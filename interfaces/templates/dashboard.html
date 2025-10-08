@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced AI Training Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧠 Advanced AI Training System</h1>
+            <p class="subtitle">Curriculum-Based Learning with 99.9% Understanding Enforcement</p>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="card stage-card">
+                <h2>Current Stage</h2>
+                <div id="current-stage" class="stage-name">Initializing...</div>
+                <div class="progress-container">
+                    <div id="stage-progress-bar" class="progress-bar">
+                        <div id="stage-progress-fill" class="progress-fill"></div>
+                    </div>
+                    <div id="stage-progress-text" class="progress-text">0%</div>
+                </div>
+                <div id="iteration-count" class="iteration-text">Iteration: 0</div>
+            </div>
+
+            <div class="card metrics-card">
+                <h2>Understanding Metrics</h2>
+                <div class="metric-row">
+                    <span class="metric-label">Understanding:</span>
+                    <span id="understanding-score" class="metric-value">0.000%</span>
+                    <span id="understanding-status" class="status-indicator">⏳</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Confidence:</span>
+                    <span id="confidence-score" class="metric-value">0.000%</span>
+                    <span id="confidence-status" class="status-indicator">⏳</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Accuracy:</span>
+                    <span id="accuracy-score" class="metric-value">0.000%</span>
+                </div>
+                <div class="threshold-info">
+                    <strong>Required:</strong> 99.9% understanding & 99.9% confidence
+                </div>
+            </div>
+
+            <div class="card personality-card">
+                <h2>Personality Traits</h2>
+                <div id="personality-traits" class="traits-container">
+                    <p class="empty-state">Personality develops in Teen stage...</p>
+                </div>
+            </div>
+
+            <div class="card philosophy-card">
+                <h2>Philosophy Insights</h2>
+                <div id="philosophy-insights" class="insights-container">
+                    <p class="empty-state">Philosophy reasoning begins in Thinker stage...</p>
+                </div>
+            </div>
+
+            <div class="card values-card">
+                <h2>Core Values Compliance</h2>
+                <div id="core-values" class="values-container">
+                    <div class="value-item">
+                        <span class="value-name">Kindness</span>
+                        <span class="value-status">✓ Enforced</span>
+                    </div>
+                    <div class="value-item">
+                        <span class="value-name">Understanding</span>
+                        <span class="value-status">✓ Enforced</span>
+                    </div>
+                    <div class="value-item">
+                        <span class="value-name">Truth</span>
+                        <span class="value-status">✓ Enforced</span>
+                    </div>
+                    <div class="value-item">
+                        <span class="value-name">Positive Relationships</span>
+                        <span class="value-status">✓ Enforced</span>
+                    </div>
+                    <div class="value-item">
+                        <span class="value-name">Non-Harm</span>
+                        <span class="value-status">✓ Enforced</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card history-card">
+                <h2>Training History</h2>
+                <div id="training-history" class="history-container">
+                    <p class="empty-state">Training history will appear here...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <span id="training-status">⏸️ Waiting to start...</span>
+            <span id="last-update">Last update: Never</span>
+        </div>
+    </div>
+
+    <script>
+        function updateDashboard() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('current-stage').textContent = data.current_stage;
+                    
+                    const understanding = (data.understanding_score * 100).toFixed(3);
+                    const confidence = (data.confidence * 100).toFixed(3);
+                    const accuracy = (data.accuracy * 100).toFixed(3);
+                    
+                    document.getElementById('understanding-score').textContent = understanding + '%';
+                    document.getElementById('confidence-score').textContent = confidence + '%';
+                    document.getElementById('accuracy-score').textContent = accuracy + '%';
+                    
+                    const understandingStatus = data.understanding_score >= 0.999 ? '✓' : 
+                                               data.understanding_score >= 0.9 ? '⚡' : '⏳';
+                    document.getElementById('understanding-status').textContent = understandingStatus;
+                    
+                    const confidenceStatus = data.confidence >= 0.999 ? '✓' : 
+                                            data.confidence >= 0.9 ? '⚡' : '⏳';
+                    document.getElementById('confidence-status').textContent = confidenceStatus;
+                    
+                    const progressPercent = ((data.stage_index + 1) / data.total_stages) * 100;
+                    document.getElementById('stage-progress-fill').style.width = progressPercent + '%';
+                    document.getElementById('stage-progress-text').textContent = 
+                        `Stage ${data.stage_index + 1}/${data.total_stages}`;
+                    
+                    document.getElementById('iteration-count').textContent = `Iteration: ${data.iteration}`;
+                    
+                    const statusText = data.training_active ? '🔄 Training Active' : '⏸️ Paused';
+                    document.getElementById('training-status').textContent = statusText;
+                    
+                    document.getElementById('last-update').textContent = 
+                        `Last update: ${new Date().toLocaleTimeString()}`;
+                });
+
+            fetch('/api/personality')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('personality-traits');
+                    if (data.traits && Object.keys(data.traits).length > 0) {
+                        let html = '';
+                        for (const [trait, value] of Object.entries(data.traits)) {
+                            const percent = (value * 100).toFixed(0);
+                            html += `
+                                <div class="trait-item">
+                                    <span class="trait-name">${trait}:</span>
+                                    <div class="trait-bar">
+                                        <div class="trait-fill" style="width: ${percent}%"></div>
+                                    </div>
+                                    <span class="trait-value">${percent}%</span>
+                                </div>
+                            `;
+                        }
+                        container.innerHTML = html;
+                    }
+                });
+
+            fetch('/api/philosophy')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('philosophy-insights');
+                    if (data.insights && data.insights.length > 0) {
+                        let html = '';
+                        data.insights.slice(-5).reverse().forEach(insight => {
+                            html += `
+                                <div class="insight-item">
+                                    <div class="insight-text">${insight.insight}</div>
+                                    <div class="insight-time">${new Date(insight.timestamp).toLocaleTimeString()}</div>
+                                </div>
+                            `;
+                        });
+                        container.innerHTML = html;
+                    }
+                });
+
+            fetch('/api/progress')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('training-history');
+                    if (data.history && data.history.length > 0) {
+                        let html = '';
+                        data.history.slice(-5).reverse().forEach(item => {
+                            const status = item.passed ? '✓' : '⚠';
+                            const statusClass = item.passed ? 'passed' : 'needs-work';
+                            html += `
+                                <div class="history-item ${statusClass}">
+                                    <span class="history-stage">${item.stage}</span>
+                                    <span class="history-score">${(item.understanding * 100).toFixed(1)}%</span>
+                                    <span class="history-status">${status}</span>
+                                </div>
+                            `;
+                        });
+                        container.innerHTML = html;
+                    }
+                });
+        }
+
+        updateDashboard();
+        setInterval(updateDashboard, 2000);
+    </script>
+</body>
+</html>

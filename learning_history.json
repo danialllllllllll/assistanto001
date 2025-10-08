@@ -1,0 +1,11 @@
+[
+  {
+    "stage": "Baby Steps",
+    "timestamp": "2025-10-08T13:33:24.358162",
+    "metrics": {
+      "accuracy": 0.4322120285423038,
+      "confidence": 0.505841760875426,
+      "understanding": 0.48375284117548933,
+      "confident_correct": 0.0
+    },
+    "passed": 
