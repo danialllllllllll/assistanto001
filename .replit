@@ -16,15 +16,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Run GA-ANN Training"
+args = "Staged AI Training"
 
 [[workflows.workflow]]
-name = "Run GA-ANN Training"
+name = "Staged AI Training"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python Example_GA_ANN.py"
+args = "python train_staged_ai.py"
 
 [workflows.workflow.metadata]
 outputType = "console"
