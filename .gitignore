@@ -122,11 +122,12 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Output files
-*.pkl
-*.png
+# Output files (keep dataset files)
 weights_*.pkl
 fitness_plot.png
+
+# Knowledge storage (training progress)
+knowledge/solution_log.json
 
 # Replit
 .pythonlibs/
