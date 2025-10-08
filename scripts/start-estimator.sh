@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO_DIR="${REPO_DIR:-$PWD}"
-INTERVAL="${ESTIMATOR_INTERVAL:-60}"  # seconds between estimator runs
+INTERVAL="${ESTIMATOR_INTERVAL:-60}"
 
 cd "$REPO_DIR"
 

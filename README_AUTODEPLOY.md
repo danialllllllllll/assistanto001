@@ -25,6 +25,6 @@ How to install on Replit
 5. Start the repl (Replit will run the `.replit` run command which launches the devserver).
 
 Notes & tips
-- The scripts avoid destructive behavior: they only do a `git.pull --ff-only` and they check working tree cleanliness.
+- The scripts avoid destructive behavior: they only do a `git pull --ff-only` and they check working tree cleanliness.
 - If you need a more advanced restart strategy (systemd, docker restart, graceful reload handlers), update `scripts/start-app.sh` to integrate with your app's shutdown/start hooks.
 - If you prefer push-based deployment (GitHub Actions -> Replit), I can add a workflow that triggers a webhook / Replit API call; tell me if you'd like that next.
