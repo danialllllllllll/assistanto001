@@ -2,6 +2,8 @@ import numpy
 import ga
 import pickle
 import ANN
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot
 
 f = open("dataset_features.pkl", "rb")
@@ -42,7 +44,7 @@ for curr_sol in numpy.arange(0, sol_per_pop):
 
     initial_pop_weights.append(numpy.array([input_HL1_weights, 
                                                 HL1_HL2_weights, 
-                                                HL2_output_weights]))
+                                                HL2_output_weights], dtype=object))
 
 pop_weights_mat = numpy.array(initial_pop_weights)
 pop_weights_vector = ga.mat_to_vector(pop_weights_mat)
@@ -99,7 +101,8 @@ matplotlib.pyplot.xlabel("Iteration", fontsize=20)
 matplotlib.pyplot.ylabel("Fitness", fontsize=20)
 matplotlib.pyplot.xticks(numpy.arange(0, num_generations+1, 100), fontsize=15)
 matplotlib.pyplot.yticks(numpy.arange(0, 101, 5), fontsize=15)
-matplotlib.pyplot.show()
+matplotlib.pyplot.savefig("fitness_plot.png")
+print("Fitness plot saved to fitness_plot.png")
 
 f = open("weights_"+str(num_generations)+"_iterations_"+str(mutation_percent)+"%_mutation.pkl", "wb")
 pickle.dump(pop_weights_mat, f)

@@ -18,13 +18,15 @@ def vector_to_mat(vector_pop_weights, mat_pop_weights):
     for sol_idx in range(mat_pop_weights.shape[0]):
         start = 0
         end = 0
+        curr_sol = []
         for layer_idx in range(mat_pop_weights.shape[1]):
             end = end + mat_pop_weights[sol_idx, layer_idx].size
             curr_vector = vector_pop_weights[sol_idx, start:end]
             mat_layer_weights = numpy.reshape(curr_vector, newshape=(mat_pop_weights[sol_idx, layer_idx].shape))
-            mat_weights.append(mat_layer_weights)
+            curr_sol.append(mat_layer_weights)
             start = end
-    return numpy.reshape(mat_weights, newshape=mat_pop_weights.shape)
+        mat_weights.append(numpy.array(curr_sol, dtype=object))
+    return numpy.array(mat_weights, dtype=object)
 
 def select_mating_pool(pop, fitness, num_parents):
     # Selecting the best individuals in the current generation as parents for producing the offspring of the next generation.
