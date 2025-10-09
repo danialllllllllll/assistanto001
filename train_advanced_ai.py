@@ -16,6 +16,7 @@ from knowledge.web_learning import WebKnowledgeAcquisition
 from core.progress_estimator import ProgressEstimator
 from core.ai_assistant import AIAssistant
 from interfaces.ai_api import update_ai_state
+from core.genetic_trainer import GeneticTrainer
 
 print("="*80)
 print("ADVANCED AI TRAINING SYSTEM")
@@ -163,20 +164,39 @@ for stage_idx, stage_info in enumerate(stages):
     accuracy = 0.0
     avg_confidence = 0.0
     
-    print("\nQuizzing for understanding (not just memorization)...")
+    # Initialize genetic trainer for this stage
+    print("\n🧬 Initializing Genetic Algorithm Learning...")
+    genetic_trainer = GeneticTrainer(network, population_size=30, elite_size=3)
+    genetic_trainer.initialize_population()
+    
+    # Set stage activation for all networks in population
+    network.set_stage_activation(stage_info['active_nodes_percent'])
+    for net in genetic_trainer.population:
+        net.set_stage_activation(stage_info['active_nodes_percent'])
+    
+    print("Evolving neural networks through genetic selection...")
+    print("(Quality and truth over quantity - breeding the best performers)\n")
     
     while not stage_passed:
+        # Genetic evolution every 10 iterations
+        if iteration % 10 == 0:
+            # Evolve one generation
+            gen_stats = genetic_trainer.evolve_generation(data_inputs, data_outputs)
+            
+            # Use the best network from population
+            if genetic_trainer.best_network:
+                network = genetic_trainer.best_network
+                # Update AI assistant with best network
+                ai_assistant.network = network
+        
+        # Gradient descent refinement on best network
         batch_size = min(64, len(data_inputs))
         indices = np.random.choice(len(data_inputs), batch_size, replace=False)
         X_batch = data_inputs[indices]
         y_batch = data_outputs[indices]
         
-        # Only set stage activation once, not every iteration
-        if iteration == 0:
-            network.set_stage_activation(stage_info['active_nodes_percent'])
-        
         network.forward(X_batch)
-        network.backward(X_batch, y_batch, stage_info['learning_rate'])
+        network.backward(X_batch, y_batch, stage_info['learning_rate'] * 0.5)  # Lower LR for fine-tuning
         
         if iteration % 10 == 0:
             predictions = network.predict(data_inputs)
@@ -212,10 +232,11 @@ for stage_idx, stage_info in enumerate(stages):
             )
             
             if iteration % 50 == 0:
+                gen_info = f"Gen {genetic_trainer.generation}, Best Fitness: {genetic_trainer.best_fitness:.4f}" if iteration > 0 else ""
                 print(f"Iteration {iteration:4d}: "
                       f"Understanding={understanding_score:.4f}, "
                       f"Accuracy={accuracy:.4f}, "
-                      f"Confidence={avg_confidence:.4f}")
+                      f"Confidence={avg_confidence:.4f} | {gen_info}")
             
             threshold_met = (
                 understanding_score >= understanding_requirements['minimum_understanding'] and
