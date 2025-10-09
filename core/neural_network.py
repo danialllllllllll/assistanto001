@@ -31,15 +31,14 @@ class ProgressiveNeuralNetwork:
             self.biases.append(b)
     
     def set_stage_activation(self, active_percent):
-        """Scale nodes based on developmental stage (not masking, scaling)"""
+        """Scale nodes based on developmental stage - ONCE per stage, not every iteration"""
         for i, scales in enumerate(self.node_scales):
             num_nodes = len(scales)
             num_active = int(num_nodes * active_percent)
             
-            scales[:] = 0.0
-            if num_active > 0:
-                active_indices = np.random.choice(num_nodes, num_active, replace=False)
-                scales[active_indices] = 1.0
+            # Set all nodes to active percentage (not random selection)
+            # This allows all nodes to contribute, scaled by the stage
+            scales[:] = active_percent
     
     def sigmoid(self, x):
         """Sigmoid activation with numerical stability"""

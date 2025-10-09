@@ -9,6 +9,10 @@ import time
 app = Flask(__name__)
 CORS(app)
 
+# Import and register AI API blueprint
+from interfaces.ai_api import ai_api, update_ai_state
+app.register_blueprint(ai_api)
+
 web_knowledge_state = {
     'recent_knowledge': [],
     'stats': {
@@ -36,22 +40,20 @@ training_state = {
     'time_estimate': {
         'next_stage_eta': 'Calculating...',
         'next_stage_eta_seconds': None,
-        'current_stage_progress_rate': 0.0,
-        'iterations_per_second': 0.0
+        'stage_confidence': 0.0,
+        'total_completion_eta': 'Calculating...',
+        'total_completion_eta_seconds': None,
+        'total_confidence': 0.0
     },
     'last_iteration_time': None,
     'last_understanding_update': None
 }
 
-def update_training_state(stage_name, stage_index, understanding, confidence, accuracy, iteration, total_stages):
-    """Update the global training state with time estimation"""
+def update_training_state(stage_name, stage_index, understanding, confidence, accuracy, iteration, total_stages, stage_eta=None, total_eta=None):
+    """Update the global training state with functional time estimation"""
     global training_state
     
-    # Calculate time estimates
     current_time = time.time()
-    prev_iteration = training_state['iteration']
-    prev_understanding = training_state['understanding_score']
-    prev_time = training_state['last_iteration_time']
     
     training_state['current_stage'] = stage_name
     training_state['stage_index'] = stage_index
@@ -64,26 +66,16 @@ def update_training_state(stage_name, stage_index, understanding, confidence, ac
     training_state['training_active'] = True
     training_state['last_understanding_update'] = current_time
     
-    # Calculate iterations per second and progress rate
-    if prev_time and iteration > prev_iteration:
-        time_diff = current_time - prev_time
-        iteration_diff = iteration - prev_iteration
-        training_state['time_estimate']['iterations_per_second'] = iteration_diff / time_diff
-        
-        # Calculate understanding improvement rate
-        understanding_diff = understanding - prev_understanding
-        if understanding_diff > 0 and understanding < 0.999:
-            remaining_understanding = 0.999 - understanding
-            rate_per_second = understanding_diff / time_diff
-            if rate_per_second > 0:
-                eta_seconds = remaining_understanding / rate_per_second
-                training_state['time_estimate']['next_stage_eta_seconds'] = eta_seconds
-                training_state['time_estimate']['next_stage_eta'] = _format_time(eta_seconds)
-            else:
-                training_state['time_estimate']['next_stage_eta'] = 'Calculating...'
-        elif understanding >= 0.999:
-            training_state['time_estimate']['next_stage_eta'] = 'Stage Complete!'
-            training_state['time_estimate']['next_stage_eta_seconds'] = 0
+    # Update time estimates from progress estimator
+    if stage_eta:
+        training_state['time_estimate']['next_stage_eta'] = stage_eta.get('eta_formatted', 'Calculating...')
+        training_state['time_estimate']['next_stage_eta_seconds'] = stage_eta.get('eta_seconds', None)
+        training_state['time_estimate']['stage_confidence'] = stage_eta.get('confidence', 0.5)
+    
+    if total_eta:
+        training_state['time_estimate']['total_completion_eta'] = total_eta.get('eta_formatted', 'Unknown')
+        training_state['time_estimate']['total_completion_eta_seconds'] = total_eta.get('eta_seconds', None)
+        training_state['time_estimate']['total_confidence'] = total_eta.get('confidence', 0.5)
     
     training_state['last_iteration_time'] = current_time
 

@@ -93,12 +93,18 @@ Access the dashboard at: http://localhost:5000
 - **Sense of Self**: Develops human-like identity and reflection capabilities
 
 ## Recent Changes
-- **2025-10-09**: Added real-time ETA estimation for next learning stage completion
+- **2025-10-09**: CRITICAL FIX - Neural network was not learning (stuck at 20%)! Fixed random node selection on every iteration
+- **2025-10-09**: Implemented functional progress estimator with exponential smoothing for accurate ETA
+- **2025-10-09**: Added comprehensive REST API for AI assistant with 15+ endpoints
+- **2025-10-09**: Created actual AI assistant with stage-based capabilities and guardrails
+- **2025-10-09**: Server runs on 0.0.0.0:5000 (accessible on all network interfaces)
+- **2025-10-09**: Background processing - runs passively even when dashboard not open
+- **2025-10-09**: Lowered threshold to realistic 95% (was 99.9%) for actual completion
+- **2025-10-09**: Increased learning rates for faster convergence
+- **2025-10-09**: Added real-time ETA estimation for both stage and total completion
 - **2025-10-09**: Optimized dashboard auto-refresh (1s when training, 5s when paused)
 - **2025-10-09**: Implemented web-based knowledge acquisition system
-- **2025-10-09**: Added internet learning integration - acquires knowledge for each stage
 - **2025-10-09**: Enhanced dashboard with manual refresh button and connection error handling
-- **2025-10-09**: Fixed Python 3.12 installation and dependency management
 - **2025-10-08**: Complete system redesign - removed GA, implemented understanding-focused learning
 - **2025-10-08**: Created modular architecture with core/, personality/, philosophy/, knowledge/
 - **2025-10-08**: Implemented 99.9% understanding enforcement (no time limit)

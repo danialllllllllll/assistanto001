@@ -13,6 +13,9 @@ from philosophy.reasoning_rules import ReasoningRules
 from knowledge.storage import KnowledgeStorage
 from interfaces.app import start_flask_background, update_training_state, update_personality, add_philosophy_insight, update_core_values, add_to_history, update_web_knowledge
 from knowledge.web_learning import WebKnowledgeAcquisition
+from core.progress_estimator import ProgressEstimator
+from core.ai_assistant import AIAssistant
+from interfaces.ai_api import update_ai_state
 
 print("="*80)
 print("ADVANCED AI TRAINING SYSTEM")
@@ -64,9 +67,13 @@ reasoning_rules = ReasoningRules()
 thinker = ThinkerEngine(reasoning_rules)
 knowledge = KnowledgeStorage()
 web_learning = WebKnowledgeAcquisition()
+progress_estimator = ProgressEstimator(total_stages=len(stages), understanding_threshold=0.999)
+ai_assistant = AIAssistant(network=network, thinker=thinker, personality=personality, knowledge=knowledge)
 
 print("Initializing web-based knowledge acquisition...")
 print("Will fetch knowledge from internet for each developmental stage")
+print("Initializing functional progress estimator for accurate ETA calculations...")
+print("Initializing AI Assistant for interactive capabilities...")
 
 core_values_list = [
     {"name": v['name'], "priority": v['priority'], "status": "Enforced"}
@@ -135,6 +142,21 @@ for stage_idx, stage_info in enumerate(stages):
         web_learning.get_knowledge_stats()
     )
     
+    # Initialize progress estimator for this stage
+    progress_estimator.start_stage(stage_idx, stage_name)
+    
+    # Initialize AI assistant for this stage
+    ai_assistant.initialize(stage_name, stage_idx)
+    update_ai_state({
+        'initialized': True,
+        'current_stage': stage_name,
+        'stage_index': stage_idx,
+        'network': network,
+        'thinker': thinker,
+        'assistant': ai_assistant,
+        'core_values': core_values_list
+    })
+    
     iteration = 0
     stage_passed = False
     understanding_score = 0.0
@@ -149,7 +171,10 @@ for stage_idx, stage_info in enumerate(stages):
         X_batch = data_inputs[indices]
         y_batch = data_outputs[indices]
         
-        network.set_stage_activation(stage_info['active_nodes_percent'])
+        # Only set stage activation once, not every iteration
+        if iteration == 0:
+            network.set_stage_activation(stage_info['active_nodes_percent'])
+        
         network.forward(X_batch)
         network.backward(X_batch, y_batch, stage_info['learning_rate'])
         
@@ -167,6 +192,13 @@ for stage_idx, stage_info in enumerate(stages):
             
             understanding_score = accuracy * 0.5 + correct_conf * 0.3 + max(0, calibration) * 0.2
             
+            # Update progress estimator
+            progress_estimator.update_progress(iteration, understanding_score)
+            
+            # Get estimates
+            stage_eta = progress_estimator.estimate_current_stage_completion()
+            total_eta = progress_estimator.estimate_total_completion()
+            
             update_training_state(
                 stage_name=stage_name,
                 stage_index=stage_idx,
@@ -174,7 +206,9 @@ for stage_idx, stage_info in enumerate(stages):
                 confidence=avg_confidence,
                 accuracy=accuracy,
                 iteration=iteration,
-                total_stages=len(stages)
+                total_stages=len(stages),
+                stage_eta=stage_eta,
+                total_eta=total_eta
             )
             
             if iteration % 50 == 0:
@@ -193,6 +227,9 @@ for stage_idx, stage_info in enumerate(stages):
                 print(f"  Understanding: {understanding_score:.4f} (required: {understanding_requirements['minimum_understanding']})")
                 print(f"  Confidence: {avg_confidence:.4f} (required: {understanding_requirements['minimum_confidence']})")
                 stage_passed = True
+                
+                # Mark stage completion in estimator
+                progress_estimator.complete_stage(iteration, understanding_score)
                 
                 stage_result = {
                     'stage': stage_name,

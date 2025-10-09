@@ -25,8 +25,12 @@
                 </div>
                 <div id="iteration-count" class="iteration-text">Iteration: 0</div>
                 <div class="time-estimate">
-                    <span class="estimate-label">⏱️ ETA to next stage:</span>
+                    <span class="estimate-label">⏱️ Next stage ETA:</span>
                     <span id="time-estimate" class="estimate-value">Calculating...</span>
+                </div>
+                <div class="time-estimate" style="margin-top: 8px;">
+                    <span class="estimate-label">🏁 Total completion ETA:</span>
+                    <span id="total-estimate" class="estimate-value">Calculating...</span>
                 </div>
             </div>
 
@@ -152,8 +156,13 @@
                     
                     document.getElementById('iteration-count').textContent = `Iteration: ${data.iteration}`;
                     
-                    if (data.time_estimate && data.time_estimate.next_stage_eta) {
-                        document.getElementById('time-estimate').textContent = data.time_estimate.next_stage_eta;
+                    if (data.time_estimate) {
+                        if (data.time_estimate.next_stage_eta) {
+                            document.getElementById('time-estimate').textContent = data.time_estimate.next_stage_eta;
+                        }
+                        if (data.time_estimate.total_completion_eta) {
+                            document.getElementById('total-estimate').textContent = data.time_estimate.total_completion_eta;
+                        }
                     }
                     
                     const statusText = data.training_active ? '🔄 Training Active' : '⏸️ Paused';
