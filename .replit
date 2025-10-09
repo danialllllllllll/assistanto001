@@ -1,1 +1,2 @@
 run = "bash scripts/devserver.sh"
+modules = ["python-3.12"]
