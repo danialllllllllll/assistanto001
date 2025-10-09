@@ -2,7 +2,7 @@ import numpy as np
 import json
 
 class ProgressiveNeuralNetwork:
-    """Neural network with progressive node activation through developmental stages"""
+    """Enhanced neural network with progressive node activation and advanced learning"""
     
     def __init__(self, input_size, hidden_sizes, output_size):
         self.input_size = input_size
@@ -17,10 +17,16 @@ class ProgressiveNeuralNetwork:
         self.activations = []
         self.z_values = []
         
+        # Advanced learning features
+        self.velocity = []  # For momentum
+        self.momentum = 0.9
+        self.learning_history = []
+        
     def initialize_weights(self):
         """Initialize weights using He initialization for better gradient flow"""
         self.weights = []
         self.biases = []
+        self.velocity = []
         
         layer_sizes = [self.input_size] + self.hidden_sizes + [self.output_size]
         
@@ -29,6 +35,12 @@ class ProgressiveNeuralNetwork:
             b = np.zeros((1, layer_sizes[i+1]))
             self.weights.append(w)
             self.biases.append(b)
+            
+            # Initialize velocity for momentum
+            self.velocity.append({
+                'weights': np.zeros_like(w),
+                'biases': np.zeros_like(b)
+            })
     
     def set_stage_activation(self, active_percent):
         """Scale nodes based on developmental stage - ONCE per stage, not every iteration"""
@@ -80,6 +92,15 @@ class ProgressiveNeuralNetwork:
     
     def backward(self, X, y, learning_rate):
         """Backpropagation with gradient descent"""
+        # Ensure velocity is properly initialized (for backwards compatibility)
+        if len(self.velocity) != len(self.weights):
+            self.velocity = []
+            for i in range(len(self.weights)):
+                self.velocity.append({
+                    'weights': np.zeros_like(self.weights[i]),
+                    'biases': np.zeros_like(self.biases[i])
+                })
+        
         m = X.shape[0]
         
         y_one_hot = np.zeros((m, self.output_size))
@@ -105,9 +126,16 @@ class ProgressiveNeuralNetwork:
                 
                 delta = delta * self.sigmoid_derivative(self.z_values[i - 1])
         
+        # Update weights with momentum for better convergence
         for i in range(len(self.weights)):
-            self.weights[i] -= learning_rate * weight_gradients[i]
-            self.biases[i] -= learning_rate * bias_gradients[i]
+            # Momentum update
+            self.velocity[i]['weights'] = (self.momentum * self.velocity[i]['weights'] + 
+                                          learning_rate * weight_gradients[i])
+            self.velocity[i]['biases'] = (self.momentum * self.velocity[i]['biases'] + 
+                                         learning_rate * bias_gradients[i])
+            
+            self.weights[i] -= self.velocity[i]['weights']
+            self.biases[i] -= self.velocity[i]['biases']
     
     def predict(self, X):
         """Make predictions"""

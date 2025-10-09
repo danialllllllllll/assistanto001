@@ -1,13 +1,20 @@
 import time
+import json
+import os
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime, timedelta
 
 class ProgressEstimator:
-    """Functional estimator for learning progress based on actual iteration data"""
+    """Functional estimator for learning progress with persistence"""
     
-    def __init__(self, total_stages: int = 7, understanding_threshold: float = 0.999):
+    def __init__(self, total_stages: int = 7, understanding_threshold: float = 0.95):
         self.total_stages = total_stages
         self.understanding_threshold = understanding_threshold
+        
+        # Persistence files
+        self.state_file = 'estimator_state.json'
+        self.history_file = 'training_history.json'
+        self.last_visit_file = 'last_visit.json'
         
         # Historical data
         self.stage_history = []
@@ -22,6 +29,13 @@ class ProgressEstimator:
         # Running averages
         self.avg_iterations_per_stage = None
         self.avg_time_per_stage = None
+        
+        # Growth tracking
+        self.last_visit_data = None
+        self.session_start = time.time()
+        
+        # Load previous state
+        self.load_state()
     
     def start_stage(self, stage_index: int, stage_name: str):
         """Mark the start of a new stage"""
@@ -42,6 +56,10 @@ class ProgressEstimator:
         self.current_stage_data['iterations'].append(iteration)
         self.current_stage_data['understanding_scores'].append(understanding)
         self.current_stage_data['last_update'] = time.time()
+        
+        # Auto-save every 50 iterations
+        if iteration % 50 == 0:
+            self.save_state()
     
     def complete_stage(self, final_iteration: int, final_understanding: float):
         """Mark stage completion and update historical averages"""
@@ -207,4 +225,94 @@ class ProgressEstimator:
             'total_elapsed_time': sum(s['duration_seconds'] for s in self.stage_history) + 
                                  (time.time() - self.current_stage_data['start_time'] if self.current_stage_data['start_time'] else 0),
             'history': self.stage_history
+        }
+    
+    def save_state(self):
+        """Save estimator state to files"""
+        # Save main state
+        state = {
+            'stage_history': self.stage_history,
+            'current_stage': self.current_stage_data.copy(),
+            'avg_iterations_per_stage': self.avg_iterations_per_stage,
+            'avg_time_per_stage': self.avg_time_per_stage,
+            'understanding_threshold': self.understanding_threshold,
+            'last_save': datetime.now().isoformat()
+        }
+        
+        # Convert numpy types to Python types for JSON serialization
+        if state['current_stage']['start_time'] is not None:
+            state['current_stage']['iterations'] = [int(x) for x in state['current_stage']['iterations']]
+            state['current_stage']['understanding_scores'] = [float(x) for x in state['current_stage']['understanding_scores']]
+        
+        with open(self.state_file, 'w') as f:
+            json.dump(state, f, indent=2)
+        
+        # Save last visit marker
+        if self.current_stage_data['understanding_scores']:
+            last_visit = {
+                'iteration': int(self.current_stage_data['iterations'][-1]) if self.current_stage_data['iterations'] else 0,
+                'understanding': float(self.current_stage_data['understanding_scores'][-1]),
+                'stage': self.current_stage_data['stage_name'],
+                'timestamp': datetime.now().isoformat()
+            }
+            
+            with open(self.last_visit_file, 'w') as f:
+                json.dump(last_visit, f, indent=2)
+    
+    def load_state(self):
+        """Load estimator state from files"""
+        if os.path.exists(self.state_file):
+            try:
+                with open(self.state_file, 'r') as f:
+                    state = json.load(f)
+                
+                self.stage_history = state.get('stage_history', [])
+                self.avg_iterations_per_stage = state.get('avg_iterations_per_stage')
+                self.avg_time_per_stage = state.get('avg_time_per_stage')
+                self.understanding_threshold = state.get('understanding_threshold', 0.95)
+                
+                print(f"✓ Loaded estimator state: {len(self.stage_history)} completed stages")
+            except Exception as e:
+                print(f"Could not load state: {e}")
+        
+        # Load last visit data
+        if os.path.exists(self.last_visit_file):
+            try:
+                with open(self.last_visit_file, 'r') as f:
+                    self.last_visit_data = json.load(f)
+                
+                print(f"✓ Last visit: Iteration {self.last_visit_data.get('iteration', 0)}, "
+                      f"Understanding {self.last_visit_data.get('understanding', 0):.2%}")
+            except Exception as e:
+                print(f"Could not load last visit: {e}")
+    
+    def get_growth_since_last_visit(self) -> Dict:
+        """Calculate growth metrics since last visit"""
+        if not self.last_visit_data or not self.current_stage_data['understanding_scores']:
+            return {
+                'iterations_progress': 0,
+                'understanding_improvement': 0.0,
+                'improvement_percent': 0.0,
+                'message': 'Welcome! Starting training...'
+            }
+        
+        current_iteration = self.current_stage_data['iterations'][-1] if self.current_stage_data['iterations'] else 0
+        current_understanding = self.current_stage_data['understanding_scores'][-1] if self.current_stage_data['understanding_scores'] else 0
+        
+        last_iteration = self.last_visit_data.get('iteration', 0)
+        last_understanding = self.last_visit_data.get('understanding', 0)
+        
+        iterations_progress = current_iteration - last_iteration
+        understanding_improvement = current_understanding - last_understanding
+        improvement_percent = (understanding_improvement / max(0.01, last_understanding)) * 100
+        
+        return {
+            'iterations_progress': iterations_progress,
+            'understanding_improvement': understanding_improvement,
+            'improvement_percent': improvement_percent,
+            'old_understanding': last_understanding,
+            'new_understanding': current_understanding,
+            'old_iteration': last_iteration,
+            'new_iteration': current_iteration,
+            'message': f"Progressed {iterations_progress} iterations! Understanding improved {improvement_percent:.1f}%"
         }
