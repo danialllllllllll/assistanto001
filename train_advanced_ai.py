@@ -137,6 +137,9 @@ for stage_idx, stage_info in enumerate(stages):
     
     iteration = 0
     stage_passed = False
+    understanding_score = 0.0
+    accuracy = 0.0
+    avg_confidence = 0.0
     
     print("\nQuizzing for understanding (not just memorization)...")
     

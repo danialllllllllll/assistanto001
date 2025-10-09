@@ -28,6 +28,7 @@ This project implements an advanced AI training system that learns through 7 dev
 
 ### Knowledge Storage (`knowledge/`)
 - `storage.py` - Learned concepts, solutions, insights storage
+- `web_learning.py` - Web-based knowledge acquisition for each stage
 - `solution_log.json` - Training progress and solutions
 
 ### Web Interface (`interfaces/`)
@@ -75,10 +76,14 @@ Access the dashboard at: http://localhost:5000
 - Current stage and progress visualization
 - Understanding score (must reach 99.9%)
 - Confidence levels
+- Real-time ETA estimation for stage completion
 - Personality trait development
 - Philosophy insights
 - Core values compliance checking
-- Auto-refreshes every 2 seconds
+- Web-acquired knowledge display
+- Smart auto-refresh (1s during training, 5s when paused)
+- Manual refresh button
+- Connection error handling
 
 ## Key Differences from Traditional AI
 - **No Genetic Algorithm**: Uses gradient descent for precise learning
@@ -88,6 +93,12 @@ Access the dashboard at: http://localhost:5000
 - **Sense of Self**: Develops human-like identity and reflection capabilities
 
 ## Recent Changes
+- **2025-10-09**: Added real-time ETA estimation for next learning stage completion
+- **2025-10-09**: Optimized dashboard auto-refresh (1s when training, 5s when paused)
+- **2025-10-09**: Implemented web-based knowledge acquisition system
+- **2025-10-09**: Added internet learning integration - acquires knowledge for each stage
+- **2025-10-09**: Enhanced dashboard with manual refresh button and connection error handling
+- **2025-10-09**: Fixed Python 3.12 installation and dependency management
 - **2025-10-08**: Complete system redesign - removed GA, implemented understanding-focused learning
 - **2025-10-08**: Created modular architecture with core/, personality/, philosophy/, knowledge/
 - **2025-10-08**: Implemented 99.9% understanding enforcement (no time limit)
