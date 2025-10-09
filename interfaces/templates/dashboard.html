@@ -24,6 +24,10 @@
                     <div id="stage-progress-text" class="progress-text">0%</div>
                 </div>
                 <div id="iteration-count" class="iteration-text">Iteration: 0</div>
+                <div class="time-estimate">
+                    <span class="estimate-label">⏱️ ETA to next stage:</span>
+                    <span id="time-estimate" class="estimate-value">Calculating...</span>
+                </div>
             </div>
 
             <div class="card metrics-card">
@@ -98,13 +102,20 @@
         <div class="status-bar">
             <span id="training-status">⏸️ Waiting to start...</span>
             <span id="last-update">Last update: Never</span>
+            <button id="refresh-btn" onclick="updateDashboard()" style="margin-left: 10px; padding: 5px 15px; cursor: pointer;">🔄 Refresh</button>
         </div>
     </div>
 
     <script>
+        let updateInterval = 2000;
+        let updateTimer = null;
+        
         function updateDashboard() {
             fetch('/api/status')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error('Network error');
+                    return response.json();
+                })
                 .then(data => {
                     document.getElementById('current-stage').textContent = data.current_stage;
                     
@@ -131,11 +142,22 @@
                     
                     document.getElementById('iteration-count').textContent = `Iteration: ${data.iteration}`;
                     
+                    if (data.time_estimate && data.time_estimate.next_stage_eta) {
+                        document.getElementById('time-estimate').textContent = data.time_estimate.next_stage_eta;
+                    }
+                    
                     const statusText = data.training_active ? '🔄 Training Active' : '⏸️ Paused';
                     document.getElementById('training-status').textContent = statusText;
                     
+                    updateInterval = data.training_active ? 1000 : 5000;
+                    
                     document.getElementById('last-update').textContent = 
                         `Last update: ${new Date().toLocaleTimeString()}`;
+                })
+                .catch(error => {
+                    console.error('Update failed:', error);
+                    document.getElementById('training-status').textContent = '❌ Connection Error';
+                    updateInterval = 5000;
                 });
 
             fetch('/api/personality')
@@ -200,8 +222,16 @@
                 });
         }
 
+        function scheduleNextUpdate() {
+            if (updateTimer) clearTimeout(updateTimer);
+            updateTimer = setTimeout(() => {
+                updateDashboard();
+                scheduleNextUpdate();
+            }, updateInterval);
+        }
+        
         updateDashboard();
-        setInterval(updateDashboard, 2000);
+        scheduleNextUpdate();
     </script>
 </body>
 </html>

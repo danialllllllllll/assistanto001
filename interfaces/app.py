@@ -4,6 +4,7 @@ import json
 import os
 from datetime import datetime
 import threading
+import time
 
 app = Flask(__name__)
 CORS(app)
@@ -22,12 +23,27 @@ training_state = {
     'core_values_status': [],
     'training_active': False,
     'stage_passed': False,
-    'history': []
+    'history': [],
+    'time_estimate': {
+        'next_stage_eta': 'Calculating...',
+        'next_stage_eta_seconds': None,
+        'current_stage_progress_rate': 0.0,
+        'iterations_per_second': 0.0
+    },
+    'last_iteration_time': None,
+    'last_understanding_update': None
 }
 
 def update_training_state(stage_name, stage_index, understanding, confidence, accuracy, iteration, total_stages):
-    """Update the global training state"""
+    """Update the global training state with time estimation"""
     global training_state
+    
+    # Calculate time estimates
+    current_time = time.time()
+    prev_iteration = training_state['iteration']
+    prev_understanding = training_state['understanding_score']
+    prev_time = training_state['last_iteration_time']
+    
     training_state['current_stage'] = stage_name
     training_state['stage_index'] = stage_index
     training_state['understanding_score'] = float(understanding)
@@ -37,6 +53,53 @@ def update_training_state(stage_name, stage_index, understanding, confidence, ac
     training_state['total_stages'] = int(total_stages)
     training_state['progress_percent'] = (stage_index / total_stages) * 100
     training_state['training_active'] = True
+    training_state['last_understanding_update'] = current_time
+    
+    # Calculate iterations per second and progress rate
+    if prev_time and iteration > prev_iteration:
+        time_diff = current_time - prev_time
+        iteration_diff = iteration - prev_iteration
+        training_state['time_estimate']['iterations_per_second'] = iteration_diff / time_diff
+        
+        # Calculate understanding improvement rate
+        understanding_diff = understanding - prev_understanding
+        if understanding_diff > 0 and understanding < 0.999:
+            remaining_understanding = 0.999 - understanding
+            rate_per_second = understanding_diff / time_diff
+            if rate_per_second > 0:
+                eta_seconds = remaining_understanding / rate_per_second
+                training_state['time_estimate']['next_stage_eta_seconds'] = eta_seconds
+                training_state['time_estimate']['next_stage_eta'] = _format_time(eta_seconds)
+            else:
+                training_state['time_estimate']['next_stage_eta'] = 'Calculating...'
+        elif understanding >= 0.999:
+            training_state['time_estimate']['next_stage_eta'] = 'Stage Complete!'
+            training_state['time_estimate']['next_stage_eta_seconds'] = 0
+    
+    training_state['last_iteration_time'] = current_time
+
+def _format_time(seconds):
+    """Format seconds into human-readable time"""
+    if seconds is None or seconds <= 0:
+        return '0s'
+    
+    seconds = int(seconds)
+    parts = []
+    
+    days, seconds = divmod(seconds, 86400)
+    hours, seconds = divmod(seconds, 3600)
+    minutes, seconds = divmod(seconds, 60)
+    
+    if days:
+        parts.append(f"{days}d")
+    if hours:
+        parts.append(f"{hours}h")
+    if minutes:
+        parts.append(f"{minutes}m")
+    if seconds or not parts:
+        parts.append(f"{seconds}s")
+    
+    return ' '.join(parts)
 
 def update_personality(traits):
     """Update personality traits"""
@@ -70,7 +133,7 @@ def dashboard():
 
 @app.route('/api/status')
 def get_status():
-    """Get current training status"""
+    """Get current training status with time estimates"""
     return jsonify({
         'current_stage': training_state['current_stage'],
         'understanding_score': training_state['understanding_score'],
@@ -79,7 +142,8 @@ def get_status():
         'iteration': training_state['iteration'],
         'stage_index': training_state['stage_index'],
         'total_stages': training_state['total_stages'],
-        'training_active': training_state['training_active']
+        'training_active': training_state['training_active'],
+        'time_estimate': training_state['time_estimate']
     })
 
 @app.route('/api/progress')

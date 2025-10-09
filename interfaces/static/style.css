@@ -107,6 +107,26 @@ header h1 {
     font-size: 0.95em;
 }
 
+.time-estimate {
+    text-align: center;
+    margin-top: 15px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.estimate-label {
+    font-weight: 600;
+    color: #555;
+    margin-right: 8px;
+}
+
+.estimate-value {
+    font-weight: bold;
+    color: #667eea;
+    font-size: 1.1em;
+}
+
 .metric-row {
     display: flex;
     align-items: center;
@@ -281,6 +301,27 @@ header h1 {
 #last-update {
     color: #666;
     font-size: 0.9em;
+}
+
+#refresh-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+#refresh-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+#refresh-btn:active {
+    transform: translateY(0);
 }
 
 @media (max-width: 768px) {
