@@ -11,7 +11,8 @@ from personality.narrative_memory import NarrativeMemory
 from philosophy.thinker_engine import ThinkerEngine
 from philosophy.reasoning_rules import ReasoningRules
 from knowledge.storage import KnowledgeStorage
-from interfaces.app import start_flask_background, update_training_state, update_personality, add_philosophy_insight, update_core_values, add_to_history
+from interfaces.app import start_flask_background, update_training_state, update_personality, add_philosophy_insight, update_core_values, add_to_history, update_web_knowledge
+from knowledge.web_learning import WebKnowledgeAcquisition
 
 print("="*80)
 print("ADVANCED AI TRAINING SYSTEM")
@@ -62,6 +63,10 @@ memory = NarrativeMemory()
 reasoning_rules = ReasoningRules()
 thinker = ThinkerEngine(reasoning_rules)
 knowledge = KnowledgeStorage()
+web_learning = WebKnowledgeAcquisition()
+
+print("Initializing web-based knowledge acquisition...")
+print("Will fetch knowledge from internet for each developmental stage")
 
 core_values_list = [
     {"name": v['name'], "priority": v['priority'], "status": "Enforced"}
@@ -119,6 +124,15 @@ for stage_idx, stage_info in enumerate(stages):
         'stage_start', 
         f"Entering {stage_name} stage with curriculum: {curriculum_description}",
         importance=9
+    )
+    
+    print(f"\n📚 Acquiring knowledge from internet for {stage_name} stage...")
+    web_knowledge = web_learning.acquire_knowledge_for_stage(stage_name)
+    topics = [item['topic'] for item in web_knowledge]
+    print(f"   Topics acquired: {', '.join(topics)}")
+    update_web_knowledge(
+        web_learning.get_recent_knowledge(limit=10),
+        web_learning.get_knowledge_stats()
     )
     
     iteration = 0

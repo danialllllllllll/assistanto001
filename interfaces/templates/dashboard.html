@@ -97,6 +97,16 @@
                     <p class="empty-state">Training history will appear here...</p>
                 </div>
             </div>
+
+            <div class="card web-knowledge-card">
+                <h2>🌐 Web-Acquired Knowledge</h2>
+                <div id="web-knowledge-stats" class="knowledge-stats">
+                    <p class="stats-text">Total: <span id="total-knowledge">0</span> topics</p>
+                </div>
+                <div id="web-knowledge" class="knowledge-container">
+                    <p class="empty-state">Web knowledge will appear here...</p>
+                </div>
+            </div>
         </div>
 
         <div class="status-bar">
@@ -219,6 +229,31 @@
                         });
                         container.innerHTML = html;
                     }
+                });
+
+            fetch('/api/web_knowledge')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.stats) {
+                        document.getElementById('total-knowledge').textContent = data.stats.total_acquired || 0;
+                    }
+                    
+                    const container = document.getElementById('web-knowledge');
+                    if (data.recent_knowledge && data.recent_knowledge.length > 0) {
+                        let html = '';
+                        data.recent_knowledge.slice(-5).reverse().forEach(item => {
+                            html += `
+                                <div class="knowledge-item">
+                                    <div class="knowledge-topic">📖 ${item.topic}</div>
+                                    <div class="knowledge-stage">${item.stage}</div>
+                                </div>
+                            `;
+                        });
+                        container.innerHTML = html;
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to fetch web knowledge:', error);
                 });
         }
 

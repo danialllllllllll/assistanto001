@@ -9,6 +9,15 @@ import time
 app = Flask(__name__)
 CORS(app)
 
+web_knowledge_state = {
+    'recent_knowledge': [],
+    'stats': {
+        'total_acquired': 0,
+        'by_stage': {},
+        'sources_count': 0
+    }
+}
+
 training_state = {
     'current_stage': 'Initializing',
     'stage_index': 0,
@@ -126,6 +135,12 @@ def add_to_history(stage_result):
     global training_state
     training_state['history'].append(stage_result)
 
+def update_web_knowledge(knowledge_items, stats):
+    """Update web knowledge state"""
+    global web_knowledge_state
+    web_knowledge_state['recent_knowledge'] = knowledge_items
+    web_knowledge_state['stats'] = stats
+
 @app.route('/')
 def dashboard():
     """Serve the main dashboard"""
@@ -185,6 +200,15 @@ def get_core_values():
         'values': training_state['core_values_status'],
         'enforced': True,
         'immutable': True
+    })
+
+@app.route('/api/web_knowledge')
+def get_web_knowledge():
+    """Get web-acquired knowledge"""
+    return jsonify({
+        'recent_knowledge': web_knowledge_state['recent_knowledge'],
+        'stats': web_knowledge_state['stats'],
+        'active': True
     })
 
 def run_flask_app():
