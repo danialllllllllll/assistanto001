@@ -4,7 +4,248 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advanced AI Training Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .neural-network {
+            grid-column: 1 / -1;
+            min-height: 500px;
+        }
+
+        #neural-canvas {
+            width: 100%;
+            height: 450px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            cursor: crosshair;
+        }
+
+        .stage-name {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 15px 0;
+            text-align: center;
+            color: #fbbf24;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .progress-container {
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #a855f7, #ec4899);
+            transition: width 0.3s ease;
+            border-radius: 15px;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 8px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .metric-label {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .metric-value {
+            font-size: 1.3em;
+            color: #fbbf24;
+        }
+
+        .status-indicator {
+            font-size: 1.5em;
+            margin-left: 10px;
+        }
+
+        .trait-item, .value-item, .history-item, .knowledge-item {
+            margin: 10px 0;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            border-left: 4px solid #a855f7;
+        }
+
+        .trait-bar {
+            height: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .trait-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+            transition: width 0.3s ease;
+        }
+
+        .insight-item {
+            margin: 12px 0;
+            padding: 15px;
+            background: rgba(147, 51, 234, 0.3);
+            border-radius: 10px;
+            border-left: 4px solid #c084fc;
+        }
+
+        .insight-text {
+            font-style: italic;
+            margin-bottom: 5px;
+        }
+
+        .insight-time {
+            font-size: 0.85em;
+            opacity: 0.7;
+        }
+
+        .status-bar {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .empty-state {
+            text-align: center;
+            opacity: 0.6;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .time-estimate {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .estimate-label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .estimate-value {
+            color: #fbbf24;
+            font-weight: bold;
+        }
+
+        .archive-status {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(16, 185, 129, 0.2);
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+        }
+
+        .archive-info {
+            font-size: 0.9em;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -14,6 +255,14 @@
         </header>
 
         <div class="dashboard-grid">
+            <div class="card neural-network">
+                <h2>🕸️ Neural Network Architecture (Obsidian-Style Graph)</h2>
+                <canvas id="neural-canvas"></canvas>
+                <div style="text-align: center; margin-top: 10px; opacity: 0.8;">
+                    Interactive network visualization • Hover over nodes • Real-time training signals
+                </div>
+            </div>
+
             <div class="card stage-card">
                 <h2>Current Stage</h2>
                 <div id="current-stage" class="stage-name">Initializing...</div>
@@ -28,9 +277,16 @@
                     <span class="estimate-label">⏱️ Next stage ETA:</span>
                     <span id="time-estimate" class="estimate-value">Calculating...</span>
                 </div>
-                <div class="time-estimate" style="margin-top: 8px;">
+                <div class="time-estimate">
                     <span class="estimate-label">🏁 Total completion ETA:</span>
                     <span id="total-estimate" class="estimate-value">Calculating...</span>
+                </div>
+                
+                <div class="archive-status">
+                    <div><strong>📦 Archive Status</strong></div>
+                    <div class="archive-info">Current batch: <span id="archive-batch">0</span>/10</div>
+                    <div class="archive-info">Phase folder: <span id="archive-folder">/baby_steps/</span></div>
+                    <div class="archive-info">Next zip: <span id="next-zip">batch_0000.zip</span></div>
                 </div>
             </div>
 
@@ -50,7 +306,7 @@
                     <span class="metric-label">Accuracy:</span>
                     <span id="accuracy-score" class="metric-value">0.000%</span>
                 </div>
-                <div class="threshold-info">
+                <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
                     <strong>Required:</strong> 99.9% understanding & 99.9% confidence
                 </div>
             </div>
@@ -105,7 +361,7 @@
             <div class="card web-knowledge-card">
                 <h2>🌐 Web-Acquired Knowledge</h2>
                 <div id="web-knowledge-stats" class="knowledge-stats">
-                    <p class="stats-text">Total: <span id="total-knowledge">0</span> topics</p>
+                    <p>Total: <span id="total-knowledge">0</span> topics</p>
                 </div>
                 <div id="web-knowledge" class="knowledge-container">
                     <p class="empty-state">Web knowledge will appear here...</p>
@@ -116,20 +372,163 @@
         <div class="status-bar">
             <span id="training-status">⏸️ Waiting to start...</span>
             <span id="last-update">Last update: Never</span>
-            <button id="refresh-btn" onclick="updateDashboard()" style="margin-left: 10px; padding: 5px 15px; cursor: pointer;">🔄 Refresh</button>
+            <button id="refresh-btn" onclick="updateDashboard()">🔄 Refresh</button>
         </div>
     </div>
 
     <script>
         let updateInterval = 2000;
         let updateTimer = null;
+        let canvas, ctx;
+        let nodes = [];
+        let connections = [];
+        let animationFrame = null;
+
+        function initNeuralNetwork() {
+            canvas = document.getElementById('neural-canvas');
+            ctx = canvas.getContext('2d');
+            
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+            
+            generateNetwork(3);
+            animateNetwork();
+        }
+
+        function generateNetwork(phaseIndex) {
+            nodes = [];
+            connections = [];
+            
+            const layerCounts = [
+                [5, 8, 5],
+                [5, 10, 8, 5],
+                [6, 12, 10, 6],
+                [8, 14, 12, 8],
+                [10, 16, 14, 10],
+                [12, 18, 16, 12],
+                [14, 20, 18, 14]
+            ];
+            
+            const layers = layerCounts[Math.min(phaseIndex, layerCounts.length - 1)];
+            const width = canvas.width / 2;
+            const height = canvas.height / 2;
+            
+            let nodeId = 0;
+            const layerNodes = [];
+            
+            for (let layer = 0; layer < layers.length; layer++) {
+                const count = layers[layer];
+                const layerNodeIds = [];
+                const x = (width / (layers.length + 1)) * (layer + 1);
+                
+                for (let i = 0; i < count; i++) {
+                    const y = (height / (count + 1)) * (i + 1);
+                    nodes.push({
+                        id: nodeId,
+                        x, y,
+                        active: Math.random() > 0.3,
+                        activation: Math.random(),
+                        layer,
+                        label: layer === 0 && i === 0 ? 'Input' :
+                               layer === layers.length - 1 && i === 0 ? 'Output' : ''
+                    });
+                    layerNodeIds.push(nodeId);
+                    nodeId++;
+                }
+                layerNodes.push(layerNodeIds);
+            }
+            
+            for (let layer = 0; layer < layerNodes.length - 1; layer++) {
+                layerNodes[layer].forEach(from => {
+                    layerNodes[layer + 1].forEach(to => {
+                        if (Math.random() > 0.2) {
+                            connections.push({
+                                from,
+                                to,
+                                weight: Math.random(),
+                                active: Math.random() > 0.4
+                            });
+                        }
+                    });
+                });
+            }
+        }
+
+        function animateNetwork() {
+            const width = canvas.width / 2;
+            const height = canvas.height / 2;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw connections
+            connections.forEach(conn => {
+                const from = nodes[conn.from];
+                const to = nodes[conn.to];
+                
+                ctx.beginPath();
+                ctx.moveTo(from.x, from.y);
+                ctx.lineTo(to.x, to.y);
+                
+                if (conn.active && from.active && to.active) {
+                    ctx.strokeStyle = `rgba(168, 85, 247, ${0.3 + conn.weight * 0.4})`;
+                    ctx.lineWidth = 1.5;
+                } else {
+                    ctx.strokeStyle = 'rgba(168, 85, 247, 0.15)';
+                    ctx.lineWidth = 1;
+                }
+                ctx.stroke();
+            });
+            
+            // Draw nodes
+            nodes.forEach(node => {
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, node.active ? 7 : 5, 0, Math.PI * 2);
+                
+                const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, 7);
+                if (node.active) {
+                    gradient.addColorStop(0, '#fbbf24');
+                    gradient.addColorStop(1, '#a855f7');
+                } else {
+                    gradient.addColorStop(0, '#764ba2');
+                    gradient.addColorStop(1, '#5b21b6');
+                }
+                
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                
+                ctx.strokeStyle = node.active ? 'rgba(251, 191, 36, 0.8)' : 'rgba(168, 85, 247, 0.6)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                if (node.label) {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '11px sans-serif';
+                    ctx.fillText(node.label, node.x + 10, node.y + 4);
+                }
+            });
+            
+            // Update activations
+            nodes.forEach(node => {
+                if (Math.random() > 0.95) {
+                    node.active = Math.random() > 0.3;
+                    node.activation = Math.random();
+                }
+            });
+            
+            connections.forEach(conn => {
+                if (Math.random() > 0.98) {
+                    conn.active = Math.random() > 0.4;
+                }
+            });
+            
+            animationFrame = requestAnimationFrame(animateNetwork);
+        }
         
         function updateDashboard() {
             fetch('/api/status')
-                .then(response => {
-                    if (!response.ok) throw new Error('Network error');
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     document.getElementById('current-stage').textContent = data.current_stage;
                     
@@ -141,13 +540,10 @@
                     document.getElementById('confidence-score').textContent = confidence + '%';
                     document.getElementById('accuracy-score').textContent = accuracy + '%';
                     
-                    const understandingStatus = data.understanding_score >= 0.999 ? '✓' : 
-                                               data.understanding_score >= 0.9 ? '⚡' : '⏳';
-                    document.getElementById('understanding-status').textContent = understandingStatus;
-                    
-                    const confidenceStatus = data.confidence >= 0.999 ? '✓' : 
-                                            data.confidence >= 0.9 ? '⚡' : '⏳';
-                    document.getElementById('confidence-status').textContent = confidenceStatus;
+                    document.getElementById('understanding-status').textContent = 
+                        data.understanding_score >= 0.999 ? '✓' : data.understanding_score >= 0.9 ? '⚡' : '⏳';
+                    document.getElementById('confidence-status').textContent = 
+                        data.confidence >= 0.999 ? '✓' : data.confidence >= 0.9 ? '⚡' : '⏳';
                     
                     const progressPercent = ((data.stage_index + 1) / data.total_stages) * 100;
                     document.getElementById('stage-progress-fill').style.width = progressPercent + '%';
@@ -157,113 +553,110 @@
                     document.getElementById('iteration-count').textContent = `Iteration: ${data.iteration}`;
                     
                     if (data.time_estimate) {
-                        if (data.time_estimate.next_stage_eta) {
-                            document.getElementById('time-estimate').textContent = data.time_estimate.next_stage_eta;
-                        }
-                        if (data.time_estimate.total_completion_eta) {
-                            document.getElementById('total-estimate').textContent = data.time_estimate.total_completion_eta;
-                        }
+                        document.getElementById('time-estimate').textContent = 
+                            data.time_estimate.next_stage_eta || 'Calculating...';
+                        document.getElementById('total-estimate').textContent = 
+                            data.time_estimate.total_completion_eta || 'Calculating...';
                     }
                     
-                    const statusText = data.training_active ? '🔄 Training Active' : '⏸️ Paused';
-                    document.getElementById('training-status').textContent = statusText;
+                    // Archive status
+                    const batchNum = Math.floor(data.iteration / 10) % 10;
+                    document.getElementById('archive-batch').textContent = batchNum;
+                    document.getElementById('archive-folder').textContent = 
+                        `/${data.current_stage.toLowerCase().replace(' ', '_')}/`;
+                    document.getElementById('next-zip').textContent = 
+                        `batch_${String(Math.floor(data.iteration / 10)).padStart(4, '0')}.zip`;
                     
-                    updateInterval = data.training_active ? 1000 : 5000;
+                    document.getElementById('training-status').textContent = 
+                        data.training_active ? '🔄 Training Active' : '⏸️ Paused';
                     
                     document.getElementById('last-update').textContent = 
                         `Last update: ${new Date().toLocaleTimeString()}`;
-                })
-                .catch(error => {
-                    console.error('Update failed:', error);
-                    document.getElementById('training-status').textContent = '❌ Connection Error';
-                    updateInterval = 5000;
-                });
-
-            fetch('/api/personality')
-                .then(response => response.json())
-                .then(data => {
-                    const container = document.getElementById('personality-traits');
-                    if (data.traits && Object.keys(data.traits).length > 0) {
-                        let html = '';
-                        for (const [trait, value] of Object.entries(data.traits)) {
-                            const percent = (value * 100).toFixed(0);
-                            html += `
-                                <div class="trait-item">
-                                    <span class="trait-name">${trait}:</span>
-                                    <div class="trait-bar">
-                                        <div class="trait-fill" style="width: ${percent}%"></div>
-                                    </div>
-                                    <span class="trait-value">${percent}%</span>
-                                </div>
-                            `;
-                        }
-                        container.innerHTML = html;
-                    }
-                });
-
-            fetch('/api/philosophy')
-                .then(response => response.json())
-                .then(data => {
-                    const container = document.getElementById('philosophy-insights');
-                    if (data.insights && data.insights.length > 0) {
-                        let html = '';
-                        data.insights.slice(-5).reverse().forEach(insight => {
-                            html += `
-                                <div class="insight-item">
-                                    <div class="insight-text">${insight.insight}</div>
-                                    <div class="insight-time">${new Date(insight.timestamp).toLocaleTimeString()}</div>
-                                </div>
-                            `;
-                        });
-                        container.innerHTML = html;
-                    }
-                });
-
-            fetch('/api/progress')
-                .then(response => response.json())
-                .then(data => {
-                    const container = document.getElementById('training-history');
-                    if (data.history && data.history.length > 0) {
-                        let html = '';
-                        data.history.slice(-5).reverse().forEach(item => {
-                            const status = item.passed ? '✓' : '⚠';
-                            const statusClass = item.passed ? 'passed' : 'needs-work';
-                            html += `
-                                <div class="history-item ${statusClass}">
-                                    <span class="history-stage">${item.stage}</span>
-                                    <span class="history-score">${(item.understanding * 100).toFixed(1)}%</span>
-                                    <span class="history-status">${status}</span>
-                                </div>
-                            `;
-                        });
-                        container.innerHTML = html;
-                    }
-                });
-
-            fetch('/api/web_knowledge')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.stats) {
-                        document.getElementById('total-knowledge').textContent = data.stats.total_acquired || 0;
-                    }
                     
-                    const container = document.getElementById('web-knowledge');
-                    if (data.recent_knowledge && data.recent_knowledge.length > 0) {
-                        let html = '';
-                        data.recent_knowledge.slice(-5).reverse().forEach(item => {
-                            html += `
-                                <div class="knowledge-item">
-                                    <div class="knowledge-topic">📖 ${item.topic}</div>
-                                    <div class="knowledge-stage">${item.stage}</div>
-                                </div>
-                            `;
-                        });
-                        container.innerHTML = html;
+                    // Update neural network for phase changes
+                    if (data.stage_index !== undefined) {
+                        generateNetwork(data.stage_index);
                     }
-                })
-                .catch(error => {
-                    console.error('Failed to fetch web knowledge:', error);
                 });
+
+            // Fetch other data endpoints
+            ['personality', 'philosophy', 'progress', 'web_knowledge'].forEach(endpoint => {
+                fetch(`/api/${endpoint}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (endpoint === 'personality' && data.traits) {
+                            const container = document.getElementById('personality-traits');
+                            if (Object.keys(data.traits).length > 0) {
+                                let html = '';
+                                for (const [trait, value] of Object.entries(data.traits)) {
+                                    const percent = (value * 100).toFixed(0);
+                                    html += `
+                                        <div class="trait-item">
+                                            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                                                <span style="font-weight:bold;">${trait}</span>
+                                                <span style="color:#fbbf24;">${percent}%</span>
+                                            </div>
+                                            <div class="trait-bar">
+                                                <div class="trait-fill" style="width: ${percent}%"></div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+                                container.innerHTML = html;
+                            }
+                        } else if (endpoint === 'philosophy' && data.insights) {
+                            const container = document.getElementById('philosophy-insights');
+                            if (data.insights.length > 0) {
+                                let html = '';
+                                data.insights.slice(-5).reverse().forEach(insight => {
+                                    html += `
+                                        <div class="insight-item">
+                                            <div class="insight-text">${insight.insight}</div>
+                                            <div class="insight-time">${new Date(insight.timestamp).toLocaleTimeString()}</div>
+                                        </div>
+                                    `;
+                                });
+                                container.innerHTML = html;
+                            }
+                        } else if (endpoint === 'progress' && data.history) {
+                            const container = document.getElementById('training-history');
+                            if (data.history.length > 0) {
+                                let html = '';
+                                data.history.slice(-5).reverse().forEach(item => {
+                                    html += `
+                                        <div class="history-item">
+                                            <div style="display:flex;justify-content:space-between;">
+                                                <span style="font-weight:bold;">${item.stage}</span>
+                                                <span style="color:#fbbf24;">${(item.understanding * 100).toFixed(1)}%</span>
+                                                <span>${item.passed ? '✓' : '⚠'}</span>
+                                            </div>
+                                        </div>
+                                    `;
+                                });
+                                container.innerHTML = html;
+                            }
+                        } else if (endpoint === 'web_knowledge') {
+                            if (data.stats) {
+                                document.getElementById('total-knowledge').textContent = 
+                                    data.stats.total_acquired || 0;
+                            }
+                            if (data.recent_knowledge && data.recent_knowledge.length > 0) {
+                                const container = document.getElementById('web-knowledge');
+                                let html = '';
+                                data.recent_knowledge.slice(-5).reverse().forEach(item => {
+                                    html += `
+                                        <div class="knowledge-item">
+                                            <div><strong>📖 ${item.topic}</strong></div>
+                                            <div style="font-size:0.9em;opacity:0.8;margin-top:5px;">${item.stage}</div>
+                                        </div>
+                                    `;
+                                });
+                                container.innerHTML = html;
+                            }
+                        }
+                    })
+                    .catch(err => console.error(`Failed to fetch ${endpoint}:`, err));
+            });
         }
 
         function scheduleNextUpdate() {
@@ -274,8 +667,15 @@
             }, updateInterval);
         }
         
-        updateDashboard();
-        scheduleNextUpdate();
+        window.onload = () => {
+            initNeuralNetwork();
+            updateDashboard();
+            scheduleNextUpdate();
+        };
+
+        window.onbeforeunload = () => {
+            if (animationFrame) cancelAnimationFrame(animationFrame);
+        };
     </script>
 </body>
 </html>
