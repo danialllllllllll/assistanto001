@@ -9,8 +9,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>🧠 Advanced AI Training System</h1>
-            <p class="subtitle">Curriculum-Based Learning with 99.9% Understanding Enforcement</p>
+            <h1>Advanced AI Learning Progress</h1>
+            <p class="subtitle">All just to create a personal AI assistant</p>
         </header>
 
         <div class="dashboard-grid">
@@ -25,11 +25,11 @@
                 </div>
                 <div id="iteration-count" class="iteration-text">Iteration: 0</div>
                 <div class="time-estimate">
-                    <span class="estimate-label">⏱️ Next stage ETA:</span>
+                    <span class="estimate-label">Estimated time until Next Phase:</span>
                     <span id="time-estimate" class="estimate-value">Calculating...</span>
                 </div>
                 <div class="time-estimate" style="margin-top: 8px;">
-                    <span class="estimate-label">🏁 Total completion ETA:</span>
+                    <span class="estimate-label">Time until completion:</span>
                     <span id="total-estimate" class="estimate-value">Calculating...</span>
                 </div>
             </div>
@@ -39,19 +39,19 @@
                 <div class="metric-row">
                     <span class="metric-label">Understanding:</span>
                     <span id="understanding-score" class="metric-value">0.000%</span>
-                    <span id="understanding-status" class="status-indicator">⏳</span>
+                    <span id="understanding-status" class="status-indicator">...</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Confidence:</span>
                     <span id="confidence-score" class="metric-value">0.000%</span>
-                    <span id="confidence-status" class="status-indicator">⏳</span>
+                    <span id="confidence-status" class="status-indicator">...</span>
                 </div>
                 <div class="metric-row">
                     <span class="metric-label">Accuracy:</span>
                     <span id="accuracy-score" class="metric-value">0.000%</span>
                 </div>
                 <div class="threshold-info">
-                    <strong>Required:</strong> 99.9% understanding & 99.9% confidence
+                    <strong>Required:</strong> 99.9% understanding & 99.9% confidence to Advance
                 </div>
             </div>
 
@@ -73,23 +73,23 @@
                 <h2>Core Values Compliance</h2>
                 <div id="core-values" class="values-container">
                     <div class="value-item">
-                        <span class="value-name">Kindness</span>
+                        <span class="value-name">Always be Kind</span>
                         <span class="value-status">✓ Enforced</span>
                     </div>
                     <div class="value-item">
-                        <span class="value-name">Understanding</span>
+                        <span class="value-name">Value Understanding over Quantity</span>
                         <span class="value-status">✓ Enforced</span>
                     </div>
                     <div class="value-item">
-                        <span class="value-name">Truth</span>
+                        <span class="value-name">Always Speak the Truth</span>
                         <span class="value-status">✓ Enforced</span>
                     </div>
                     <div class="value-item">
-                        <span class="value-name">Positive Relationships</span>
+                        <span class="value-name">Facilitate Positive Relationships with User</span>
                         <span class="value-status">✓ Enforced</span>
                     </div>
                     <div class="value-item">
-                        <span class="value-name">Non-Harm</span>
+                        <span class="value-name">Do No Harm</span>
                         <span class="value-status">✓ Enforced</span>
                     </div>
                 </div>
@@ -142,11 +142,11 @@
                     document.getElementById('accuracy-score').textContent = accuracy + '%';
                     
                     const understandingStatus = data.understanding_score >= 0.999 ? '✓' : 
-                                               data.understanding_score >= 0.9 ? '⚡' : '⏳';
+                                               data.understanding_score >= 0.9 ? '⚡' : '...';
                     document.getElementById('understanding-status').textContent = understandingStatus;
                     
                     const confidenceStatus = data.confidence >= 0.999 ? '✓' : 
-                                            data.confidence >= 0.9 ? '⚡' : '⏳';
+                                            data.confidence >= 0.9 ? '⚡' : '...';
                     document.getElementById('confidence-status').textContent = confidenceStatus;
                     
                     const progressPercent = ((data.stage_index + 1) / data.total_stages) * 100;
@@ -165,7 +165,7 @@
                         }
                     }
                     
-                    const statusText = data.training_active ? '🔄 Training Active' : '⏸️ Paused';
+                    const statusText = data.training_active ? 'Training Active' : '⏸️ Paused';
                     document.getElementById('training-status').textContent = statusText;
                     
                     updateInterval = data.training_active ? 1000 : 5000;
@@ -175,7 +175,7 @@
                 })
                 .catch(error => {
                     console.error('Update failed:', error);
-                    document.getElementById('training-status').textContent = '❌ Connection Error';
+                    document.getElementById('training-status').textContent = 'Connection Error';
                     updateInterval = 5000;
                 });
 
