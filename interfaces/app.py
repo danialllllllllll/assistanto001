@@ -1,13 +1,20 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
 import json
 import os
 from datetime import datetime
 import threading
 import time
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
-CORS(app)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+# Production-ready configuration
+app.config['JSON_SORT_KEYS'] = False
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max request
 
 # Import and register AI API blueprint
 from interfaces.ai_api import ai_api, update_ai_state
@@ -239,6 +246,37 @@ def get_core_values():
         'immutable': True
     })
 
+@app.route('/health')
+def health_check():
+    """Health check endpoint for deployment monitoring"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'training_active': training_state.get('training_active', False),
+        'current_stage': training_state.get('current_stage', 'Unknown')
+    })
+
+@app.route('/api/metrics')
+def get_metrics():
+    """Comprehensive metrics endpoint"""
+    return jsonify({
+        'training': {
+            'stage': training_state.get('current_stage'),
+            'iteration': training_state.get('iteration'),
+            'understanding': training_state.get('understanding_score'),
+            'accuracy': training_state.get('accuracy')
+        },
+        'system': {
+            'active': training_state.get('training_active'),
+            'generation': training_state.get('generation', 0),
+            'mutations': len(training_state.get('mutations', []))
+        },
+        'performance': {
+            'nodes_created': training_state.get('nodes_created', 0),
+            'nodes_pruned': training_state.get('nodes_pruned', 0)
+        }
+    })
+
 @app.route('/api/web_knowledge')
 def get_web_knowledge():
     """Get web-acquired knowledge"""
@@ -346,8 +384,10 @@ def get_network_state():
         return jsonify({'nodes': [], 'connections': [], 'layer_sizes': []})
 
 def run_flask_app():
-    """Run Flask app in a thread"""
-    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+    """Run Flask app in production mode"""
+    from waitress import serve
+    print("Starting production WSGI server...")
+    serve(app, host='0.0.0.0', port=5000, threads=4, channel_timeout=120)
 
 def start_flask_background():
     """Start Flask in background thread"""

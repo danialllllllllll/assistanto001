@@ -116,7 +116,7 @@ class GeneticTrainer:
         return child
     
     def _mutate_network(self, network, mutation_rate=0.1):
-        """Mutate network weights AND optimization parameters for self-optimization"""
+        """Optimized mutation with intelligent parameter evolution"""
         # CORE VALUES LOCK - These parameters are immutable
         LOCKED_CORE_VALUES = {
             'kindness_weight': 1.0,
@@ -125,41 +125,51 @@ class GeneticTrainer:
             'positive_relationships': True
         }
         
-        # Self-optimizing mutation strategies
+        # Advanced mutation strategies with performance tracking
         mutation_strategies = []
+        performance_score = getattr(network, 'last_fitness', 0.5)
+        
+        # Adaptive mutation rate based on performance
+        adaptive_rate = mutation_rate * (1.5 if performance_score < 0.7 else 0.8)
         
         for i in range(len(network.weights)):
-            # Strategy 1: Standard Gaussian mutation
-            if np.random.random() < 0.4:
-                mask = np.random.rand(*network.weights[i].shape) < mutation_rate
-                mutations = np.random.randn(*network.weights[i].shape) * 0.1
+            # Strategy 1: Cauchy mutation for better exploration
+            if np.random.random() < 0.35:
+                mask = np.random.rand(*network.weights[i].shape) < adaptive_rate
+                mutations = np.random.standard_cauchy(network.weights[i].shape) * 0.08
+                mutations = np.clip(mutations, -0.5, 0.5)  # Prevent extreme values
                 network.weights[i] += mask * mutations
-                mutation_strategies.append('gaussian')
+                mutation_strategies.append('cauchy_exploration')
             
-            # Strategy 2: Adaptive mutation based on gradient history
-            elif np.random.random() < 0.7 and hasattr(network, 'adam_m'):
-                # Use momentum direction for intelligent mutation
+            # Strategy 2: Gradient-guided mutation with momentum
+            elif np.random.random() < 0.65 and hasattr(network, 'adam_m'):
                 momentum_direction = network.adam_m[i]['weights']
-                adaptive_scale = np.abs(momentum_direction).mean() * 0.05
-                mask = np.random.rand(*network.weights[i].shape) < mutation_rate
-                mutations = np.sign(momentum_direction) * adaptive_scale * np.random.rand(*network.weights[i].shape)
+                adaptive_scale = np.abs(momentum_direction).mean() * 0.07
+                mask = np.random.rand(*network.weights[i].shape) < adaptive_rate
+                mutations = np.sign(momentum_direction) * adaptive_scale * (0.5 + np.random.rand(*network.weights[i].shape) * 0.5)
                 network.weights[i] += mask * mutations
-                mutation_strategies.append('adaptive_momentum')
+                mutation_strategies.append('gradient_guided')
             
-            # Strategy 3: Layer-wise optimization mutation
+            # Strategy 3: Selective neuron mutation (prune weak, enhance strong)
             else:
-                # Mutate based on layer position (early layers get more exploration)
-                layer_factor = (len(network.weights) - i) / len(network.weights)
-                mask = np.random.rand(*network.weights[i].shape) < mutation_rate * layer_factor
-                mutations = np.random.randn(*network.weights[i].shape) * 0.15 * layer_factor
-                network.weights[i] += mask * mutations
-                mutation_strategies.append('layer_wise')
+                weight_magnitude = np.abs(network.weights[i])
+                importance = weight_magnitude / (weight_magnitude.max() + 1e-8)
+                
+                # High importance weights: small refinement
+                strong_mask = (importance > 0.7) & (np.random.rand(*network.weights[i].shape) < adaptive_rate * 0.3)
+                network.weights[i] += strong_mask * np.random.randn(*network.weights[i].shape) * 0.03
+                
+                # Low importance weights: larger exploration
+                weak_mask = (importance < 0.3) & (np.random.rand(*network.weights[i].shape) < adaptive_rate * 1.5)
+                network.weights[i] += weak_mask * np.random.randn(*network.weights[i].shape) * 0.2
+                
+                mutation_strategies.append('selective_neuron')
             
-            # Mutate biases with self-optimizing strategy
-            mask_bias = np.random.rand(*network.biases[i].shape) < mutation_rate * 0.5
-            bias_mutation_scale = 0.05 if i < len(network.biases) - 1 else 0.02  # Output layer more conservative
-            mutations_bias = np.random.randn(*network.biases[i].shape) * bias_mutation_scale
-            network.biases[i] += mask_bias * mutations_bias
+            # Optimized bias mutation
+            bias_importance = np.abs(network.biases[i]) / (np.abs(network.biases[i]).max() + 1e-8)
+            mask_bias = np.random.rand(*network.biases[i].shape) < adaptive_rate * 0.4
+            bias_scale = 0.04 * (2.0 - bias_importance)  # Scale inversely with importance
+            network.biases[i] += mask_bias * np.random.randn(*network.biases[i].shape) * bias_scale
         
         # Self-optimize learning hyperparameters (NOT core values)
         if hasattr(network, 'dropout_rate'):

@@ -1,4 +1,5 @@
-run = "bash scripts/devserver.sh"
+
+run = "python train_advanced_ai.py"
 modules = ["python-3.12"]
 
 [workflows]
@@ -28,6 +29,10 @@ outputType = "webview"
 [nix]
 channel = "stable-25_05"
 packages = ["cairo", "ffmpeg-full", "freetype", "ghostscript", "gobject-introspection", "gtk3", "pkg-config", "qhull", "tcl", "tk"]
+
+[deployment]
+run = ["python", "train_advanced_ai.py"]
+deploymentTarget = "cloudrun"
 
 [[ports]]
 localPort = 5000
