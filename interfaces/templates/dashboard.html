@@ -78,7 +78,7 @@
             height: 450px;
             background: rgba(0, 0, 0, 0.2);
             border-radius: 10px;
-            cursor: crosshair;
+            cursor: default;
         }
 
         .stage-name {
@@ -373,10 +373,9 @@
             margin-top: 5px;
         }
 
-        /* Enhanced 3D-style node visualization */
+        /* Optimized flat visualization */
         #neural-canvas {
-            background: radial-gradient(circle at 50% 50%, rgba(30, 30, 60, 0.3), rgba(10, 10, 30, 0.5));
-            box-shadow: inset 0 0 50px rgba(168, 85, 247, 0.2);
+            background: rgba(0, 0, 0, 0.3);
         }
 
         .node-pulse {
@@ -586,7 +585,7 @@
     </div>
 
     <script>
-        let updateInterval = 2000;
+        let updateInterval = 3000; // Reduced update frequency for efficiency
 
 
         let understandingInsights = [];
@@ -798,127 +797,95 @@
                 }
             });
             
-            // Draw connections with animated flow
+            // Draw connections - optimized (no shadows/glow)
             connections.forEach(conn => {
                 if (conn.from >= 0 && conn.from < nodes.length && 
                     conn.to >= 0 && conn.to < nodes.length) {
                     const from = nodes[conn.from];
                     const to = nodes[conn.to];
                     
-                    // Main connection line
                     ctx.beginPath();
                     ctx.moveTo(from.x, from.y);
                     ctx.lineTo(to.x, to.y);
                     
                     if (conn.active && from.active && to.active) {
-                        const alpha = 0.3 + conn.weight * 0.5;
+                        const alpha = 0.2 + conn.weight * 0.4;
                         ctx.strokeStyle = `rgba(168, 85, 247, ${alpha})`;
-                        ctx.lineWidth = 1 + conn.weight * 2;
+                        ctx.lineWidth = 0.5 + conn.weight;
                         
-                        // Animated flow particle
-                        conn.flow_progress = (conn.flow_progress + 0.02) % 1;
-                        const flowX = from.x + (to.x - from.x) * conn.flow_progress;
-                        const flowY = from.y + (to.y - from.y) * conn.flow_progress;
-                        
-                        ctx.shadowBlur = 10;
-                        ctx.shadowColor = 'rgba(251, 191, 36, 0.8)';
+                        // Simple flow animation (less frequent updates)
+                        conn.flow_progress = (conn.flow_progress + 0.015) % 1;
                     } else {
-                        ctx.strokeStyle = 'rgba(168, 85, 247, 0.1)';
-                        ctx.lineWidth = 0.5;
-                        ctx.shadowBlur = 0;
+                        ctx.strokeStyle = 'rgba(168, 85, 247, 0.05)';
+                        ctx.lineWidth = 0.3;
                     }
                     ctx.stroke();
                     
-                    // Draw flow particle
-                    if (conn.active && from.active && to.active) {
+                    // Flow particle - only every 4th frame for performance
+                    if (conn.active && from.active && to.active && Math.random() > 0.75) {
                         const flowX = from.x + (to.x - from.x) * conn.flow_progress;
                         const flowY = from.y + (to.y - from.y) * conn.flow_progress;
                         ctx.beginPath();
-                        ctx.arc(flowX, flowY, 2, 0, Math.PI * 2);
-                        ctx.fillStyle = 'rgba(251, 191, 36, 0.9)';
+                        ctx.arc(flowX, flowY, 1.5, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(251, 191, 36, 0.7)';
                         ctx.fill();
                     }
-                    ctx.shadowBlur = 0;
                 }
             });
             
-            // Draw nodes with enhanced 3D-style depth
+            // Draw nodes - optimized 2D rendering (no shadows/gradients)
             nodes.forEach(node => {
                 let scale = 1;
                 let alpha = 1;
                 
-                // Birth animation
+                // Birth animation - simple scale
                 if (node.is_new && node.spawn_time) {
-                    const age = (Date.now() - node.spawn_time) / 800;
+                    const age = (Date.now() - node.spawn_time) / 600;
                     if (age < 1) {
-                        scale = Math.sin(age * Math.PI / 2); // Smooth ease-out
-                        node.birth_radius = scale;
+                        scale = age; // Linear scale-up
                     } else {
                         node.is_new = false;
                         scale = 1;
                     }
                 }
                 
-                // Death animation
+                // Death animation - simple fade
                 if (node.deleting) {
-                    const age = (Date.now() - node.deletion_start) / 600;
+                    const age = (Date.now() - node.deletion_start) / 400;
                     scale = 1 - age;
                     alpha = 1 - age;
-                    if (age >= 1) return; // Don't draw
+                    if (age >= 1) return;
                 }
                 
-                // Active pulse with 3D depth illusion
-                const pulse = node.active ? 1 + Math.sin(time * 3 + node.id * 0.15) * 0.15 : 0;
-                const baseRadius = 5;
-                const radius = (node.active ? baseRadius + pulse * 2 : baseRadius * 0.8) * scale;
+                // Simple pulse for active nodes
+                const pulse = node.active ? 1 + Math.sin(time * 2 + node.id * 0.1) * 0.1 : 0;
+                const baseRadius = 4;
+                const radius = (node.active ? baseRadius + pulse : baseRadius * 0.7) * scale;
                 
-                // 3D shadow for depth
-                ctx.shadowBlur = node.active ? 15 : 5;
-                ctx.shadowColor = node.active ? 'rgba(168, 85, 247, 0.6)' : 'rgba(0, 0, 0, 0.3)';
-                ctx.shadowOffsetX = 2;
-                ctx.shadowOffsetY = 2;
-                
+                // Draw node - solid color (no gradient for performance)
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
                 
-                // Enhanced gradient with 3D lighting effect
-                const gradient = ctx.createRadialGradient(
-                    node.x - radius * 0.3, node.y - radius * 0.3, 0,
-                    node.x, node.y, radius
-                );
-                
                 if (node.active) {
                     const intensity = node.activation * alpha;
-                    gradient.addColorStop(0, `rgba(255, 215, 100, ${intensity})`);
-                    gradient.addColorStop(0.4, `rgba(251, 191, 36, ${intensity * 0.9})`);
-                    gradient.addColorStop(1, `rgba(168, 85, 247, ${intensity * 0.7})`);
+                    ctx.fillStyle = `rgba(251, 191, 36, ${intensity})`;
                 } else {
-                    gradient.addColorStop(0, `rgba(150, 100, 200, ${0.5 * alpha})`);
-                    gradient.addColorStop(1, `rgba(91, 33, 182, ${0.3 * alpha})`);
+                    ctx.fillStyle = `rgba(168, 85, 247, ${0.4 * alpha})`;
                 }
-                
-                ctx.fillStyle = gradient;
                 ctx.fill();
                 
-                // Outer glow ring
+                // Simple outline
                 ctx.strokeStyle = node.active ? 
-                    `rgba(251, 191, 36, ${(0.7 + pulse * 0.3) * alpha})` : 
-                    `rgba(168, 85, 247, ${0.4 * alpha})`;
-                ctx.lineWidth = node.active ? 2.5 : 1.5;
+                    `rgba(255, 255, 255, ${0.8 * alpha})` : 
+                    `rgba(168, 85, 247, ${0.3 * alpha})`;
+                ctx.lineWidth = 1;
                 ctx.stroke();
                 
-                ctx.shadowBlur = 0;
-                ctx.shadowOffsetX = 0;
-                ctx.shadowOffsetY = 0;
-                
-                // Labels with better visibility
+                // Labels - simplified
                 if (node.label && scale > 0.8) {
                     ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-                    ctx.font = 'bold 11px sans-serif';
-                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-                    ctx.lineWidth = 3;
-                    ctx.strokeText(node.label, node.x + 14, node.y + 4);
-                    ctx.fillText(node.label, node.x + 14, node.y + 4);
+                    ctx.font = '10px sans-serif';
+                    ctx.fillText(node.label, node.x + 10, node.y + 3);
                 }
             });
             

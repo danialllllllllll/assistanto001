@@ -116,22 +116,80 @@ class GeneticTrainer:
         return child
     
     def _mutate_network(self, network, mutation_rate=0.1):
-        """Mutate network weights for exploration"""
+        """Mutate network weights AND optimization parameters for self-optimization"""
+        # CORE VALUES LOCK - These parameters are immutable
+        LOCKED_CORE_VALUES = {
+            'kindness_weight': 1.0,
+            'harm_prevention': True,
+            'truth_seeking': True,
+            'positive_relationships': True
+        }
+        
+        # Self-optimizing mutation strategies
+        mutation_strategies = []
+        
         for i in range(len(network.weights)):
-            # Mutate weights
-            mask = np.random.rand(*network.weights[i].shape) < mutation_rate
-            mutations = np.random.randn(*network.weights[i].shape) * 0.1
-            network.weights[i] += mask * mutations
+            # Strategy 1: Standard Gaussian mutation
+            if np.random.random() < 0.4:
+                mask = np.random.rand(*network.weights[i].shape) < mutation_rate
+                mutations = np.random.randn(*network.weights[i].shape) * 0.1
+                network.weights[i] += mask * mutations
+                mutation_strategies.append('gaussian')
             
-            # Mutate biases
-            mask_bias = np.random.rand(*network.biases[i].shape) < mutation_rate
-            mutations_bias = np.random.randn(*network.biases[i].shape) * 0.1
+            # Strategy 2: Adaptive mutation based on gradient history
+            elif np.random.random() < 0.7 and hasattr(network, 'adam_m'):
+                # Use momentum direction for intelligent mutation
+                momentum_direction = network.adam_m[i]['weights']
+                adaptive_scale = np.abs(momentum_direction).mean() * 0.05
+                mask = np.random.rand(*network.weights[i].shape) < mutation_rate
+                mutations = np.sign(momentum_direction) * adaptive_scale * np.random.rand(*network.weights[i].shape)
+                network.weights[i] += mask * mutations
+                mutation_strategies.append('adaptive_momentum')
+            
+            # Strategy 3: Layer-wise optimization mutation
+            else:
+                # Mutate based on layer position (early layers get more exploration)
+                layer_factor = (len(network.weights) - i) / len(network.weights)
+                mask = np.random.rand(*network.weights[i].shape) < mutation_rate * layer_factor
+                mutations = np.random.randn(*network.weights[i].shape) * 0.15 * layer_factor
+                network.weights[i] += mask * mutations
+                mutation_strategies.append('layer_wise')
+            
+            # Mutate biases with self-optimizing strategy
+            mask_bias = np.random.rand(*network.biases[i].shape) < mutation_rate * 0.5
+            bias_mutation_scale = 0.05 if i < len(network.biases) - 1 else 0.02  # Output layer more conservative
+            mutations_bias = np.random.randn(*network.biases[i].shape) * bias_mutation_scale
             network.biases[i] += mask_bias * mutations_bias
+        
+        # Self-optimize learning hyperparameters (NOT core values)
+        if hasattr(network, 'dropout_rate'):
+            # Adapt dropout for regularization
+            network.dropout_rate = np.clip(network.dropout_rate + np.random.randn() * 0.02, 0.0, 0.5)
+        
+        if hasattr(network, 'beta1'):
+            # Adapt Adam optimizer momentum (within safe bounds)
+            network.beta1 = np.clip(network.beta1 + np.random.randn() * 0.01, 0.85, 0.95)
+        
+        # ENFORCE CORE VALUES LOCK - Verify no corruption
+        if hasattr(network, 'core_values_lock'):
+            network.core_values_lock = LOCKED_CORE_VALUES
+        else:
+            # Initialize lock if not present
+            network.core_values_lock = LOCKED_CORE_VALUES
+        
+        # Store mutation strategy for analysis
+        network.last_mutation_strategy = mutation_strategies
         
         return network
     
     def evolve_generation(self, X, y):
-        """Evolve one generation"""
+        """Evolve one generation with core values protection"""
+        from core.core_values_guard import CoreValuesGuard
+        
+        # VERIFY CORE VALUES before fitness evaluation
+        for network in self.population:
+            CoreValuesGuard.verify_network(network)
+        
         # Evaluate fitness
         self.fitness_scores = self.evaluate_fitness(X, y)
         
@@ -140,6 +198,10 @@ class GeneticTrainer:
         if self.fitness_scores[best_idx] > self.best_fitness:
             self.best_fitness = self.fitness_scores[best_idx]
             self.best_network = self._copy_network(self.population[best_idx])
+            
+            # VERIFY best network integrity
+            CoreValuesGuard.verify_network(self.best_network)
+            CoreValuesGuard.log_verification(self.best_network, self.generation)
         
         # Elitism: keep best performers
         elite_indices = np.argsort(self.fitness_scores)[-self.elite_size:]

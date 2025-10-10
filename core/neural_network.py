@@ -18,6 +18,16 @@ class ProgressiveNeuralNetwork:
         self.activations = []
         self.z_values = []
         
+        # IMMUTABLE CORE VALUES LOCK - Cannot be changed by mutations or learning
+        self.core_values_lock = {
+            'kindness_weight': 1.0,
+            'harm_prevention': True,
+            'truth_seeking': True,
+            'positive_relationships': True,
+            'non_harm_threshold': 0.0,
+            'locked': True  # Permanent lock flag
+        }
+        
         # Advanced optimization components
         self.adam_m = []  # First moment (mean)
         self.adam_v = []  # Second moment (variance)
@@ -38,6 +48,9 @@ class ProgressiveNeuralNetwork:
         
         # Gradient clipping
         self.max_grad_norm = 5.0
+        
+        # Self-optimization tracking
+        self.last_mutation_strategy = []
         
         self.initialize_advanced_params()
 
