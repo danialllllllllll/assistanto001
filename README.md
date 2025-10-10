@@ -52,6 +52,32 @@ This project implements an advanced AI adaptation system that develops through 7
 - Ensure a positive relationship with user
 - Prioritize Kindness over Righteousness or ego
 
+## File Organization
+
+### Core Components (`core/`)
+- `neural_network.py` - Progressive neural network with structural mutations
+- `genetic_trainer.py` - Evolutionary training algorithm
+- `autonomous_debugger.py` - Self-correcting error handler
+- `understanding_trainer.py` - Curriculum-based learning
+- `progress_estimator.py` - ETA and progress tracking
+- `ai_assistant.py` - Assistant interface
+
+### Utilities (`utils/`)
+- `file_manager.py` - Centralized file operations
+- `config_manager.py` - Configuration management
+
+### Personality & Philosophy (`personality/`, `philosophy/`)
+- `traits.py` - Personality development
+- `thinker_engine.py` - Philosophical reasoning
+
+### Knowledge (`knowledge/`)
+- `web_learning.py` - Web-based knowledge acquisition
+- `storage.py` - Knowledge persistence
+
+### Interface (`interfaces/`)
+- `app.py` - Flask web server
+- `templates/` - Dashboard HTML
+
 ## Web Interface
 The system includes a real-time web dashboard accessible at http://localhost:5000 that shows:
 - Current adaptation stage and progress

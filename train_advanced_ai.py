@@ -758,17 +758,25 @@ for stage_idx, stage_info in enumerate(stages):
             ga_stats = autonomous_debugger.monitor_execution(
                 genetic_trainer.evolve_generation, X_batch, y_batch
             )
-            print(f"  🧬 Generation {ga_stats['generation']}: "
-                  f"Best Fitness={ga_stats['best_fitness']:.4f}, "
-                  f"Avg={ga_stats['avg_fitness']:.4f}, "
-                  f"Diversity={ga_stats['population_diversity']:.3f}")
+            
+            # Check if evolution succeeded
+            if ga_stats is None:
+                print(f"  ⚠️ Generation evolution failed - using fallback training")
+                # Fallback: just do gradient descent without GA
+                network.forward(X_batch, training=True)
+                network.backward(X_batch, y_batch, current_lr)
+            else:
+                print(f"  🧬 Generation {ga_stats['generation']}: "
+                      f"Best Fitness={ga_stats['best_fitness']:.4f}, "
+                      f"Avg={ga_stats['avg_fitness']:.4f}, "
+                      f"Diversity={ga_stats['population_diversity']:.3f}")
 
             # Track mutations and evolution
             evolution_events = []
             mutation_list = []
 
-            # Analyze network changes
-            if genetic_trainer.best_network:
+            # Analyze network changes (only if GA succeeded)
+            if ga_stats and genetic_trainer.best_network:
                 network = genetic_trainer.best_network
 
                 # Check for structural mutations

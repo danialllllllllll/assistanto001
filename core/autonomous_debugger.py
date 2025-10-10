@@ -72,7 +72,8 @@ class AutonomousDebugger:
                 else:
                     print(f"   No automatic fix available")
                     if retry_count >= max_retries:
-                        raise
+                        print(f"   Max retries reached - returning None for graceful degradation")
+                        return None  # Return None instead of raising to allow fallback handling
     
     def _analyze_error(self, error: Exception) -> Dict[str, Any]:
         """Analyze error and identify pattern"""

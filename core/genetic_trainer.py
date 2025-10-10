@@ -181,20 +181,26 @@ class GeneticTrainer:
                 mutation_strategies.append('cauchy_exploration')
             
             # Strategy 2: Gradient-guided mutation with momentum
-            elif np.random.random() < 0.65 and hasattr(network, 'adam_m'):
-                momentum_direction = network.adam_m[i]['weights']
-                # Handle shape mismatch by reshaping or reinitializing
-                if momentum_direction.shape != network.weights[i].shape:
-                    # Reinitialize Adam state for this layer
-                    network.adam_m[i]['weights'] = np.zeros_like(network.weights[i])
-                    network.adam_v[i]['weights'] = np.zeros_like(network.weights[i])
+            elif np.random.random() < 0.65 and hasattr(network, 'adam_m') and i < len(network.adam_m):
+                try:
                     momentum_direction = network.adam_m[i]['weights']
-                
-                adaptive_scale = np.abs(momentum_direction).mean() * 0.07
-                mask = np.random.rand(*network.weights[i].shape) < adaptive_rate
-                mutations = np.sign(momentum_direction) * adaptive_scale * (0.5 + np.random.rand(*network.weights[i].shape) * 0.5)
-                network.weights[i] += mask * mutations
-                mutation_strategies.append('gradient_guided')
+                    # Handle shape mismatch by reshaping or reinitializing
+                    if momentum_direction.shape != network.weights[i].shape:
+                        # Reinitialize Adam state for this layer
+                        network.adam_m[i]['weights'] = np.zeros_like(network.weights[i])
+                        network.adam_v[i]['weights'] = np.zeros_like(network.weights[i])
+                        momentum_direction = network.adam_m[i]['weights']
+                    
+                    adaptive_scale = np.abs(momentum_direction).mean() * 0.07
+                    mask = np.random.rand(*network.weights[i].shape) < adaptive_rate
+                    mutations = np.sign(momentum_direction) * adaptive_scale * (0.5 + np.random.rand(*network.weights[i].shape) * 0.5)
+                    network.weights[i] += mask * mutations
+                    mutation_strategies.append('gradient_guided')
+                except (KeyError, IndexError, ValueError):
+                    # Fallback to basic mutation if Adam state is corrupted
+                    mask = np.random.rand(*network.weights[i].shape) < adaptive_rate
+                    network.weights[i] += mask * np.random.randn(*network.weights[i].shape) * 0.1
+                    mutation_strategies.append('fallback_mutation')
             
             # Strategy 3: Selective neuron mutation (prune weak, enhance strong)
             else:
