@@ -20,6 +20,153 @@
       "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 269, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,60) (1,63) \n",
       "pattern": "shape_mismatch",
       "timestamp": "2025-10-10T17:45:01.316997"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:53.856613"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:53.871937"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:53.920245"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:54.318045"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:54.337343"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:54.414563"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:54.727892"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:54.733406"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:54.816057"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:55.145050"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:55.231785"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:55.319272"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:55.820573"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:55.827319"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:55.833153"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:56.339298"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:56.419449"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:56.425688"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:57.207388"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:57.215174"
+    },
+    {
+      "type": "ValueError",
+      "message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/core/autonomous_debugger.py\", line 55, in monitor_execution\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 275, in evolve_generation\n    self.fitness_scores = self.evaluate_fitness(X, y)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/genetic_trainer.py\", line 100, in evaluate_fitness\n    predictions = network.predict(X)\n                  ^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 273, in predict\n    output = self.forward(X, training=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 175, in forward\n    z = self.batch_normalize(z, i, training)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/core/neural_network.py\", line 127, in batch_normalize\n    x_norm = (x - mean) / np.sqrt(var + self.epsilon)\n              ~~^~~~~~\nValueError: operands could not be broadcast together with shapes (64,150) (1,155) \n",
+      "pattern": "shape_mismatch",
+      "timestamp": "2025-10-10T17:47:57.220739"
     }
   ],
   "fixes": [
@@ -43,7 +190,154 @@
       "error_message": "operands could not be broadcast together with shapes (64,60) (1,63) ",
       "pattern": "shape_mismatch",
       "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:53.858726",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:53.871990",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:53.920299",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:54.318106",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:54.337414",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:54.414612",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:54.727947",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:54.733454",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:54.816118",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:55.145146",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:55.231881",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:55.319347",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:55.820633",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:55.827371",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:55.833192",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:56.339357",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:56.419517",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:56.425736",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:57.207445",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:57.215214",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
+    },
+    {
+      "timestamp": "2025-10-10T17:47:57.220804",
+      "error_type": "ValueError",
+      "error_message": "operands could not be broadcast together with shapes (64,150) (1,155) ",
+      "pattern": "shape_mismatch",
+      "fix_applied": "Reinitialized Adam optimizer state to match current network shape"
     }
   ],
-  "last_save": "2025-10-10T17:45:01.317072"
+  "last_save": "2025-10-10T17:47:57.220808"
 }
