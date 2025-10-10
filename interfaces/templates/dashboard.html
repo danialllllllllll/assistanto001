@@ -245,6 +245,42 @@
             margin-top: 5px;
             opacity: 0.8;
         }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .stat-box {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #fbbf24;
+        }
+
+        .progress-chart {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .data-management-card {
+            grid-column: 1 / -1;
+        }
     </style>
 </head>
 <body>
@@ -367,6 +403,39 @@
                     <p class="empty-state">Web knowledge will appear here...</p>
                 </div>
             </div>
+
+            <div class="card data-management-card">
+                <h2>📊 Data Management & Stats</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">Training Speed</div>
+                        <div class="stat-value" id="training-speed">0 iter/s</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Total Iterations</div>
+                        <div class="stat-value" id="total-iterations">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Archives Created</div>
+                        <div class="stat-value" id="archive-count">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Network Size</div>
+                        <div class="stat-value" id="network-size">0 nodes</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Active Neurons</div>
+                        <div class="stat-value" id="active-neurons">0%</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Avg Activation</div>
+                        <div class="stat-value" id="avg-activation">0.00</div>
+                    </div>
+                </div>
+                <div class="progress-chart" style="margin-top: 20px;">
+                    <canvas id="progress-chart" width="400" height="150"></canvas>
+                </div>
+            </div>
         </div>
 
         <div class="status-bar">
@@ -383,6 +452,9 @@
         let nodes = [];
         let connections = [];
         let animationFrame = null;
+        let lastIterationCount = 0;
+        let lastIterationTime = Date.now();
+        let progressHistory = [];
 
         function initNeuralNetwork() {
             canvas = document.getElementById('neural-canvas');
@@ -398,15 +470,28 @@
         }
 
         function generateNetwork(networkData) {
-            nodes = [];
-            connections = [];
+            // Don't clear existing nodes, just update/evolve them
+            const width = canvas.width / 2;
+            const height = canvas.height / 2;
             
             if (!networkData || !networkData.nodes || networkData.nodes.length === 0) {
+                // Keep existing network if no data
                 return;
             }
             
-            const width = canvas.width / 2;
-            const height = canvas.height / 2;
+            // Track existing node IDs
+            const existingNodeIds = new Set(nodes.map(n => n.id));
+            const newNodeIds = new Set(networkData.nodes.map(n => n.id));
+            
+            // Remove deleted nodes with fade animation
+            nodes = nodes.filter(node => {
+                if (!newNodeIds.has(node.id)) {
+                    // Mark for deletion with fade
+                    node.deletion_fade = 1.0;
+                    return false;
+                }
+                return true;
+            });
             
             // Group nodes by layer
             const layerGroups = {};
@@ -419,13 +504,12 @@
             
             const numLayers = Object.keys(layerGroups).length;
             
-            // Position nodes with better spacing
+            // Update or add nodes
             Object.keys(layerGroups).sort((a, b) => a - b).forEach(layerIdx => {
                 const layer = parseInt(layerIdx);
                 const layerNodes = layerGroups[layerIdx];
                 const x = (width / (numLayers + 1)) * (layer + 1);
                 
-                // Limit visible nodes per layer for cleaner visualization
                 const maxNodesPerLayer = 20;
                 const step = Math.ceil(layerNodes.length / maxNodesPerLayer);
                 
@@ -435,20 +519,34 @@
                         const totalDisplayNodes = Math.ceil(layerNodes.length / step);
                         const y = (height / (totalDisplayNodes + 1)) * (displayIndex + 1);
                         
-                        nodes.push({
-                            id: node.id,
-                            x, y,
-                            active: node.active,
-                            activation: node.activation,
-                            layer: node.layer,
-                            label: layer === 0 && displayIndex === 0 ? 'Input' :
-                                   layer === numLayers - 1 && displayIndex === 0 ? 'Output' : ''
-                        });
+                        const existingNode = nodes.find(n => n.id === node.id);
+                        if (existingNode) {
+                            // Update existing node (smooth transition)
+                            existingNode.target_x = x;
+                            existingNode.target_y = y;
+                            existingNode.active = node.active;
+                            existingNode.activation = node.activation;
+                        } else {
+                            // Add new node with spawn animation
+                            nodes.push({
+                                id: node.id,
+                                x, y,
+                                target_x: x,
+                                target_y: y,
+                                active: node.active,
+                                activation: node.activation,
+                                layer: node.layer,
+                                label: layer === 0 && displayIndex === 0 ? 'Input' :
+                                       layer === numLayers - 1 && displayIndex === 0 ? 'Output' : '',
+                                spawn_time: Date.now(),
+                                is_new: true
+                            });
+                        }
                     }
                 });
             });
             
-            // Map connections to displayed nodes
+            // Update connections
             const displayedNodeIds = new Set(nodes.map(n => n.id));
             connections = networkData.connections
                 .filter(conn => displayedNodeIds.has(conn.from) && displayedNodeIds.has(conn.to))
@@ -464,8 +562,17 @@
         function animateNetwork() {
             const width = canvas.width / 2;
             const height = canvas.height / 2;
+            const time = Date.now() / 1000;
             
             ctx.clearRect(0, 0, width, height);
+            
+            // Smooth position interpolation for all nodes
+            nodes.forEach(node => {
+                if (node.target_x !== undefined) {
+                    node.x += (node.target_x - node.x) * 0.1;
+                    node.y += (node.target_y - node.y) * 0.1;
+                }
+            });
             
             // Draw connections with alpha based on activity
             connections.forEach(conn => {
@@ -490,37 +597,46 @@
                 }
             });
             
-            // Draw nodes with pulsing effect for active nodes
-            const time = Date.now() / 1000;
+            // Draw nodes with animations
             nodes.forEach(node => {
+                // Spawn animation for new nodes
+                let spawnScale = 1;
+                if (node.is_new && node.spawn_time) {
+                    const age = (Date.now() - node.spawn_time) / 500; // 500ms spawn
+                    spawnScale = Math.min(1, age);
+                    if (age >= 1) {
+                        node.is_new = false;
+                    }
+                }
+                
                 const pulse = node.active ? 1 + Math.sin(time * 2 + node.id * 0.1) * 0.2 : 0;
-                const radius = node.active ? 6 + pulse : 4;
+                const radius = (node.active ? 6 + pulse : 4) * spawnScale;
                 
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
                 
                 const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, radius);
                 if (node.active) {
-                    const intensity = node.activation;
+                    const intensity = node.activation * spawnScale;
                     gradient.addColorStop(0, `rgba(251, 191, 36, ${intensity})`);
                     gradient.addColorStop(1, `rgba(168, 85, 247, ${intensity * 0.8})`);
                 } else {
-                    gradient.addColorStop(0, 'rgba(118, 75, 162, 0.4)');
-                    gradient.addColorStop(1, 'rgba(91, 33, 182, 0.3)');
+                    gradient.addColorStop(0, `rgba(118, 75, 162, ${0.4 * spawnScale})`);
+                    gradient.addColorStop(1, `rgba(91, 33, 182, ${0.3 * spawnScale})`);
                 }
                 
                 ctx.fillStyle = gradient;
                 ctx.fill();
                 
                 ctx.strokeStyle = node.active ? 
-                    `rgba(251, 191, 36, ${0.6 + pulse * 0.3})` : 
-                    'rgba(168, 85, 247, 0.4)';
+                    `rgba(251, 191, 36, ${(0.6 + pulse * 0.3) * spawnScale})` : 
+                    `rgba(168, 85, 247, ${0.4 * spawnScale})`;
                 ctx.lineWidth = node.active ? 2 : 1;
                 ctx.stroke();
                 
                 // Draw labels
-                if (node.label) {
-                    ctx.fillStyle = '#fff';
+                if (node.label && spawnScale > 0.8) {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${spawnScale})`;
                     ctx.font = 'bold 12px sans-serif';
                     ctx.fillText(node.label, node.x + 12, node.y + 4);
                 }
@@ -536,6 +652,15 @@
                 .then(networkData => {
                     if (networkData.nodes && networkData.nodes.length > 0) {
                         generateNetwork(networkData);
+                        
+                        // Update network stats
+                        const activeNodes = networkData.nodes.filter(n => n.active).length;
+                        const totalNodes = networkData.nodes.length;
+                        const avgActivation = networkData.nodes.reduce((sum, n) => sum + n.activation, 0) / totalNodes;
+                        
+                        document.getElementById('network-size').textContent = `${totalNodes} nodes`;
+                        document.getElementById('active-neurons').textContent = `${((activeNodes/totalNodes)*100).toFixed(1)}%`;
+                        document.getElementById('avg-activation').textContent = avgActivation.toFixed(2);
                     }
                 })
                 .catch(err => console.error('Failed to fetch network state:', err));
@@ -584,11 +709,13 @@
                     
                     // Archive status
                     const batchNum = Math.floor(data.iteration / 10) % 10;
+                    const totalArchives = Math.floor(data.iteration / 10);
                     document.getElementById('archive-batch').textContent = batchNum;
                     document.getElementById('archive-folder').textContent = 
                         `/${data.current_stage.toLowerCase().replace(' ', '_')}/`;
                     document.getElementById('next-zip').textContent = 
                         `batch_${String(Math.floor(data.iteration / 10)).padStart(4, '0')}.zip`;
+                    document.getElementById('archive-count').textContent = totalArchives;
                     
                     document.getElementById('training-status').textContent = 
                         data.training_active ? '🔄 Training Active' : '⏸️ Paused';
@@ -596,10 +723,28 @@
                     document.getElementById('last-update').textContent = 
                         `Last update: ${new Date().toLocaleTimeString()}`;
                     
-                    // Update neural network for phase changes
-                    if (data.stage_index !== undefined) {
-                        generateNetwork(data.stage_index);
+                    // Calculate training speed
+                    const currentTime = Date.now();
+                    const timeDiff = (currentTime - lastIterationTime) / 1000;
+                    const iterDiff = data.iteration - lastIterationCount;
+                    const speed = timeDiff > 0 ? (iterDiff / timeDiff).toFixed(1) : 0;
+                    
+                    document.getElementById('training-speed').textContent = `${speed} iter/s`;
+                    document.getElementById('total-iterations').textContent = data.iteration;
+                    
+                    lastIterationCount = data.iteration;
+                    lastIterationTime = currentTime;
+                    
+                    // Track progress history
+                    progressHistory.push({
+                        time: currentTime,
+                        understanding: data.understanding_score
+                    });
+                    if (progressHistory.length > 50) {
+                        progressHistory.shift();
                     }
+                    
+                    updateProgressChart();
                 });
 
             // Fetch other data endpoints
@@ -696,6 +841,54 @@
             updateDashboard();
             scheduleNextUpdate();
         };
+
+        function updateProgressChart() {
+            const chartCanvas = document.getElementById('progress-chart');
+            if (!chartCanvas) return;
+            
+            const chartCtx = chartCanvas.getContext('2d');
+            const width = chartCanvas.width;
+            const height = chartCanvas.height;
+            
+            chartCtx.clearRect(0, 0, width, height);
+            
+            if (progressHistory.length < 2) return;
+            
+            // Draw grid
+            chartCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            chartCtx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = (height / 5) * i;
+                chartCtx.beginPath();
+                chartCtx.moveTo(0, y);
+                chartCtx.lineTo(width, y);
+                chartCtx.stroke();
+            }
+            
+            // Draw progress line
+            chartCtx.strokeStyle = '#a855f7';
+            chartCtx.lineWidth = 2;
+            chartCtx.beginPath();
+            
+            progressHistory.forEach((point, i) => {
+                const x = (i / (progressHistory.length - 1)) * width;
+                const y = height - (point.understanding * height);
+                
+                if (i === 0) {
+                    chartCtx.moveTo(x, y);
+                } else {
+                    chartCtx.lineTo(x, y);
+                }
+            });
+            
+            chartCtx.stroke();
+            
+            // Draw labels
+            chartCtx.fillStyle = '#fff';
+            chartCtx.font = '10px sans-serif';
+            chartCtx.fillText('0%', 5, height - 5);
+            chartCtx.fillText('100%', 5, 15);
+        }
 
         window.onbeforeunload = () => {
             if (animationFrame) cancelAnimationFrame(animationFrame);

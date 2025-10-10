@@ -13,6 +13,35 @@ CORS(app)
 from interfaces.ai_api import ai_api, update_ai_state
 app.register_blueprint(ai_api)
 
+# Global progress estimator for background ETA
+global_progress_estimator = None
+
+def background_eta_calculator():
+    """Background thread to calculate ETAs without blocking training"""
+    while True:
+        try:
+            if global_progress_estimator and training_state.get('training_active'):
+                stage_eta = global_progress_estimator.estimate_current_stage_completion()
+                total_eta = global_progress_estimator.estimate_total_completion()
+                
+                if stage_eta:
+                    training_state['time_estimate']['next_stage_eta'] = stage_eta.get('eta_formatted', 'Calculating...')
+                    training_state['time_estimate']['next_stage_eta_seconds'] = stage_eta.get('eta_seconds', None)
+                    training_state['time_estimate']['stage_confidence'] = stage_eta.get('confidence', 0.5)
+                
+                if total_eta:
+                    training_state['time_estimate']['total_completion_eta'] = total_eta.get('eta_formatted', 'Unknown')
+                    training_state['time_estimate']['total_completion_eta_seconds'] = total_eta.get('eta_seconds', None)
+                    training_state['time_estimate']['total_confidence'] = total_eta.get('confidence', 0.5)
+        except Exception as e:
+            print(f"Background ETA error: {e}")
+        
+        time.sleep(2)  # Update every 2 seconds
+
+# Start background ETA calculator
+eta_thread = threading.Thread(target=background_eta_calculator, daemon=True)
+eta_thread.start()
+
 web_knowledge_state = {
     'recent_knowledge': [],
     'stats': {
@@ -49,6 +78,11 @@ training_state = {
     'last_understanding_update': None
 }
 
+def set_progress_estimator(estimator):
+    """Register the progress estimator for background ETA calculation"""
+    global global_progress_estimator
+    global_progress_estimator = estimator
+
 def update_training_state(stage_name, stage_index, understanding, confidence, accuracy, iteration, total_stages, stage_eta=None, total_eta=None):
     """Update the global training state with functional time estimation"""
     global training_state
@@ -65,18 +99,6 @@ def update_training_state(stage_name, stage_index, understanding, confidence, ac
     training_state['progress_percent'] = (stage_index / total_stages) * 100
     training_state['training_active'] = True
     training_state['last_understanding_update'] = current_time
-
-    # Update time estimates from progress estimator
-    if stage_eta:
-        training_state['time_estimate']['next_stage_eta'] = stage_eta.get('eta_formatted', 'Calculating...')
-        training_state['time_estimate']['next_stage_eta_seconds'] = stage_eta.get('eta_seconds', None)
-        training_state['time_estimate']['stage_confidence'] = stage_eta.get('confidence', 0.5)
-
-    if total_eta:
-        training_state['time_estimate']['total_completion_eta'] = total_eta.get('eta_formatted', 'Unknown')
-        training_state['time_estimate']['total_completion_eta_seconds'] = total_eta.get('eta_seconds', None)
-        training_state['time_estimate']['total_confidence'] = total_eta.get('confidence', 0.5)
-
     training_state['last_iteration_time'] = current_time
 
 def _format_time(seconds):

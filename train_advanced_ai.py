@@ -15,7 +15,7 @@ from personality.narrative_memory import NarrativeMemory
 from philosophy.thinker_engine import ThinkerEngine
 from philosophy.reasoning_rules import ReasoningRules
 from knowledge.storage import KnowledgeStorage
-from interfaces.app import start_flask_background, update_training_state, update_personality, add_philosophy_insight, update_core_values, add_to_history, update_web_knowledge
+from interfaces.app import start_flask_background, update_training_state, update_personality, add_philosophy_insight, update_core_values, add_to_history, update_web_knowledge, set_progress_estimator
 from knowledge.web_learning import WebKnowledgeAcquisition
 from core.progress_estimator import ProgressEstimator
 from core.ai_assistant import AIAssistant
@@ -462,6 +462,7 @@ update_core_values(core_values_list)
 
 print("\nStarting Flask web interface with purple gradient...")
 flask_thread = start_flask_background()
+set_progress_estimator(progress_estimator)  # Register for background ETA calculation
 time.sleep(2)
 
 print("\n" + "="*80)
@@ -556,14 +557,10 @@ for stage_idx, stage_info in enumerate(stages):
 
             understanding_score = accuracy * 0.5 + correct_conf * 0.3 + max(0, calibration) * 0.2
 
-            # Update progress estimator
+            # Update progress estimator (non-blocking)
             progress_estimator.update_progress(iteration, understanding_score)
 
-            # Calculate ETAs
-            stage_eta = progress_estimator.estimate_current_stage_completion()
-            total_eta = progress_estimator.estimate_total_completion()
-
-            # Update Flask state with ETA
+            # Update Flask state WITHOUT waiting for ETA calculation
             update_training_state(
                 stage_name=stage_name,
                 stage_index=stage_idx,
@@ -572,8 +569,8 @@ for stage_idx, stage_info in enumerate(stages):
                 accuracy=accuracy,
                 iteration=iteration,
                 total_stages=len(stages),
-                stage_eta=stage_eta,
-                total_eta=total_eta
+                stage_eta=None,  # Will be calculated in background
+                total_eta=None
             )
 
             # ARCHIVE GENERATION DATA
