@@ -52,9 +52,9 @@ training_state = {
 def update_training_state(stage_name, stage_index, understanding, confidence, accuracy, iteration, total_stages, stage_eta=None, total_eta=None):
     """Update the global training state with functional time estimation"""
     global training_state
-    
+
     current_time = time.time()
-    
+
     training_state['current_stage'] = stage_name
     training_state['stage_index'] = stage_index
     training_state['understanding_score'] = float(understanding)
@@ -65,32 +65,32 @@ def update_training_state(stage_name, stage_index, understanding, confidence, ac
     training_state['progress_percent'] = (stage_index / total_stages) * 100
     training_state['training_active'] = True
     training_state['last_understanding_update'] = current_time
-    
+
     # Update time estimates from progress estimator
     if stage_eta:
         training_state['time_estimate']['next_stage_eta'] = stage_eta.get('eta_formatted', 'Calculating...')
         training_state['time_estimate']['next_stage_eta_seconds'] = stage_eta.get('eta_seconds', None)
         training_state['time_estimate']['stage_confidence'] = stage_eta.get('confidence', 0.5)
-    
+
     if total_eta:
         training_state['time_estimate']['total_completion_eta'] = total_eta.get('eta_formatted', 'Unknown')
         training_state['time_estimate']['total_completion_eta_seconds'] = total_eta.get('eta_seconds', None)
         training_state['time_estimate']['total_confidence'] = total_eta.get('confidence', 0.5)
-    
+
     training_state['last_iteration_time'] = current_time
 
 def _format_time(seconds):
     """Format seconds into human-readable time"""
     if seconds is None or seconds <= 0:
         return '0s'
-    
+
     seconds = int(seconds)
     parts = []
-    
+
     days, seconds = divmod(seconds, 86400)
     hours, seconds = divmod(seconds, 3600)
     minutes, seconds = divmod(seconds, 60)
-    
+
     if days:
         parts.append(f"{days}d")
     if hours:
@@ -99,7 +99,7 @@ def _format_time(seconds):
         parts.append(f"{minutes}m")
     if seconds or not parts:
         parts.append(f"{seconds}s")
-    
+
     return ' '.join(parts)
 
 def update_personality(traits):
@@ -202,6 +202,66 @@ def get_web_knowledge():
         'stats': web_knowledge_state['stats'],
         'active': True
     })
+
+@app.route('/api/network_state')
+def get_network_state():
+    """Get current neural network structure and activation states"""
+    try:
+        # Get network from trainer if available
+        if hasattr(trainer, 'network'):
+            network = trainer.network
+            nodes = []
+            connections = []
+
+            # Build node data from network layers
+            layer_sizes = [network.input_size] + network.hidden_sizes + [network.output_size]
+            node_id = 0
+
+            for layer_idx, size in enumerate(layer_sizes):
+                for node_idx in range(size):
+                    # Get activation from last forward pass if available
+                    activation = 0.5
+                    if hasattr(network, 'last_activations') and layer_idx < len(network.last_activations):
+                        if node_idx < len(network.last_activations[layer_idx]):
+                            activation = float(network.last_activations[layer_idx][node_idx])
+
+                    nodes.append({
+                        'id': node_id,
+                        'layer': layer_idx,
+                        'activation': activation,
+                        'active': activation > 0.3
+                    })
+                    node_id += 1
+
+            # Build connection data from weights
+            node_offset = 0
+            for layer_idx in range(len(layer_sizes) - 1):
+                layer_size = layer_sizes[layer_idx]
+                next_layer_size = layer_sizes[layer_idx + 1]
+
+                if layer_idx < len(network.weights):
+                    weights = network.weights[layer_idx]
+                    for i in range(layer_size):
+                        for j in range(next_layer_size):
+                            weight_val = float(weights[j][i]) if i < weights.shape[1] and j < weights.shape[0] else 0
+                            connections.append({
+                                'from': node_offset + i,
+                                'to': node_offset + layer_size + j,
+                                'weight': abs(weight_val),
+                                'active': abs(weight_val) > 0.1
+                            })
+
+                node_offset += layer_size
+
+            return jsonify({
+                'nodes': nodes,
+                'connections': connections,
+                'layer_sizes': layer_sizes
+            })
+
+        return jsonify({'nodes': [], 'connections': [], 'layer_sizes': []})
+    except Exception as e:
+        return jsonify({'error': str(e), 'nodes': [], 'connections': []})
 
 def run_flask_app():
     """Run Flask app in a thread"""

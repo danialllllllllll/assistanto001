@@ -397,63 +397,56 @@
             animateNetwork();
         }
 
-        function generateNetwork(phaseIndex) {
+        function generateNetwork(networkData) {
             nodes = [];
             connections = [];
             
-            const layerCounts = [
-                [5, 8, 5],
-                [5, 10, 8, 5],
-                [6, 12, 10, 6],
-                [8, 14, 12, 8],
-                [10, 16, 14, 10],
-                [12, 18, 16, 12],
-                [14, 20, 18, 14]
-            ];
+            if (!networkData || !networkData.nodes || networkData.nodes.length === 0) {
+                // Fallback to placeholder if no data
+                return;
+            }
             
-            const layers = layerCounts[Math.min(phaseIndex, layerCounts.length - 1)];
             const width = canvas.width / 2;
             const height = canvas.height / 2;
             
-            let nodeId = 0;
-            const layerNodes = [];
-            
-            for (let layer = 0; layer < layers.length; layer++) {
-                const count = layers[layer];
-                const layerNodeIds = [];
-                const x = (width / (layers.length + 1)) * (layer + 1);
-                
-                for (let i = 0; i < count; i++) {
-                    const y = (height / (count + 1)) * (i + 1);
-                    nodes.push({
-                        id: nodeId,
-                        x, y,
-                        active: Math.random() > 0.3,
-                        activation: Math.random(),
-                        layer,
-                        label: layer === 0 && i === 0 ? 'Input' :
-                               layer === layers.length - 1 && i === 0 ? 'Output' : ''
-                    });
-                    layerNodeIds.push(nodeId);
-                    nodeId++;
+            // Group nodes by layer
+            const layerGroups = {};
+            networkData.nodes.forEach(node => {
+                if (!layerGroups[node.layer]) {
+                    layerGroups[node.layer] = [];
                 }
-                layerNodes.push(layerNodeIds);
-            }
+                layerGroups[node.layer].push(node);
+            });
             
-            for (let layer = 0; layer < layerNodes.length - 1; layer++) {
-                layerNodes[layer].forEach(from => {
-                    layerNodes[layer + 1].forEach(to => {
-                        if (Math.random() > 0.2) {
-                            connections.push({
-                                from,
-                                to,
-                                weight: Math.random(),
-                                active: Math.random() > 0.4
-                            });
-                        }
+            const numLayers = Object.keys(layerGroups).length;
+            
+            // Position nodes based on actual network structure
+            Object.keys(layerGroups).forEach(layerIdx => {
+                const layer = parseInt(layerIdx);
+                const layerNodes = layerGroups[layerIdx];
+                const x = (width / (numLayers + 1)) * (layer + 1);
+                
+                layerNodes.forEach((node, i) => {
+                    const y = (height / (layerNodes.length + 1)) * (i + 1);
+                    nodes.push({
+                        id: node.id,
+                        x, y,
+                        active: node.active,
+                        activation: node.activation,
+                        layer: node.layer,
+                        label: layer === 0 && i === 0 ? 'Input' :
+                               layer === numLayers - 1 && i === 0 ? 'Output' : ''
                     });
                 });
-            }
+            });
+            
+            // Use actual connections from network
+            connections = networkData.connections.map(conn => ({
+                from: conn.from,
+                to: conn.to,
+                weight: conn.weight,
+                active: conn.active
+            }));
         }
 
         function animateNetwork() {
@@ -509,24 +502,22 @@
                 }
             });
             
-            // Update activations
-            nodes.forEach(node => {
-                if (Math.random() > 0.95) {
-                    node.active = Math.random() > 0.3;
-                    node.activation = Math.random();
-                }
-            });
-            
-            connections.forEach(conn => {
-                if (Math.random() > 0.98) {
-                    conn.active = Math.random() > 0.4;
-                }
-            });
+            // Network data is updated from real training state via API
             
             animationFrame = requestAnimationFrame(animateNetwork);
         }
         
         function updateDashboard() {
+            // Fetch network visualization data
+            fetch('/api/network_state')
+                .then(response => response.json())
+                .then(networkData => {
+                    if (networkData.nodes && networkData.nodes.length > 0) {
+                        generateNetwork(networkData);
+                    }
+                })
+                .catch(err => console.error('Failed to fetch network state:', err));
+            
             fetch('/api/status')
                 .then(response => response.json())
                 .then(data => {
@@ -669,6 +660,7 @@
         
         window.onload = () => {
             initNeuralNetwork();
+            generateNetwork({ nodes: [], connections: [] }); // Start empty
             updateDashboard();
             scheduleNextUpdate();
         };
