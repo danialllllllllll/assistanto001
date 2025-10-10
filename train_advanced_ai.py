@@ -613,45 +613,8 @@ optimizer = TrainingOptimizer()
 archiver = HierarchicalArchiver()  # NEW: Hierarchical archiving system
 phase_algorithms = PhaseTrainingAlgorithms()  # NEW: Real training algorithms
 
-# Import the actual genetic trainer from core
-try:
-    from core.genetic_trainer import GeneticTrainer
-    genetic_trainer = GeneticTrainer(
-        network_template=network,
-        population_size=20,
-        elite_size=2
-    )
-    genetic_trainer.initialize_population()
-    print("✓ Genetic Trainer initialized")
-except ImportError:
-    # Fallback mock if genetic trainer has issues
-    class MockGeneticTrainer:
-        def __init__(self):
-            self.best_network = None
-            self.generation = 0
-            self.population_diversity = 0.0
-
-        def evolve_generation(self, X_batch, y_batch):
-            self.generation += 1
-            best_fitness = 0.9 + np.random.rand() * 0.1
-            avg_fitness = 0.7 + np.random.rand() * 0.2
-            self.population_diversity = 0.5 + np.random.rand() * 0.3
-
-            self.best_network = ProgressiveNeuralNetwork(
-                input_size=X_batch.shape[1],
-                hidden_sizes=[150, 60],
-                output_size=4
-            )
-
-            return {
-                'generation': self.generation,
-                'best_fitness': best_fitness,
-                'avg_fitness': avg_fitness,
-                'population_diversity': self.population_diversity
-            }
-
-    genetic_trainer = MockGeneticTrainer()
-    print("✓ Mock Genetic Trainer initialized (fallback)")
+# Pure gradient descent learning - no genetic algorithms
+print("✓ Neural network initialized with gradient descent learning")
 
 
 print("✓ Hierarchical archiving system initialized")
@@ -730,87 +693,71 @@ for stage_idx, stage_info in enumerate(stages):
             update_personality(personality.traits)
         elif stage_name == "Scholar":
             phase_metrics = phase_algorithms.train_scholar(network, X_batch, y_batch, current_lr, web_learning)
-            if 'web_knowledge' in phase_metrics:
-                update_web_knowledge({
-                    'topic': phase_metrics['web_knowledge'],
-                    'stage': stage_name,
-                    'timestamp': datetime.now().isoformat()
-                })
+            # Update web knowledge tracking
+            recent_knowledge = []
+            for topic_key, topic_data in web_learning.knowledge_base.items():
+                if topic_data:
+                    recent_knowledge.append({
+                        'topic': topic_key,
+                        'phase': topic_data[-1].get('phase', 'Scholar'),
+                        'timestamp': topic_data[-1].get('timestamp')
+                    })
+            update_web_knowledge(recent_knowledge[-10:], web_learning.get_statistics())
         elif stage_name == "Thinker":
             phase_metrics = phase_algorithms.train_thinker(
                 network, X_batch, y_batch, current_lr,
                 personality.traits, thinker, web_learning
             )
             update_personality(personality.traits)
-            for topic in phase_metrics.get('learned_topics', []):
-                update_web_knowledge({
-                    'topic': topic,
-                    'stage': stage_name,
-                    'timestamp': datetime.now().isoformat()
-                })
+            # Update comprehensive web knowledge
+            recent_knowledge = []
+            for topic_key, topic_data in web_learning.knowledge_base.items():
+                if topic_data:
+                    recent_knowledge.append({
+                        'topic': topic_key,
+                        'phase': topic_data[-1].get('phase', 'Thinker'),
+                        'confidence': topic_data[-1].get('confidence', 0.95),
+                        'timestamp': topic_data[-1].get('timestamp')
+                    })
+            update_web_knowledge(recent_knowledge[-10:], web_learning.get_statistics())
 
-        # Every 10 iterations, run genetic algorithm generation with mutation tracking
+        # Track network evolution through gradient descent
         if iteration % 10 == 0:
-            ga_stats = genetic_trainer.evolve_generation(X_batch, y_batch)
-            print(f"  🧬 Generation {ga_stats['generation']}: "
-                  f"Best Fitness={ga_stats['best_fitness']:.4f}, "
-                  f"Avg={ga_stats['avg_fitness']:.4f}, "
-                  f"Diversity={ga_stats['population_diversity']:.3f}")
-
-            # Track mutations and evolution
+            # Analyze network structure changes
             evolution_events = []
-            mutation_list = []
-
-            # Analyze network changes
-            if genetic_trainer.best_network:
-                network = genetic_trainer.best_network
-
-                # Check for structural mutations
-                if hasattr(network, 'last_mutation_strategy'):
-                    for strategy in network.last_mutation_strategy:
-                        mutation_list.append({
-                            'type': strategy,
-                            'generation': ga_stats['generation'],
-                            'fitness': ga_stats['best_fitness'],
-                            'timestamp': datetime.now().isoformat()
-                        })
-
-                # Track node creation/pruning based on activation patterns
-                for i, activation in enumerate(network.activations if hasattr(network, 'activations') else []):
-                    active_nodes = np.sum(activation > 0.3)
-                    total_nodes = activation.size if hasattr(activation, 'size') else len(activation)
-
-                    if active_nodes < total_nodes * 0.7:  # Pruning opportunity
-                        evolution_events.append({
-                            'type': 'node_pruning',
-                            'layer': i,
-                            'count': total_nodes - active_nodes,
-                            'generation': ga_stats['generation']
-                        })
-
-                    if active_nodes > total_nodes * 0.95:  # Growth opportunity
-                        evolution_events.append({
-                            'type': 'node_creation',
-                            'layer': i,
-                            'count': int(total_nodes * 0.1),
-                            'generation': ga_stats['generation']
-                        })
-
-                # Update evolution tracking
-                nodes_created = sum(e['count'] for e in evolution_events if e['type'] == 'node_creation')
-                nodes_pruned = sum(e['count'] for e in evolution_events if e['type'] == 'node_pruning')
-
-                update_evolution(
-                    generation=ga_stats['generation'],
-                    mutations=mutation_list,
-                    nodes_created=nodes_created,
-                    nodes_pruned=nodes_pruned,
-                    evolution_events=evolution_events
-                )
-
-                # Apply gradient refinement
-                network.forward(X_batch, training=True)
-                network.backward(X_batch, y_batch, current_lr * 0.5)  # Lower LR for refinement
+            
+            # Track active nodes based on weight magnitudes
+            for i, weights in enumerate(network.weights):
+                weight_magnitude = np.abs(weights)
+                active_nodes = np.sum(weight_magnitude > 0.1)
+                total_nodes = weights.shape[1]
+                
+                if active_nodes < total_nodes * 0.7:
+                    evolution_events.append({
+                        'type': 'node_pruning',
+                        'layer': i,
+                        'count': total_nodes - active_nodes,
+                        'iteration': iteration
+                    })
+                
+                if active_nodes > total_nodes * 0.95:
+                    evolution_events.append({
+                        'type': 'node_strengthening',
+                        'layer': i,
+                        'count': active_nodes,
+                        'iteration': iteration
+                    })
+            
+            nodes_created = sum(e['count'] for e in evolution_events if e['type'] == 'node_strengthening')
+            nodes_pruned = sum(e['count'] for e in evolution_events if e['type'] == 'node_pruning')
+            
+            update_evolution(
+                generation=iteration // 10,
+                mutations=[],
+                nodes_created=nodes_created,
+                nodes_pruned=nodes_pruned,
+                evolution_events=evolution_events
+            )
 
 
         # Evaluate every 10 iterations
