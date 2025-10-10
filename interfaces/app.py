@@ -287,34 +287,62 @@ def get_web_knowledge():
         'active': True
     })
 
+@app.route('/api/debugger/status')
+def get_debugger_status():
+    """Get autonomous debugger status"""
+    try:
+        from core.autonomous_debugger import autonomous_debugger
+        summary = autonomous_debugger.get_fix_summary()
+        return jsonify(summary)
+    except Exception as e:
+        return jsonify({
+            'total_errors': 0,
+            'total_fixes': 0,
+            'recent_fixes': [],
+            'success_rate': 1.0,
+            'error': str(e)
+        })
+
 @app.route('/api/evolution')
 def get_evolution():
     """Get evolution and mutation data"""
-    global training_state # Changed evolution_state to training_state
+    global training_state
 
-    # Convert numpy types to native Python types
-    def convert_types(obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, dict):
-            return {k: convert_types(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
-            return [convert_types(item) for item in obj]
-        return obj
+    try:
+        # Convert numpy types to native Python types
+        def convert_types(obj):
+            if isinstance(obj, np.integer):
+                return int(obj)
+            elif isinstance(obj, np.floating):
+                return float(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            elif isinstance(obj, dict):
+                return {k: convert_types(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_types(item) for item in obj]
+            return obj
 
-    safe_state = convert_types({
-        'generation': training_state.get('generation', 0), # Changed evolution_state to training_state
-        'mutations': training_state.get('mutations', []), # Changed evolution_state to training_state
-        'nodes_created': training_state.get('nodes_created', 0), # Changed evolution_state to training_state
-        'nodes_pruned': training_state.get('nodes_pruned', 0), # Changed evolution_state to training_state
-        'evolution_events': training_state.get('evolution_events', []) # Changed evolution_state to training_state
-    })
+        safe_state = convert_types({
+            'generation': training_state.get('generation', 0),
+            'mutations': training_state.get('mutations', []),
+            'nodes_created': training_state.get('nodes_created', 0),
+            'nodes_pruned': training_state.get('nodes_pruned', 0),
+            'evolution_events': training_state.get('evolution_events', [])
+        })
 
-    return jsonify(safe_state)
+        return jsonify(safe_state)
+    except Exception as e:
+        print(f"Evolution endpoint error: {e}")
+        # Return safe default instead of crashing
+        return jsonify({
+            'generation': 0,
+            'mutations': [],
+            'nodes_created': 0,
+            'nodes_pruned': 0,
+            'evolution_events': [],
+            'error': str(e)
+        })
 
 @app.route('/api/network_state')
 def get_network_state():

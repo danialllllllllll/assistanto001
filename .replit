@@ -3,7 +3,7 @@ run = "python train_advanced_ai.py"
 modules = ["web", "bash", "python-3.11"]
 
 [workflows]
-runButton = "Project"
+runButton = "AI Training - Auto Debug"
 
 [[workflows.workflow]]
 name = "Project"
@@ -38,6 +38,15 @@ author = "agent"
 task = "shell.exec"
 args = "gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "AI Training - Auto Debug"
+author = 22331225
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python train_advanced_ai.py"
 
 [nix]
 channel = "stable-25_05"

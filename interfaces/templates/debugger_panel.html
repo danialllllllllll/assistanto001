@@ -1,0 +1,80 @@
+
+<div class="debugger-panel">
+    <h3>🔧 Autonomous Debugger</h3>
+    <div id="debugger-stats">
+        <div class="stat-item">
+            <span class="stat-label">Errors Detected:</span>
+            <span class="stat-value" id="total-errors">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Fixes Applied:</span>
+            <span class="stat-value" id="total-fixes">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Success Rate:</span>
+            <span class="stat-value" id="fix-rate">100%</span>
+        </div>
+    </div>
+    <div id="recent-fixes" class="fixes-list"></div>
+</div>
+
+<style>
+.debugger-panel {
+    background: rgba(139, 92, 246, 0.05);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+}
+
+.debugger-panel h3 {
+    color: #8b5cf6;
+    margin-bottom: 15px;
+}
+
+#debugger-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #8b5cf6;
+}
+
+.fixes-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.fix-entry {
+    padding: 8px;
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.fix-entry .fix-type {
+    color: #fbbf24;
+    font-weight: bold;
+}
+
+.fix-entry .fix-desc {
+    color: rgba(255,255,255,0.8);
+    margin-top: 4px;
+}
+</style>

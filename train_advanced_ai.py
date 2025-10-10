@@ -654,9 +654,12 @@ except ImportError:
     print("✓ Mock Genetic Trainer initialized (fallback)")
 
 
+from core.autonomous_debugger import autonomous_debugger
+
 print("✓ Hierarchical archiving system initialized")
 print("✓ Phase-specific training algorithms loaded")
 print("✓ Web-based knowledge acquisition ready")
+print("✓ Autonomous debugger initialized and monitoring")
 
 core_values_list = [
     {"name": v['name'], "priority": v['priority'], "status": "Enforced"}
@@ -751,7 +754,10 @@ for stage_idx, stage_info in enumerate(stages):
 
         # Every 10 iterations, run genetic algorithm generation with mutation tracking
         if iteration % 10 == 0:
-            ga_stats = genetic_trainer.evolve_generation(X_batch, y_batch)
+            # Use autonomous debugger to monitor and fix errors
+            ga_stats = autonomous_debugger.monitor_execution(
+                genetic_trainer.evolve_generation, X_batch, y_batch
+            )
             print(f"  🧬 Generation {ga_stats['generation']}: "
                   f"Best Fitness={ga_stats['best_fitness']:.4f}, "
                   f"Avg={ga_stats['avg_fitness']:.4f}, "
