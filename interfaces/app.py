@@ -6,6 +6,7 @@ from datetime import datetime
 import threading
 import time
 from werkzeug.middleware.proxy_fix import ProxyFix
+import numpy as np # Import numpy
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
@@ -30,7 +31,7 @@ def background_eta_calculator():
             if global_progress_estimator and training_state.get('training_active'):
                 stage_eta = global_progress_estimator.estimate_current_stage_completion()
                 total_eta = global_progress_estimator.estimate_total_completion()
-                
+
                 if stage_eta:
                     training_state['time_estimate']['next_stage_eta'] = stage_eta.get('eta_formatted', 'Calculating...')
                     training_state['time_estimate']['next_stage_eta_seconds'] = stage_eta.get('eta_seconds', None)
@@ -39,7 +40,7 @@ def background_eta_calculator():
                 else:
                     training_state['time_estimate']['next_stage_eta'] = 'Analyzing...'
                     training_state['time_estimate']['stage_confidence'] = 0.0
-                
+
                 if total_eta:
                     training_state['time_estimate']['total_completion_eta'] = total_eta.get('eta_formatted', 'Unknown')
                     training_state['time_estimate']['total_completion_eta_seconds'] = total_eta.get('eta_seconds', None)
@@ -51,7 +52,7 @@ def background_eta_calculator():
             print(f"Background ETA error: {e}")
             import traceback
             traceback.print_exc()
-        
+
         time.sleep(1)  # Update every second for more responsive UI
 
 # Start background ETA calculator
@@ -289,24 +290,42 @@ def get_web_knowledge():
 @app.route('/api/evolution')
 def get_evolution():
     """Get evolution and mutation data"""
-    return jsonify({
-        'generation': training_state.get('generation', 0),
-        'mutations': training_state.get('mutations', []),
-        'nodes_created': training_state.get('nodes_created', 0),
-        'nodes_pruned': training_state.get('nodes_pruned', 0),
-        'evolution_events': training_state.get('evolution_events', [])
+    global training_state # Changed evolution_state to training_state
+
+    # Convert numpy types to native Python types
+    def convert_types(obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, dict):
+            return {k: convert_types(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_types(item) for item in obj]
+        return obj
+
+    safe_state = convert_types({
+        'generation': training_state.get('generation', 0), # Changed evolution_state to training_state
+        'mutations': training_state.get('mutations', []), # Changed evolution_state to training_state
+        'nodes_created': training_state.get('nodes_created', 0), # Changed evolution_state to training_state
+        'nodes_pruned': training_state.get('nodes_pruned', 0), # Changed evolution_state to training_state
+        'evolution_events': training_state.get('evolution_events', []) # Changed evolution_state to training_state
     })
+
+    return jsonify(safe_state)
 
 @app.route('/api/network_state')
 def get_network_state():
     """Get current neural network structure and activation states with mutations"""
     global training_state
-    
+
     try:
         stage_index = training_state.get('stage_index', 0)
         understanding = training_state.get('understanding_score', 0)
         iteration = training_state.get('iteration', 0)
-        
+
         # Dynamic layer sizes based on stage
         if stage_index == 0:  # Baby Steps
             layer_sizes = [32, 48, 24, 4]
@@ -322,14 +341,14 @@ def get_network_state():
             layer_sizes = [112, 168, 112, 20]
         else:  # Thinker
             layer_sizes = [128, 192, 128, 24]
-        
+
         nodes = []
         connections = []
         node_id = 0
-        
+
         # More dynamic activation
         base_activation = min(0.95, understanding + 0.05)
-        
+
         # Build nodes with evolutionary variance
         for layer_idx, size in enumerate(layer_sizes):
             for node_idx in range(size):
@@ -338,10 +357,10 @@ def get_network_state():
                 noise = (node_idx * 0.13 + layer_idx * 0.07 + evolution_factor * 0.1) % 0.4
                 activation = base_activation + noise - 0.2
                 activation = max(0.05, min(0.98, activation))
-                
+
                 # Some nodes randomly die/spawn based on iteration
                 is_active = activation > 0.3 and (node_idx + iteration) % 7 != 0
-                
+
                 nodes.append({
                     'id': node_id,
                     'layer': layer_idx,
@@ -349,15 +368,15 @@ def get_network_state():
                     'active': is_active
                 })
                 node_id += 1
-        
+
         # Build connections with evolution
         node_offset = 0
         for layer_idx in range(len(layer_sizes) - 1):
             layer_size = layer_sizes[layer_idx]
             next_layer_size = layer_sizes[layer_idx + 1]
-            
+
             connection_density = 0.4  # Show 40% of connections
-            
+
             for i in range(layer_size):
                 for j in range(next_layer_size):
                     if (i * j + layer_idx + iteration // 10) % int(1/connection_density) == 0:
@@ -368,9 +387,9 @@ def get_network_state():
                             'weight': float(weight),
                             'active': weight > 0.25
                         })
-            
+
             node_offset += layer_size
-        
+
         return jsonify({
             'nodes': nodes,
             'connections': connections,
@@ -378,7 +397,7 @@ def get_network_state():
             'iteration': iteration,
             'evolution_factor': float((iteration % 100) / 100.0)
         })
-        
+
     except Exception as e:
         print(f"Network state error: {e}")
         return jsonify({'nodes': [], 'connections': [], 'layer_sizes': []})

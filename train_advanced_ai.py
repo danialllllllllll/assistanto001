@@ -774,31 +774,24 @@ for stage_idx, stage_info in enumerate(stages):
                             'fitness': ga_stats['best_fitness'],
                             'timestamp': datetime.now().isoformat()
                         })
-
-                # Track node creation/pruning based on activation patterns
-                for i, activation in enumerate(network.activations if hasattr(network, 'activations') else []):
-                    active_nodes = np.sum(activation > 0.3)
-                    total_nodes = activation.size if hasattr(activation, 'size') else len(activation)
-
-                    if active_nodes < total_nodes * 0.7:  # Pruning opportunity
+                
+                # Get ACTUAL structural mutations from network
+                evolution_events = []
+                if hasattr(network, 'structural_mutations'):
+                    for mutation in network.structural_mutations:
                         evolution_events.append({
-                            'type': 'node_pruning',
-                            'layer': i,
-                            'count': total_nodes - active_nodes,
+                            'type': mutation['type'],
+                            'layer': mutation['layer'],
+                            'count': mutation['count'],
+                            'new_size': mutation.get('new_size', 0),
                             'generation': ga_stats['generation']
                         })
+                    # Clear after recording
+                    network.structural_mutations = []
 
-                    if active_nodes > total_nodes * 0.95:  # Growth opportunity
-                        evolution_events.append({
-                            'type': 'node_creation',
-                            'layer': i,
-                            'count': int(total_nodes * 0.1),
-                            'generation': ga_stats['generation']
-                        })
-
-                # Update evolution tracking
-                nodes_created = sum(e['count'] for e in evolution_events if e['type'] == 'node_creation')
-                nodes_pruned = sum(e['count'] for e in evolution_events if e['type'] == 'node_pruning')
+                # Get actual counts from network
+                nodes_created = getattr(network, 'nodes_created_count', 0)
+                nodes_pruned = getattr(network, 'nodes_pruned_count', 0)
 
                 update_evolution(
                     generation=ga_stats['generation'],

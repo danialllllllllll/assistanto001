@@ -96,6 +96,15 @@ class ThinkerEngine:
         
         return caveats
     
+    def add_insight(self, insight_text):
+        """Add a philosophical insight"""
+        insight = {
+            'timestamp': datetime.now().isoformat(),
+            'insight': insight_text
+        }
+        self.philosophical_insights.append(insight)
+        return insight
+    
     def philosophical_reflection(self, theme, stage):
         """Generate philosophical reflection on a theme"""
         reflection = {

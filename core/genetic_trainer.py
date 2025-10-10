@@ -210,6 +210,25 @@ class GeneticTrainer:
             bias_scale = 0.04 * (2.0 - bias_importance)  # Scale inversely with importance
             network.biases[i] += mask_bias * np.random.randn(*network.biases[i].shape) * bias_scale
         
+        # STRUCTURAL MUTATIONS: Node creation and pruning
+        for layer_idx in range(len(network.hidden_sizes)):
+            # 20% chance of structural mutation per layer
+            if np.random.random() < 0.2:
+                mutation_type = np.random.choice(['create', 'prune', 'none'], p=[0.4, 0.4, 0.2])
+                
+                if mutation_type == 'create' and network.hidden_sizes[layer_idx] < 200:
+                    # Add 2-5 new nodes
+                    num_new = np.random.randint(2, 6)
+                    created = network.add_nodes_to_layer(layer_idx, num_new)
+                    if created > 0:
+                        mutation_strategies.append(f'created_{created}_nodes_layer_{layer_idx}')
+                
+                elif mutation_type == 'prune' and network.hidden_sizes[layer_idx] > 30:
+                    # Prune weak nodes
+                    pruned = network.prune_weak_nodes(layer_idx, prune_threshold=0.15)
+                    if pruned > 0:
+                        mutation_strategies.append(f'pruned_{pruned}_nodes_layer_{layer_idx}')
+        
         # Self-optimize learning hyperparameters (NOT core values)
         if hasattr(network, 'dropout_rate'):
             # Adapt dropout for regularization
