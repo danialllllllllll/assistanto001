@@ -385,9 +385,13 @@ def get_network_state():
 
 def run_flask_app():
     """Run Flask app in production mode"""
-    from waitress import serve
-    print("Starting production WSGI server...")
-    serve(app, host='0.0.0.0', port=5000, threads=4, channel_timeout=120)
+    try:
+        from waitress import serve
+        print("Starting production WSGI server on http://0.0.0.0:5000...")
+        serve(app, host='0.0.0.0', port=5000, threads=4, channel_timeout=120)
+    except ImportError:
+        print("Waitress not found, falling back to Flask development server...")
+        app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
 
 def start_flask_background():
     """Start Flask in background thread"""

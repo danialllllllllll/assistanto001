@@ -44,7 +44,7 @@ channel = "stable-25_05"
 packages = ["cairo", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "gobject-introspection", "gtk3", "openssl", "pkg-config", "postgresql", "qhull", "tcl", "tk"]
 
 [deployment]
-run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+run = ["sh", "-c", "python train_advanced_ai.py"]
 deploymentTarget = "autoscale"
 
 [[ports]]

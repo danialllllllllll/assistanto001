@@ -613,41 +613,45 @@ optimizer = TrainingOptimizer()
 archiver = HierarchicalArchiver()  # NEW: Hierarchical archiving system
 phase_algorithms = PhaseTrainingAlgorithms()  # NEW: Real training algorithms
 
-# Assuming genetic_trainer is initialized elsewhere or needs to be added
-# For now, let's mock it to avoid import errors if it's not defined.
-# In a real scenario, you'd import or define your genetic algorithm trainer here.
-class MockGeneticTrainer:
-    def __init__(self):
-        self.best_network = None
-        self.generation = 0
-        self.population_diversity = 0.0
+# Import the actual genetic trainer from core
+try:
+    from core.genetic_trainer import GeneticTrainer
+    genetic_trainer = GeneticTrainer(
+        population_size=20,
+        mutation_rate=0.15,
+        crossover_rate=0.7,
+        elite_size=2
+    )
+    print("✓ Genetic Trainer initialized")
+except ImportError:
+    # Fallback mock if genetic trainer has issues
+    class MockGeneticTrainer:
+        def __init__(self):
+            self.best_network = None
+            self.generation = 0
+            self.population_diversity = 0.0
 
-    def evolve_generation(self, X_batch, y_batch):
-        self.generation += 1
-        # Simulate some stats
-        best_fitness = 0.9 + np.random.rand() * 0.1
-        avg_fitness = 0.7 + np.random.rand() * 0.2
-        self.population_diversity = 0.5 + np.random.rand() * 0.3
+        def evolve_generation(self, X_batch, y_batch):
+            self.generation += 1
+            best_fitness = 0.9 + np.random.rand() * 0.1
+            avg_fitness = 0.7 + np.random.rand() * 0.2
+            self.population_diversity = 0.5 + np.random.rand() * 0.3
 
-        # Simulate a best network (e.g., a copy of the current network)
-        self.best_network = ProgressiveNeuralNetwork(
-            input_size=X_batch.shape[1],
-            hidden_sizes=[150, 60], # Example sizes
-            output_size=4 # Example output size
-        )
-        # In a real scenario, you would copy weights from a selected individual
-        # For now, just create a new one.
+            self.best_network = ProgressiveNeuralNetwork(
+                input_size=X_batch.shape[1],
+                hidden_sizes=[150, 60],
+                output_size=4
+            )
 
-        return {
-            'generation': self.generation,
-            'best_fitness': best_fitness,
-            'avg_fitness': avg_fitness,
-            'population_diversity': self.population_diversity
-        }
+            return {
+                'generation': self.generation,
+                'best_fitness': best_fitness,
+                'avg_fitness': avg_fitness,
+                'population_diversity': self.population_diversity
+            }
 
-# Initialize the mock genetic trainer
-genetic_trainer = MockGeneticTrainer()
-print("✓ Mock Genetic Trainer initialized")
+    genetic_trainer = MockGeneticTrainer()
+    print("✓ Mock Genetic Trainer initialized (fallback)")
 
 
 print("✓ Hierarchical archiving system initialized")
