@@ -402,7 +402,6 @@
             connections = [];
             
             if (!networkData || !networkData.nodes || networkData.nodes.length === 0) {
-                // Fallback to placeholder if no data
                 return;
             }
             
@@ -420,33 +419,46 @@
             
             const numLayers = Object.keys(layerGroups).length;
             
-            // Position nodes based on actual network structure
-            Object.keys(layerGroups).forEach(layerIdx => {
+            // Position nodes with better spacing
+            Object.keys(layerGroups).sort((a, b) => a - b).forEach(layerIdx => {
                 const layer = parseInt(layerIdx);
                 const layerNodes = layerGroups[layerIdx];
                 const x = (width / (numLayers + 1)) * (layer + 1);
                 
+                // Limit visible nodes per layer for cleaner visualization
+                const maxNodesPerLayer = 20;
+                const step = Math.ceil(layerNodes.length / maxNodesPerLayer);
+                
                 layerNodes.forEach((node, i) => {
-                    const y = (height / (layerNodes.length + 1)) * (i + 1);
-                    nodes.push({
-                        id: node.id,
-                        x, y,
-                        active: node.active,
-                        activation: node.activation,
-                        layer: node.layer,
-                        label: layer === 0 && i === 0 ? 'Input' :
-                               layer === numLayers - 1 && i === 0 ? 'Output' : ''
-                    });
+                    if (i % step === 0) {
+                        const displayIndex = Math.floor(i / step);
+                        const totalDisplayNodes = Math.ceil(layerNodes.length / step);
+                        const y = (height / (totalDisplayNodes + 1)) * (displayIndex + 1);
+                        
+                        nodes.push({
+                            id: node.id,
+                            x, y,
+                            active: node.active,
+                            activation: node.activation,
+                            layer: node.layer,
+                            label: layer === 0 && displayIndex === 0 ? 'Input' :
+                                   layer === numLayers - 1 && displayIndex === 0 ? 'Output' : ''
+                        });
+                    }
                 });
             });
             
-            // Use actual connections from network
-            connections = networkData.connections.map(conn => ({
-                from: conn.from,
-                to: conn.to,
-                weight: conn.weight,
-                active: conn.active
-            }));
+            // Map connections to displayed nodes
+            const displayedNodeIds = new Set(nodes.map(n => n.id));
+            connections = networkData.connections
+                .filter(conn => displayedNodeIds.has(conn.from) && displayedNodeIds.has(conn.to))
+                .map(conn => ({
+                    from: nodes.findIndex(n => n.id === conn.from),
+                    to: nodes.findIndex(n => n.id === conn.to),
+                    weight: conn.weight,
+                    active: conn.active
+                }))
+                .filter(conn => conn.from >= 0 && conn.to >= 0);
         }
 
         function animateNetwork() {
@@ -455,54 +467,64 @@
             
             ctx.clearRect(0, 0, width, height);
             
-            // Draw connections
+            // Draw connections with alpha based on activity
             connections.forEach(conn => {
-                const from = nodes[conn.from];
-                const to = nodes[conn.to];
-                
-                ctx.beginPath();
-                ctx.moveTo(from.x, from.y);
-                ctx.lineTo(to.x, to.y);
-                
-                if (conn.active && from.active && to.active) {
-                    ctx.strokeStyle = `rgba(168, 85, 247, ${0.3 + conn.weight * 0.4})`;
-                    ctx.lineWidth = 1.5;
-                } else {
-                    ctx.strokeStyle = 'rgba(168, 85, 247, 0.15)';
-                    ctx.lineWidth = 1;
+                if (conn.from >= 0 && conn.from < nodes.length && 
+                    conn.to >= 0 && conn.to < nodes.length) {
+                    const from = nodes[conn.from];
+                    const to = nodes[conn.to];
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(from.x, from.y);
+                    ctx.lineTo(to.x, to.y);
+                    
+                    if (conn.active && from.active && to.active) {
+                        const alpha = 0.2 + conn.weight * 0.5;
+                        ctx.strokeStyle = `rgba(168, 85, 247, ${alpha})`;
+                        ctx.lineWidth = 1 + conn.weight * 1.5;
+                    } else {
+                        ctx.strokeStyle = 'rgba(168, 85, 247, 0.1)';
+                        ctx.lineWidth = 0.5;
+                    }
+                    ctx.stroke();
                 }
-                ctx.stroke();
             });
             
-            // Draw nodes
+            // Draw nodes with pulsing effect for active nodes
+            const time = Date.now() / 1000;
             nodes.forEach(node => {
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, node.active ? 7 : 5, 0, Math.PI * 2);
+                const pulse = node.active ? 1 + Math.sin(time * 2 + node.id * 0.1) * 0.2 : 0;
+                const radius = node.active ? 6 + pulse : 4;
                 
-                const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, 7);
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
+                
+                const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, radius);
                 if (node.active) {
-                    gradient.addColorStop(0, '#fbbf24');
-                    gradient.addColorStop(1, '#a855f7');
+                    const intensity = node.activation;
+                    gradient.addColorStop(0, `rgba(251, 191, 36, ${intensity})`);
+                    gradient.addColorStop(1, `rgba(168, 85, 247, ${intensity * 0.8})`);
                 } else {
-                    gradient.addColorStop(0, '#764ba2');
-                    gradient.addColorStop(1, '#5b21b6');
+                    gradient.addColorStop(0, 'rgba(118, 75, 162, 0.4)');
+                    gradient.addColorStop(1, 'rgba(91, 33, 182, 0.3)');
                 }
                 
                 ctx.fillStyle = gradient;
                 ctx.fill();
                 
-                ctx.strokeStyle = node.active ? 'rgba(251, 191, 36, 0.8)' : 'rgba(168, 85, 247, 0.6)';
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = node.active ? 
+                    `rgba(251, 191, 36, ${0.6 + pulse * 0.3})` : 
+                    'rgba(168, 85, 247, 0.4)';
+                ctx.lineWidth = node.active ? 2 : 1;
                 ctx.stroke();
                 
+                // Draw labels
                 if (node.label) {
                     ctx.fillStyle = '#fff';
-                    ctx.font = '11px sans-serif';
-                    ctx.fillText(node.label, node.x + 10, node.y + 4);
+                    ctx.font = 'bold 12px sans-serif';
+                    ctx.fillText(node.label, node.x + 12, node.y + 4);
                 }
             });
-            
-            // Network data is updated from real training state via API
             
             animationFrame = requestAnimationFrame(animateNetwork);
         }
@@ -544,10 +566,20 @@
                     document.getElementById('iteration-count').textContent = `Iteration: ${data.iteration}`;
                     
                     if (data.time_estimate) {
+                        const nextETA = data.time_estimate.next_stage_eta || 'Calculating...';
+                        const totalETA = data.time_estimate.total_completion_eta || 'Calculating...';
+                        const nextConf = data.time_estimate.stage_confidence || 0;
+                        const totalConf = data.time_estimate.total_confidence || 0;
+                        
+                        document.getElementById('time-estimate').textContent = nextETA;
+                        document.getElementById('total-estimate').textContent = totalETA;
+                        
+                        // Update confidence indicators
+                        const confEmoji = (conf) => conf > 0.7 ? '🎯' : conf > 0.4 ? '📊' : '🔮';
                         document.getElementById('time-estimate').textContent = 
-                            data.time_estimate.next_stage_eta || 'Calculating...';
+                            `${confEmoji(nextConf)} ${nextETA}`;
                         document.getElementById('total-estimate').textContent = 
-                            data.time_estimate.total_completion_eta || 'Calculating...';
+                            `${confEmoji(totalConf)} ${totalETA}`;
                     }
                     
                     // Archive status
