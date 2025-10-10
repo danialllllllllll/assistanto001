@@ -236,58 +236,74 @@ def get_web_knowledge():
 
 @app.route('/api/network_state')
 def get_network_state():
-    """Get current neural network structure and activation states"""
+    """Get current neural network structure and activation states with mutations"""
     global training_state
     
     try:
-        # Create a simplified network visualization
         stage_index = training_state.get('stage_index', 0)
         understanding = training_state.get('understanding_score', 0)
+        iteration = training_state.get('iteration', 0)
         
-        # Define layer sizes for visualization
-        layer_sizes = [64, 128, 64, 10]  # input, hidden1, hidden2, output
+        # Dynamic layer sizes based on stage
+        if stage_index == 0:  # Baby Steps
+            layer_sizes = [32, 48, 24, 4]
+        elif stage_index == 1:  # Toddler
+            layer_sizes = [48, 72, 48, 8]
+        elif stage_index == 2:  # Pre-K
+            layer_sizes = [64, 96, 64, 10]
+        elif stage_index == 3:  # Elementary
+            layer_sizes = [80, 120, 80, 12]
+        elif stage_index == 4:  # Teen
+            layer_sizes = [96, 144, 96, 16]
+        elif stage_index == 5:  # Scholar
+            layer_sizes = [112, 168, 112, 20]
+        else:  # Thinker
+            layer_sizes = [128, 192, 128, 24]
+        
         nodes = []
         connections = []
         node_id = 0
         
-        # Calculate activation based on training progress
-        base_activation = min(0.9, understanding)
+        # More dynamic activation
+        base_activation = min(0.95, understanding + 0.05)
         
-        # Build nodes
+        # Build nodes with evolutionary variance
         for layer_idx, size in enumerate(layer_sizes):
             for node_idx in range(size):
-                # Vary activation based on position and training state
-                noise = (node_idx * 0.1 + layer_idx * 0.05) % 0.3
-                activation = base_activation + noise - 0.15
-                activation = max(0.1, min(0.95, activation))
+                # Time-based evolution
+                evolution_factor = (iteration % 100) / 100.0
+                noise = (node_idx * 0.13 + layer_idx * 0.07 + evolution_factor * 0.1) % 0.4
+                activation = base_activation + noise - 0.2
+                activation = max(0.05, min(0.98, activation))
+                
+                # Some nodes randomly die/spawn based on iteration
+                is_active = activation > 0.3 and (node_idx + iteration) % 7 != 0
                 
                 nodes.append({
                     'id': node_id,
                     'layer': layer_idx,
                     'activation': float(activation),
-                    'active': activation > 0.4
+                    'active': is_active
                 })
                 node_id += 1
         
-        # Build connections with weights
+        # Build connections with evolution
         node_offset = 0
         for layer_idx in range(len(layer_sizes) - 1):
             layer_size = layer_sizes[layer_idx]
             next_layer_size = layer_sizes[layer_idx + 1]
             
-            # Sample connections (not all, to keep visualization clean)
-            connection_density = 0.3  # Show 30% of connections
+            connection_density = 0.4  # Show 40% of connections
             
             for i in range(layer_size):
                 for j in range(next_layer_size):
-                    if (i * j + layer_idx) % int(1/connection_density) == 0:
-                        # Generate weight based on training progress
-                        weight = base_activation * ((i + j) % 10) / 10
+                    if (i * j + layer_idx + iteration // 10) % int(1/connection_density) == 0:
+                        weight = base_activation * ((i + j + iteration // 50) % 10) / 10
                         connections.append({
                             'from': node_offset + i,
                             'to': node_offset + layer_size + j,
                             'weight': float(weight),
-                            'active': weight > 0.2
+                            'active': weight > 0.25
                         })
             
             node_offset += layer_size
@@ -295,7 +311,9 @@ def get_network_state():
         return jsonify({
             'nodes': nodes,
             'connections': connections,
-            'layer_sizes': layer_sizes
+            'layer_sizes': layer_sizes,
+            'iteration': iteration,
+            'evolution_factor': float((iteration % 100) / 100.0)
         })
         
     except Exception as e:

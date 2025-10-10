@@ -147,6 +147,39 @@
             padding: 12px;
             background: rgba(0, 0, 0, 0.2);
             border-radius: 8px;
+
+            <div class="card evolution-card">
+                <h2>🧬 Evolution & Mutations</h2>
+                <div id="evolution-stats" class="evolution-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Current Generation:</span>
+                        <span id="current-generation" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Network Mutations:</span>
+                        <span id="mutation-count" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Nodes Created:</span>
+                        <span id="nodes-created" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Nodes Pruned:</span>
+                        <span id="nodes-pruned" class="stat-value">0</span>
+                    </div>
+                </div>
+                <div id="mutation-insights" class="mutation-container">
+                    <p class="empty-state">Evolutionary insights will appear here...</p>
+                </div>
+            </div>
+
+            <div class="card understanding-evolution-card">
+                <h2>💡 Understanding Evolution</h2>
+                <div id="understanding-insights" class="understanding-container">
+                    <p class="empty-state">Learning breakthroughs will appear here...</p>
+                </div>
+            </div>
+
             border-left: 4px solid #a855f7;
         }
 
@@ -280,6 +313,113 @@
 
         .data-management-card {
             grid-column: 1 / -1;
+        }
+
+        .evolution-card, .understanding-evolution-card {
+            background: rgba(147, 51, 234, 0.2);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+        }
+
+        .evolution-stats {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        .mutation-item, .understanding-item {
+            margin: 10px 0;
+            padding: 12px;
+            background: rgba(168, 85, 247, 0.2);
+            border-radius: 8px;
+            border-left: 4px solid #a855f7;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .mutation-type {
+            font-weight: bold;
+            color: #fbbf24;
+            margin-bottom: 5px;
+        }
+
+        .mutation-description {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .mutation-timestamp {
+            font-size: 0.8em;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+
+        /* Enhanced 3D-style node visualization */
+        #neural-canvas {
+            background: radial-gradient(circle at 50% 50%, rgba(30, 30, 60, 0.3), rgba(10, 10, 30, 0.5));
+            box-shadow: inset 0 0 50px rgba(168, 85, 247, 0.2);
+        }
+
+        .node-pulse {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .node-birth {
+            animation: birthAnimation 0.8s ease-out;
+        }
+
+        @keyframes birthAnimation {
+            0% { 
+                transform: scale(0); 
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.3);
+                opacity: 0.8;
+            }
+            100% { 
+                transform: scale(1); 
+                opacity: 1;
+            }
+        }
+
+        .node-death {
+            animation: deathAnimation 0.6s ease-in forwards;
+        }
+
+        @keyframes deathAnimation {
+            0% { 
+                transform: scale(1); 
+                opacity: 1;
+            }
+            100% { 
+                transform: scale(0); 
+                opacity: 0;
+            }
         }
     </style>
 </head>
@@ -447,6 +587,47 @@
 
     <script>
         let updateInterval = 2000;
+
+
+        let understandingInsights = [];
+
+        function addUnderstandingInsight(title, description, iteration) {
+            const insight = {
+                title,
+                description,
+                iteration,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Avoid duplicates
+            const isDuplicate = understandingInsights.some(i => 
+                i.title === title && i.iteration === iteration
+            );
+            
+            if (!isDuplicate) {
+                understandingInsights.push(insight);
+                updateUnderstandingDisplay();
+            }
+        }
+
+        function updateUnderstandingDisplay() {
+            const container = document.getElementById('understanding-insights');
+            if (understandingInsights.length > 0) {
+                let html = '';
+                understandingInsights.slice(-5).reverse().forEach(insight => {
+                    const time = new Date(insight.timestamp).toLocaleTimeString();
+                    html += `
+                        <div class="understanding-item">
+                            <div class="mutation-type">💡 ${insight.title}</div>
+                            <div class="mutation-description">${insight.description}</div>
+                            <div class="mutation-timestamp">Iteration ${insight.iteration} • ${time}</div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            }
+        }
+
         let updateTimer = null;
         let canvas, ctx;
         let nodes = [];
@@ -469,13 +650,15 @@
             animateNetwork();
         }
 
+        let nodesCreated = 0;
+        let nodesPruned = 0;
+        let mutationEvents = [];
+
         function generateNetwork(networkData) {
-            // Don't clear existing nodes, just update/evolve them
             const width = canvas.width / 2;
             const height = canvas.height / 2;
             
             if (!networkData || !networkData.nodes || networkData.nodes.length === 0) {
-                // Keep existing network if no data
                 return;
             }
             
@@ -483,12 +666,28 @@
             const existingNodeIds = new Set(nodes.map(n => n.id));
             const newNodeIds = new Set(networkData.nodes.map(n => n.id));
             
-            // Remove deleted nodes with fade animation
+            // Detect and animate node deletion
+            nodes.forEach(node => {
+                if (!newNodeIds.has(node.id) && !node.deleting) {
+                    node.deleting = true;
+                    node.deletion_start = Date.now();
+                    nodesPruned++;
+                    
+                    // Log mutation event
+                    mutationEvents.push({
+                        type: 'Node Pruned',
+                        description: `Node ${node.id} in layer ${node.layer} removed (low activation)`,
+                        timestamp: new Date().toISOString(),
+                        layer: node.layer
+                    });
+                }
+            });
+            
+            // Remove fully deleted nodes after animation
             nodes = nodes.filter(node => {
-                if (!newNodeIds.has(node.id)) {
-                    // Mark for deletion with fade
-                    node.deletion_fade = 1.0;
-                    return false;
+                if (node.deleting) {
+                    const age = Date.now() - node.deletion_start;
+                    return age < 600; // Keep for 600ms animation
                 }
                 return true;
             });
@@ -504,13 +703,13 @@
             
             const numLayers = Object.keys(layerGroups).length;
             
-            // Update or add nodes
+            // Update or add nodes with enhanced animations
             Object.keys(layerGroups).sort((a, b) => a - b).forEach(layerIdx => {
                 const layer = parseInt(layerIdx);
                 const layerNodes = layerGroups[layerIdx];
                 const x = (width / (numLayers + 1)) * (layer + 1);
                 
-                const maxNodesPerLayer = 20;
+                const maxNodesPerLayer = 30; // Show more nodes
                 const step = Math.ceil(layerNodes.length / maxNodesPerLayer);
                 
                 layerNodes.forEach((node, i) => {
@@ -521,13 +720,24 @@
                         
                         const existingNode = nodes.find(n => n.id === node.id);
                         if (existingNode) {
-                            // Update existing node (smooth transition)
+                            // Smooth position interpolation
                             existingNode.target_x = x;
                             existingNode.target_y = y;
                             existingNode.active = node.active;
+                            const oldActivation = existingNode.activation;
                             existingNode.activation = node.activation;
+                            
+                            // Detect significant activation changes (mutations)
+                            if (Math.abs(oldActivation - node.activation) > 0.3) {
+                                mutationEvents.push({
+                                    type: 'Activation Shift',
+                                    description: `Node ${node.id} activation changed: ${(oldActivation*100).toFixed(1)}% → ${(node.activation*100).toFixed(1)}%`,
+                                    timestamp: new Date().toISOString(),
+                                    layer: layer
+                                });
+                            }
                         } else {
-                            // Add new node with spawn animation
+                            // Create new node with birth animation
                             nodes.push({
                                 id: node.id,
                                 x, y,
@@ -539,14 +749,23 @@
                                 label: layer === 0 && displayIndex === 0 ? 'Input' :
                                        layer === numLayers - 1 && displayIndex === 0 ? 'Output' : '',
                                 spawn_time: Date.now(),
-                                is_new: true
+                                is_new: true,
+                                birth_radius: 0
+                            });
+                            nodesCreated++;
+                            
+                            mutationEvents.push({
+                                type: 'Node Created',
+                                description: `New node ${node.id} emerged in layer ${layer} (activation: ${(node.activation*100).toFixed(1)}%)`,
+                                timestamp: new Date().toISOString(),
+                                layer: layer
                             });
                         }
                     }
                 });
             });
             
-            // Update connections
+            // Update connections with activation flow
             const displayedNodeIds = new Set(nodes.map(n => n.id));
             connections = networkData.connections
                 .filter(conn => displayedNodeIds.has(conn.from) && displayedNodeIds.has(conn.to))
@@ -554,9 +773,13 @@
                     from: nodes.findIndex(n => n.id === conn.from),
                     to: nodes.findIndex(n => n.id === conn.to),
                     weight: conn.weight,
-                    active: conn.active
+                    active: conn.active,
+                    flow_progress: Math.random() // For animated flow
                 }))
                 .filter(conn => conn.from >= 0 && conn.to >= 0);
+            
+            // Update mutation display
+            updateMutationDisplay();
         }
 
         function animateNetwork() {
@@ -566,85 +789,166 @@
             
             ctx.clearRect(0, 0, width, height);
             
-            // Smooth position interpolation for all nodes
+            // Smooth position interpolation with easing
             nodes.forEach(node => {
                 if (node.target_x !== undefined) {
-                    node.x += (node.target_x - node.x) * 0.1;
-                    node.y += (node.target_y - node.y) * 0.1;
+                    const easing = 0.15; // Smoother interpolation
+                    node.x += (node.target_x - node.x) * easing;
+                    node.y += (node.target_y - node.y) * easing;
                 }
             });
             
-            // Draw connections with alpha based on activity
+            // Draw connections with animated flow
             connections.forEach(conn => {
                 if (conn.from >= 0 && conn.from < nodes.length && 
                     conn.to >= 0 && conn.to < nodes.length) {
                     const from = nodes[conn.from];
                     const to = nodes[conn.to];
                     
+                    // Main connection line
                     ctx.beginPath();
                     ctx.moveTo(from.x, from.y);
                     ctx.lineTo(to.x, to.y);
                     
                     if (conn.active && from.active && to.active) {
-                        const alpha = 0.2 + conn.weight * 0.5;
+                        const alpha = 0.3 + conn.weight * 0.5;
                         ctx.strokeStyle = `rgba(168, 85, 247, ${alpha})`;
-                        ctx.lineWidth = 1 + conn.weight * 1.5;
+                        ctx.lineWidth = 1 + conn.weight * 2;
+                        
+                        // Animated flow particle
+                        conn.flow_progress = (conn.flow_progress + 0.02) % 1;
+                        const flowX = from.x + (to.x - from.x) * conn.flow_progress;
+                        const flowY = from.y + (to.y - from.y) * conn.flow_progress;
+                        
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = 'rgba(251, 191, 36, 0.8)';
                     } else {
                         ctx.strokeStyle = 'rgba(168, 85, 247, 0.1)';
                         ctx.lineWidth = 0.5;
+                        ctx.shadowBlur = 0;
                     }
                     ctx.stroke();
+                    
+                    // Draw flow particle
+                    if (conn.active && from.active && to.active) {
+                        const flowX = from.x + (to.x - from.x) * conn.flow_progress;
+                        const flowY = from.y + (to.y - from.y) * conn.flow_progress;
+                        ctx.beginPath();
+                        ctx.arc(flowX, flowY, 2, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(251, 191, 36, 0.9)';
+                        ctx.fill();
+                    }
+                    ctx.shadowBlur = 0;
                 }
             });
             
-            // Draw nodes with animations
+            // Draw nodes with enhanced 3D-style depth
             nodes.forEach(node => {
-                // Spawn animation for new nodes
-                let spawnScale = 1;
+                let scale = 1;
+                let alpha = 1;
+                
+                // Birth animation
                 if (node.is_new && node.spawn_time) {
-                    const age = (Date.now() - node.spawn_time) / 500; // 500ms spawn
-                    spawnScale = Math.min(1, age);
-                    if (age >= 1) {
+                    const age = (Date.now() - node.spawn_time) / 800;
+                    if (age < 1) {
+                        scale = Math.sin(age * Math.PI / 2); // Smooth ease-out
+                        node.birth_radius = scale;
+                    } else {
                         node.is_new = false;
+                        scale = 1;
                     }
                 }
                 
-                const pulse = node.active ? 1 + Math.sin(time * 2 + node.id * 0.1) * 0.2 : 0;
-                const radius = (node.active ? 6 + pulse : 4) * spawnScale;
+                // Death animation
+                if (node.deleting) {
+                    const age = (Date.now() - node.deletion_start) / 600;
+                    scale = 1 - age;
+                    alpha = 1 - age;
+                    if (age >= 1) return; // Don't draw
+                }
+                
+                // Active pulse with 3D depth illusion
+                const pulse = node.active ? 1 + Math.sin(time * 3 + node.id * 0.15) * 0.15 : 0;
+                const baseRadius = 5;
+                const radius = (node.active ? baseRadius + pulse * 2 : baseRadius * 0.8) * scale;
+                
+                // 3D shadow for depth
+                ctx.shadowBlur = node.active ? 15 : 5;
+                ctx.shadowColor = node.active ? 'rgba(168, 85, 247, 0.6)' : 'rgba(0, 0, 0, 0.3)';
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
                 
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
                 
-                const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, radius);
+                // Enhanced gradient with 3D lighting effect
+                const gradient = ctx.createRadialGradient(
+                    node.x - radius * 0.3, node.y - radius * 0.3, 0,
+                    node.x, node.y, radius
+                );
+                
                 if (node.active) {
-                    const intensity = node.activation * spawnScale;
-                    gradient.addColorStop(0, `rgba(251, 191, 36, ${intensity})`);
-                    gradient.addColorStop(1, `rgba(168, 85, 247, ${intensity * 0.8})`);
+                    const intensity = node.activation * alpha;
+                    gradient.addColorStop(0, `rgba(255, 215, 100, ${intensity})`);
+                    gradient.addColorStop(0.4, `rgba(251, 191, 36, ${intensity * 0.9})`);
+                    gradient.addColorStop(1, `rgba(168, 85, 247, ${intensity * 0.7})`);
                 } else {
-                    gradient.addColorStop(0, `rgba(118, 75, 162, ${0.4 * spawnScale})`);
-                    gradient.addColorStop(1, `rgba(91, 33, 182, ${0.3 * spawnScale})`);
+                    gradient.addColorStop(0, `rgba(150, 100, 200, ${0.5 * alpha})`);
+                    gradient.addColorStop(1, `rgba(91, 33, 182, ${0.3 * alpha})`);
                 }
                 
                 ctx.fillStyle = gradient;
                 ctx.fill();
                 
+                // Outer glow ring
                 ctx.strokeStyle = node.active ? 
-                    `rgba(251, 191, 36, ${(0.6 + pulse * 0.3) * spawnScale})` : 
-                    `rgba(168, 85, 247, ${0.4 * spawnScale})`;
-                ctx.lineWidth = node.active ? 2 : 1;
+                    `rgba(251, 191, 36, ${(0.7 + pulse * 0.3) * alpha})` : 
+                    `rgba(168, 85, 247, ${0.4 * alpha})`;
+                ctx.lineWidth = node.active ? 2.5 : 1.5;
                 ctx.stroke();
                 
-                // Draw labels
-                if (node.label && spawnScale > 0.8) {
-                    ctx.fillStyle = `rgba(255, 255, 255, ${spawnScale})`;
-                    ctx.font = 'bold 12px sans-serif';
-                    ctx.fillText(node.label, node.x + 12, node.y + 4);
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // Labels with better visibility
+                if (node.label && scale > 0.8) {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.font = 'bold 11px sans-serif';
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+                    ctx.lineWidth = 3;
+                    ctx.strokeText(node.label, node.x + 14, node.y + 4);
+                    ctx.fillText(node.label, node.x + 14, node.y + 4);
                 }
             });
             
             animationFrame = requestAnimationFrame(animateNetwork);
         }
         
+        function updateMutationDisplay() {
+            // Update evolution stats
+            document.getElementById('nodes-created').textContent = nodesCreated;
+            document.getElementById('nodes-pruned').textContent = nodesPruned;
+            document.getElementById('mutation-count').textContent = mutationEvents.length;
+            
+            // Display recent mutations (last 5)
+            const mutationContainer = document.getElementById('mutation-insights');
+            if (mutationEvents.length > 0) {
+                let html = '';
+                mutationEvents.slice(-5).reverse().forEach(mutation => {
+                    const time = new Date(mutation.timestamp).toLocaleTimeString();
+                    html += `
+                        <div class="mutation-item">
+                            <div class="mutation-type">🧬 ${mutation.type}</div>
+                            <div class="mutation-description">${mutation.description}</div>
+                            <div class="mutation-timestamp">Layer ${mutation.layer} • ${time}</div>
+                        </div>
+                    `;
+                });
+                mutationContainer.innerHTML = html;
+            }
+        }
+
         function updateDashboard() {
             // Fetch network visualization data
             fetch('/api/network_state')
@@ -731,6 +1035,18 @@
                     
                     document.getElementById('training-speed').textContent = `${speed} iter/s`;
                     document.getElementById('total-iterations').textContent = data.iteration;
+                    document.getElementById('current-generation').textContent = Math.floor(data.iteration / 100);
+                    
+                    // Track understanding breakthroughs
+                    if (data.understanding_score >= 0.99 && data.understanding_score < 0.995) {
+                        addUnderstandingInsight('Near Perfect Understanding', 
+                            `Achieved ${(data.understanding_score * 100).toFixed(2)}% understanding in ${data.current_stage} stage`,
+                            data.iteration);
+                    } else if (data.understanding_score >= 0.999) {
+                        addUnderstandingInsight('Mastery Achieved', 
+                            `Perfect understanding (${(data.understanding_score * 100).toFixed(3)}%) - Stage ready for advancement`,
+                            data.iteration);
+                    }
                     
                     lastIterationCount = data.iteration;
                     lastIterationTime = currentTime;
