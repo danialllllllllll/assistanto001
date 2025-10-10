@@ -17,7 +17,7 @@ from philosophy.reasoning_rules import ReasoningRules
 from knowledge.storage import KnowledgeStorage
 from interfaces.app import start_flask_background, update_training_state, update_personality, add_philosophy_insight, update_core_values, add_to_history, update_web_knowledge, set_progress_estimator
 from knowledge.web_learning import WebKnowledgeAcquisition
-from core.progress_estimator import ProgressEstimator
+from core.progress_estimator import AdvancedProgressEstimator
 from core.ai_assistant import AIAssistant
 from interfaces.ai_api import update_ai_state
 
@@ -444,7 +444,7 @@ reasoning_rules = ReasoningRules()
 thinker = ThinkerEngine(reasoning_rules)
 knowledge = KnowledgeStorage()
 web_learning = WebKnowledgeAcquisition()
-progress_estimator = ProgressEstimator(total_stages=len(stages), understanding_threshold=0.999)
+progress_estimator = AdvancedProgressEstimator(total_stages=len(stages), understanding_threshold=0.999)
 ai_assistant = AIAssistant(network=network, thinker=thinker, personality=personality, knowledge=knowledge)
 optimizer = TrainingOptimizer()
 archiver = HierarchicalArchiver()  # NEW: Hierarchical archiving system
@@ -476,6 +476,9 @@ for stage_idx, stage_info in enumerate(stages):
 
     # Set archiver phase
     archiver.set_phase(stage_name)
+    
+    # Start stage tracking in estimator
+    progress_estimator.start_stage(stage_idx, stage_name)
 
     print(f"\n{'='*80}")
     print(f"STAGE {stage_idx + 1}/{len(stages)}: {stage_name}")

@@ -691,20 +691,20 @@
                     document.getElementById('iteration-count').textContent = `Iteration: ${data.iteration}`;
                     
                     if (data.time_estimate) {
-                        const nextETA = data.time_estimate.next_stage_eta || 'Calculating...';
-                        const totalETA = data.time_estimate.total_completion_eta || 'Calculating...';
+                        const nextETA = data.time_estimate.next_stage_eta || 'Analyzing...';
+                        const totalETA = data.time_estimate.total_completion_eta || 'Analyzing...';
                         const nextConf = data.time_estimate.stage_confidence || 0;
                         const totalConf = data.time_estimate.total_confidence || 0;
+                        const method = data.time_estimate.stage_method || '';
                         
-                        document.getElementById('time-estimate').textContent = nextETA;
-                        document.getElementById('total-estimate').textContent = totalETA;
+                        // Update confidence indicators with method info
+                        const confEmoji = (conf) => conf > 0.8 ? '🎯' : conf > 0.6 ? '📊' : conf > 0.3 ? '📈' : '🔮';
+                        const methodEmoji = method === 'ensemble' ? '🧮' : method === 'kalman' ? '📡' : '';
                         
-                        // Update confidence indicators
-                        const confEmoji = (conf) => conf > 0.7 ? '🎯' : conf > 0.4 ? '📊' : '🔮';
                         document.getElementById('time-estimate').textContent = 
-                            `${confEmoji(nextConf)} ${nextETA}`;
+                            `${confEmoji(nextConf)}${methodEmoji} ${nextETA} (${(nextConf*100).toFixed(0)}%)`;
                         document.getElementById('total-estimate').textContent = 
-                            `${confEmoji(totalConf)} ${totalETA}`;
+                            `${confEmoji(totalConf)} ${totalETA} (${(totalConf*100).toFixed(0)}%)`;
                     }
                     
                     // Archive status

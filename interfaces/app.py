@@ -28,15 +28,24 @@ def background_eta_calculator():
                     training_state['time_estimate']['next_stage_eta'] = stage_eta.get('eta_formatted', 'Calculating...')
                     training_state['time_estimate']['next_stage_eta_seconds'] = stage_eta.get('eta_seconds', None)
                     training_state['time_estimate']['stage_confidence'] = stage_eta.get('confidence', 0.5)
+                    training_state['time_estimate']['stage_method'] = stage_eta.get('method', 'unknown')
+                else:
+                    training_state['time_estimate']['next_stage_eta'] = 'Analyzing...'
+                    training_state['time_estimate']['stage_confidence'] = 0.0
                 
                 if total_eta:
                     training_state['time_estimate']['total_completion_eta'] = total_eta.get('eta_formatted', 'Unknown')
                     training_state['time_estimate']['total_completion_eta_seconds'] = total_eta.get('eta_seconds', None)
                     training_state['time_estimate']['total_confidence'] = total_eta.get('confidence', 0.5)
+                else:
+                    training_state['time_estimate']['total_completion_eta'] = 'Analyzing...'
+                    training_state['time_estimate']['total_confidence'] = 0.0
         except Exception as e:
             print(f"Background ETA error: {e}")
+            import traceback
+            traceback.print_exc()
         
-        time.sleep(2)  # Update every 2 seconds
+        time.sleep(1)  # Update every second for more responsive UI
 
 # Start background ETA calculator
 eta_thread = threading.Thread(target=background_eta_calculator, daemon=True)
