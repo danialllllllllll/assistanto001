@@ -654,12 +654,9 @@ except ImportError:
     print("✓ Mock Genetic Trainer initialized (fallback)")
 
 
-from core.autonomous_debugger import autonomous_debugger
-
 print("✓ Hierarchical archiving system initialized")
 print("✓ Phase-specific training algorithms loaded")
 print("✓ Web-based knowledge acquisition ready")
-print("✓ Autonomous debugger initialized and monitoring")
 
 core_values_list = [
     {"name": v['name'], "priority": v['priority'], "status": "Enforced"}
@@ -691,14 +688,6 @@ for stage_idx, stage_info in enumerate(stages):
     print(f"STAGE {stage_idx + 1}/{len(stages)}: {stage_name}")
     print(f"{'='*80}")
 
-    # RESET network to force actual learning for this stage
-    # (Don't start with 100% understanding from previous stage)
-    if stage_idx > 0:
-        # Slightly perturb weights to force relearning
-        for layer in network.layers:
-            if hasattr(layer, 'weights'):
-                layer.weights += np.random.randn(*layer.weights.shape) * 0.01
-    
     iteration = 0
     stage_passed = False
     understanding_score = 0.0
@@ -742,13 +731,11 @@ for stage_idx, stage_info in enumerate(stages):
         elif stage_name == "Scholar":
             phase_metrics = phase_algorithms.train_scholar(network, X_batch, y_batch, current_lr, web_learning)
             if 'web_knowledge' in phase_metrics:
-                update_web_knowledge(
-                    topic=phase_metrics['web_knowledge'],
-                    stats={
-                        'stage': stage_name,
-                        'timestamp': datetime.now().isoformat()
-                    }
-                )
+                update_web_knowledge({
+                    'topic': phase_metrics['web_knowledge'],
+                    'stage': stage_name,
+                    'timestamp': datetime.now().isoformat()
+                })
         elif stage_name == "Thinker":
             phase_metrics = phase_algorithms.train_thinker(
                 network, X_batch, y_batch, current_lr,
@@ -756,40 +743,26 @@ for stage_idx, stage_info in enumerate(stages):
             )
             update_personality(personality.traits)
             for topic in phase_metrics.get('learned_topics', []):
-                update_web_knowledge(
-                    topic=topic,
-                    stats={
-                        'stage': stage_name,
-                        'timestamp': datetime.now().isoformat()
-                    }
-                )
+                update_web_knowledge({
+                    'topic': topic,
+                    'stage': stage_name,
+                    'timestamp': datetime.now().isoformat()
+                })
 
         # Every 10 iterations, run genetic algorithm generation with mutation tracking
-        # BUT only if we haven't already achieved perfect understanding
-        if iteration % 10 == 0 and understanding_score < 0.99:
-            # Use autonomous debugger to monitor and fix errors
-            ga_stats = autonomous_debugger.monitor_execution(
-                genetic_trainer.evolve_generation, X_batch, y_batch
-            )
-            
-            # Check if evolution succeeded
-            if ga_stats is None:
-                print(f"  ⚠️ Generation evolution failed - using fallback training")
-                # Fallback: just do gradient descent without GA
-                network.forward(X_batch, training=True)
-                network.backward(X_batch, y_batch, current_lr)
-            else:
-                print(f"  🧬 Generation {ga_stats['generation']}: "
-                      f"Best Fitness={ga_stats['best_fitness']:.4f}, "
-                      f"Avg={ga_stats['avg_fitness']:.4f}, "
-                      f"Diversity={ga_stats['population_diversity']:.3f}")
+        if iteration % 10 == 0:
+            ga_stats = genetic_trainer.evolve_generation(X_batch, y_batch)
+            print(f"  🧬 Generation {ga_stats['generation']}: "
+                  f"Best Fitness={ga_stats['best_fitness']:.4f}, "
+                  f"Avg={ga_stats['avg_fitness']:.4f}, "
+                  f"Diversity={ga_stats['population_diversity']:.3f}")
 
             # Track mutations and evolution
             evolution_events = []
             mutation_list = []
 
-            # Analyze network changes (only if GA succeeded)
-            if ga_stats and genetic_trainer.best_network:
+            # Analyze network changes
+            if genetic_trainer.best_network:
                 network = genetic_trainer.best_network
 
                 # Check for structural mutations
@@ -801,24 +774,31 @@ for stage_idx, stage_info in enumerate(stages):
                             'fitness': ga_stats['best_fitness'],
                             'timestamp': datetime.now().isoformat()
                         })
-                
-                # Get ACTUAL structural mutations from network
-                evolution_events = []
-                if hasattr(network, 'structural_mutations'):
-                    for mutation in network.structural_mutations:
+
+                # Track node creation/pruning based on activation patterns
+                for i, activation in enumerate(network.activations if hasattr(network, 'activations') else []):
+                    active_nodes = np.sum(activation > 0.3)
+                    total_nodes = activation.size if hasattr(activation, 'size') else len(activation)
+
+                    if active_nodes < total_nodes * 0.7:  # Pruning opportunity
                         evolution_events.append({
-                            'type': mutation['type'],
-                            'layer': mutation['layer'],
-                            'count': mutation['count'],
-                            'new_size': mutation.get('new_size', 0),
+                            'type': 'node_pruning',
+                            'layer': i,
+                            'count': total_nodes - active_nodes,
                             'generation': ga_stats['generation']
                         })
-                    # Clear after recording
-                    network.structural_mutations = []
 
-                # Get actual counts from network
-                nodes_created = getattr(network, 'nodes_created_count', 0)
-                nodes_pruned = getattr(network, 'nodes_pruned_count', 0)
+                    if active_nodes > total_nodes * 0.95:  # Growth opportunity
+                        evolution_events.append({
+                            'type': 'node_creation',
+                            'layer': i,
+                            'count': int(total_nodes * 0.1),
+                            'generation': ga_stats['generation']
+                        })
+
+                # Update evolution tracking
+                nodes_created = sum(e['count'] for e in evolution_events if e['type'] == 'node_creation')
+                nodes_pruned = sum(e['count'] for e in evolution_events if e['type'] == 'node_pruning')
 
                 update_evolution(
                     generation=ga_stats['generation'],
