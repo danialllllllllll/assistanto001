@@ -22,16 +22,21 @@ class CoreValuesGuard:
             return True
         
         # Check for tampering
+        repairs_made = []
         for key, value in cls.IMMUTABLE_VALUES.items():
             if network.core_values_lock.get(key) != value:
                 # REPAIR: Restore immutable values
                 network.core_values_lock[key] = value
-                print(f"⚠️ CORE VALUES GUARD: Repaired {key} to {value}")
+                repairs_made.append(key)
         
         # Ensure lock is present
         if not network.core_values_lock.get('locked'):
             network.core_values_lock['locked'] = True
-            print("⚠️ CORE VALUES GUARD: Re-locked core values")
+            repairs_made.append('lock')
+        
+        # Only print if repairs were actually needed
+        if repairs_made:
+            print(f"⚠️ CORE VALUES GUARD: Repaired {', '.join(repairs_made)}")
         
         return True
     

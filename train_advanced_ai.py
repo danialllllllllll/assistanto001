@@ -691,6 +691,14 @@ for stage_idx, stage_info in enumerate(stages):
     print(f"STAGE {stage_idx + 1}/{len(stages)}: {stage_name}")
     print(f"{'='*80}")
 
+    # RESET network to force actual learning for this stage
+    # (Don't start with 100% understanding from previous stage)
+    if stage_idx > 0:
+        # Slightly perturb weights to force relearning
+        for layer in network.layers:
+            if hasattr(layer, 'weights'):
+                layer.weights += np.random.randn(*layer.weights.shape) * 0.01
+    
     iteration = 0
     stage_passed = False
     understanding_score = 0.0
@@ -734,11 +742,13 @@ for stage_idx, stage_info in enumerate(stages):
         elif stage_name == "Scholar":
             phase_metrics = phase_algorithms.train_scholar(network, X_batch, y_batch, current_lr, web_learning)
             if 'web_knowledge' in phase_metrics:
-                update_web_knowledge({
-                    'topic': phase_metrics['web_knowledge'],
-                    'stage': stage_name,
-                    'timestamp': datetime.now().isoformat()
-                })
+                update_web_knowledge(
+                    topic=phase_metrics['web_knowledge'],
+                    stats={
+                        'stage': stage_name,
+                        'timestamp': datetime.now().isoformat()
+                    }
+                )
         elif stage_name == "Thinker":
             phase_metrics = phase_algorithms.train_thinker(
                 network, X_batch, y_batch, current_lr,
@@ -746,14 +756,17 @@ for stage_idx, stage_info in enumerate(stages):
             )
             update_personality(personality.traits)
             for topic in phase_metrics.get('learned_topics', []):
-                update_web_knowledge({
-                    'topic': topic,
-                    'stage': stage_name,
-                    'timestamp': datetime.now().isoformat()
-                })
+                update_web_knowledge(
+                    topic=topic,
+                    stats={
+                        'stage': stage_name,
+                        'timestamp': datetime.now().isoformat()
+                    }
+                )
 
         # Every 10 iterations, run genetic algorithm generation with mutation tracking
-        if iteration % 10 == 0:
+        # BUT only if we haven't already achieved perfect understanding
+        if iteration % 10 == 0 and understanding_score < 0.99:
             # Use autonomous debugger to monitor and fix errors
             ga_stats = autonomous_debugger.monitor_execution(
                 genetic_trainer.evolve_generation, X_batch, y_batch
