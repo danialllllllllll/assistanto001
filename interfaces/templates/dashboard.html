@@ -623,6 +623,59 @@
                 </div>
             </div>
 
+            <div class="card evolution-card">
+                <h2>🧬 Evolution & Mutations</h2>
+                <div id="evolution-stats" class="evolution-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Current Generation:</span>
+                        <span id="current-generation" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Network Mutations:</span>
+                        <span id="mutation-count" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Nodes Created:</span>
+                        <span id="nodes-created" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Nodes Pruned:</span>
+                        <span id="nodes-pruned" class="stat-value">0</span>
+                    </div>
+                </div>
+                <div id="mutation-insights" class="mutation-container">
+                    <p class="empty-state">Evolutionary insights will appear here...</p>
+                </div>
+            </div>
+
+            <div class="card understanding-evolution-card">
+                <h2>💡 Understanding Evolution</h2>
+                <div id="understanding-insights" class="understanding-container">
+                    <p class="empty-state">Learning breakthroughs will appear here...</p>
+                </div>
+            </div>
+
+            <div class="card mutation-chart-card">
+                <h2>📊 Code Mutation Analysis</h2>
+                <div class="chart-container">
+                    <canvas id="mutation-chart" width="300" height="300"></canvas>
+                </div>
+                <div class="mutation-stats-grid">
+                    <div class="mutation-stat-box">
+                        <div class="mutation-stat-label">Self-Optimizations</div>
+                        <div class="mutation-stat-value" id="self-opt-count">0</div>
+                    </div>
+                    <div class="mutation-stat-box">
+                        <div class="mutation-stat-label">Node Creations</div>
+                        <div class="mutation-stat-value" id="node-create-count">0</div>
+                    </div>
+                    <div class="mutation-stat-box">
+                        <div class="mutation-stat-label">Node Deletions</div>
+                        <div class="mutation-stat-value" id="node-delete-count">0</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="card data-management-card">
                 <h2>📊 Data Management & Stats</h2>
                 <div class="stats-grid">
@@ -1232,7 +1285,7 @@
                 });
 
             // Fetch other data endpoints
-            ['personality', 'philosophy', 'progress', 'web_knowledge'].forEach(endpoint => {
+            ['personality', 'philosophy', 'progress', 'web_knowledge', 'evolution'].forEach(endpoint => {
                 fetch(`/api/${endpoint}`)
                     .then(response => response.json())
                     .then(data => {
@@ -1300,6 +1353,60 @@
                                         <div class="knowledge-item">
                                             <div><strong>📖 ${item.topic}</strong></div>
                                             <div style="font-size:0.9em;opacity:0.8;margin-top:5px;">${item.stage}</div>
+                                        </div>
+                                    `;
+                                });
+                                container.innerHTML = html;
+                            }
+                        } else if (endpoint === 'evolution') {
+                            // Update generation counter
+                            document.getElementById('current-generation').textContent = data.generation || 0;
+                            document.getElementById('mutation-count').textContent = (data.mutations || []).length;
+                            document.getElementById('nodes-created').textContent = data.nodes_created || 0;
+                            document.getElementById('nodes-pruned').textContent = data.nodes_pruned || 0;
+                            
+                            // Update mutation chart
+                            mutationChartData.selfOptimizations = (data.mutations || []).filter(m => m.type === 'adaptive_momentum' || m.type === 'layer_wise').length;
+                            mutationChartData.nodeCreations = data.nodes_created || 0;
+                            mutationChartData.nodeDeletions = data.nodes_pruned || 0;
+                            
+                            document.getElementById('self-opt-count').textContent = mutationChartData.selfOptimizations;
+                            document.getElementById('node-create-count').textContent = mutationChartData.nodeCreations;
+                            document.getElementById('node-delete-count').textContent = mutationChartData.nodeDeletions;
+                            
+                            if (mutationChart) {
+                                mutationChart.draw();
+                            }
+                            
+                            // Display mutation insights
+                            if (data.mutations && data.mutations.length > 0) {
+                                const container = document.getElementById('mutation-insights');
+                                let html = '';
+                                data.mutations.slice(-5).reverse().forEach(mutation => {
+                                    const time = new Date(mutation.timestamp).toLocaleTimeString();
+                                    html += `
+                                        <div class="mutation-item">
+                                            <div class="mutation-type">🧬 ${mutation.type.replace('_', ' ').toUpperCase()}</div>
+                                            <div class="mutation-description">Fitness: ${(mutation.fitness * 100).toFixed(1)}%</div>
+                                            <div class="mutation-timestamp">Gen ${mutation.generation} • ${time}</div>
+                                        </div>
+                                    `;
+                                });
+                                container.innerHTML = html;
+                            }
+                            
+                            // Display evolution events
+                            if (data.evolution_events && data.evolution_events.length > 0) {
+                                const container = document.getElementById('understanding-insights');
+                                let html = '';
+                                data.evolution_events.slice(-5).reverse().forEach(event => {
+                                    const emoji = event.type === 'node_creation' ? '➕' : '✂️';
+                                    const action = event.type === 'node_creation' ? 'Created' : 'Pruned';
+                                    html += `
+                                        <div class="understanding-item">
+                                            <div class="mutation-type">${emoji} ${action} Nodes</div>
+                                            <div class="mutation-description">Layer ${event.layer}: ${event.count} nodes ${action.toLowerCase()}</div>
+                                            <div class="mutation-timestamp">Generation ${event.generation}</div>
                                         </div>
                                     `;
                                 });

@@ -84,7 +84,12 @@ training_state = {
         'total_confidence': 0.0
     },
     'last_iteration_time': None,
-    'last_understanding_update': None
+    'last_understanding_update': None,
+    'generation': 0,
+    'mutations': [],
+    'nodes_created': 0,
+    'nodes_pruned': 0,
+    'evolution_events': []
 }
 
 def set_progress_estimator(estimator):
@@ -164,6 +169,15 @@ def update_web_knowledge(knowledge_items, stats):
     web_knowledge_state['recent_knowledge'] = knowledge_items
     web_knowledge_state['stats'] = stats
 
+def update_evolution(generation, mutations, nodes_created, nodes_pruned, evolution_events):
+    """Update evolution and mutation data"""
+    global training_state
+    training_state['generation'] = generation
+    training_state['mutations'] = mutations[-20:]  # Keep last 20
+    training_state['nodes_created'] = nodes_created
+    training_state['nodes_pruned'] = nodes_pruned
+    training_state['evolution_events'] = evolution_events[-20:]  # Keep last 20
+
 @app.route('/')
 def dashboard():
     """Serve the main dashboard"""
@@ -232,6 +246,17 @@ def get_web_knowledge():
         'recent_knowledge': web_knowledge_state['recent_knowledge'],
         'stats': web_knowledge_state['stats'],
         'active': True
+    })
+
+@app.route('/api/evolution')
+def get_evolution():
+    """Get evolution and mutation data"""
+    return jsonify({
+        'generation': training_state.get('generation', 0),
+        'mutations': training_state.get('mutations', []),
+        'nodes_created': training_state.get('nodes_created', 0),
+        'nodes_pruned': training_state.get('nodes_pruned', 0),
+        'evolution_events': training_state.get('evolution_events', [])
     })
 
 @app.route('/api/network_state')

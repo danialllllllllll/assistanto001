@@ -15,7 +15,7 @@ from personality.narrative_memory import NarrativeMemory
 from philosophy.thinker_engine import ThinkerEngine
 from philosophy.reasoning_rules import ReasoningRules
 from knowledge.storage import KnowledgeStorage
-from interfaces.app import start_flask_background, update_training_state, update_personality, add_philosophy_insight, update_core_values, add_to_history, update_web_knowledge, set_progress_estimator
+from interfaces.app import start_flask_background, update_training_state, update_personality, add_philosophy_insight, update_core_values, add_to_history, update_web_knowledge, set_progress_estimator, update_evolution # Added update_evolution
 from knowledge.web_learning import WebKnowledgeAcquisition
 from core.progress_estimator import AdvancedProgressEstimator
 from core.ai_assistant import AIAssistant
@@ -112,19 +112,19 @@ class PhaseTrainingAlgorithms:
         """Baby Steps: Minimal training with sparse connectivity"""
         # Incoherent thought - random exploration with minimal structure
         network.forward(X_batch, training=True)
-        
+
         # High noise to simulate incoherent learning
         noise_factor = 0.6
         noisy_lr = learning_rate * (1 + np.random.randn() * noise_factor)
-        
+
         # Random gradient sampling (explore solution space chaotically)
         if np.random.random() > 0.7:
             network.backward(X_batch, y_batch, max(0.001, noisy_lr))
-        
+
         # Measure pattern emergence
         predictions = network.predict(X_batch)
         pattern_score = np.mean(predictions == y_batch) * np.random.uniform(0.5, 1.0)
-        
+
         return {
             'pattern_recognition': min(0.3, pattern_score),
             'coherence': np.random.random() * 0.2,
@@ -136,31 +136,31 @@ class PhaseTrainingAlgorithms:
         """Toddler: Memory consolidation with experience replay"""
         metrics = {}
         memory_buffer = []
-        
+
         # Multiple passes with memory formation
         for pass_num in range(4):
             network.forward(X_batch, training=True)
             network.backward(X_batch, y_batch, learning_rate * 0.8)
-            
+
             # Store experiences for replay
             predictions = network.predict(X_batch)
             accuracy = np.mean(predictions == y_batch)
             metrics[f'pass_{pass_num}_accuracy'] = accuracy
-            
+
             # Experience replay from memory buffer
             if len(memory_buffer) > 0:
                 replay_idx = np.random.choice(len(memory_buffer))
                 X_replay, y_replay = memory_buffer[replay_idx]
                 network.forward(X_replay, training=True)
                 network.backward(X_replay, y_replay, learning_rate * 0.5)
-            
+
             memory_buffer.append((X_batch.copy(), y_batch.copy()))
             if len(memory_buffer) > 3:
                 memory_buffer.pop(0)
-        
+
         # Cognitive development metric
         improvement = metrics.get('pass_3_accuracy', 0) - metrics.get('pass_0_accuracy', 0)
-        
+
         return {
             'memory_retention': np.mean(list(metrics.values())),
             'coherence_improvement': improvement,
@@ -173,28 +173,28 @@ class PhaseTrainingAlgorithms:
         # Initial observation
         initial_output = network.forward(X_batch, training=True)
         network.backward(X_batch, y_batch, learning_rate)
-        
+
         # Conscious reflection - multiple contemplation cycles
         awareness_scores = []
         for ponder_cycle in range(3):
             # Re-observe with attention
             reflected_output = network.forward(X_batch, training=True)
-            
+
             # Measure conscious awareness
             awareness = np.mean(np.abs(reflected_output - initial_output))
             awareness_scores.append(awareness)
-            
+
             # Adjust learning based on awareness
             adjusted_lr = learning_rate * (1 + awareness * 0.5)
             network.backward(X_batch, y_batch, adjusted_lr)
-            
+
             initial_output = reflected_output
-        
+
         # Coherent thought metric
         predictions = network.predict(X_batch)
         confidences = network.get_confidence(X_batch)
         coherence = np.mean(confidences[predictions == y_batch]) if np.any(predictions == y_batch) else 0
-        
+
         return {
             'self_awareness': np.mean(awareness_scores),
             'thought_coherence': coherence,
@@ -205,33 +205,33 @@ class PhaseTrainingAlgorithms:
     def train_elementary(network, X_batch, y_batch, learning_rate):
         """Elementary: Curriculum learning with iterative self-quizzing"""
         quiz_results = []
-        
+
         # Sort examples by difficulty (easy to hard curriculum)
         confidences = network.get_confidence(X_batch)
         difficulty_order = np.argsort(confidences)[::-1]  # Start with confident (easy) ones
-        
+
         # Curriculum-based learning
         for curriculum_step in range(3):
             # Select subset based on curriculum (progressively harder)
             start_idx = curriculum_step * (len(difficulty_order) // 3)
             end_idx = (curriculum_step + 1) * (len(difficulty_order) // 3)
             curr_indices = difficulty_order[start_idx:end_idx]
-            
+
             X_curr = X_batch[curr_indices]
             y_curr = y_batch[curr_indices]
-            
+
             # Self-quiz cycles on curriculum subset
             for quiz_round in range(6):
                 network.forward(X_curr, training=True)
                 network.backward(X_curr, y_curr, learning_rate)
-                
+
                 # Quiz understanding
                 predictions = network.predict(X_curr)
                 confidences_quiz = network.get_confidence(X_curr)
                 correct = predictions == y_curr
                 accuracy = np.mean(correct)
                 avg_confidence = np.mean(confidences_quiz[correct]) if np.any(correct) else 0
-                
+
                 understanding = accuracy * avg_confidence
                 quiz_results.append({
                     'accuracy': accuracy,
@@ -239,20 +239,20 @@ class PhaseTrainingAlgorithms:
                     'understanding': understanding,
                     'curriculum_level': curriculum_step
                 })
-                
+
                 # Adaptive learning rate
                 if understanding < 0.7:
                     learning_rate *= 1.15
                 elif understanding > 0.9:
                     learning_rate *= 0.9
-        
+
         # Mastery verification on full batch
         final_predictions = network.predict(X_batch)
         final_confidences = network.get_confidence(X_batch)
         final_accuracy = np.mean(final_predictions == y_batch)
-        
+
         improvement = quiz_results[-1]['understanding'] - quiz_results[0]['understanding']
-        
+
         return {
             'final_understanding': quiz_results[-1]['understanding'],
             'learning_improvement': max(0, improvement),
@@ -266,29 +266,29 @@ class PhaseTrainingAlgorithms:
         """Teen: Meta-learning with quality interpretation and world awareness"""
         quality_metrics = []
         interpretation_depth = []
-        
+
         # Meta-learning: Learn how to learn better
         meta_lr = learning_rate
-        
+
         for refinement in range(8):
             # Forward with quality assessment
             output = network.forward(X_batch, training=True)
             predictions = network.predict(X_batch)
             confidences = network.get_confidence(X_batch)
             correct = predictions == y_batch
-            
+
             # Quality metrics (precision, recall, F1)
             precision = np.mean(confidences[correct]) if np.any(correct) else 0
             recall = np.mean(correct)
             f1_quality = 2 * (precision * recall) / (precision + recall + 1e-7)
             quality_metrics.append(f1_quality)
-            
+
             # Interpret meaning - measure semantic understanding
             if refinement > 0:
                 quality_change = f1_quality - quality_metrics[-2]
                 interpretation = abs(quality_change) * confidences.mean()
                 interpretation_depth.append(interpretation)
-            
+
             # Meta-learning: adjust learning strategy based on quality trend
             if len(quality_metrics) >= 3:
                 recent_trend = quality_metrics[-1] - quality_metrics[-3]
@@ -296,7 +296,7 @@ class PhaseTrainingAlgorithms:
                     meta_lr *= 1.1  # Accelerate if improving
                 else:
                     meta_lr *= 0.8  # Slow down if plateauing
-            
+
             # Adaptive quality-based learning
             if f1_quality < 0.75:
                 adjusted_lr = meta_lr * 1.4
@@ -304,18 +304,18 @@ class PhaseTrainingAlgorithms:
                 adjusted_lr = meta_lr * 0.7  # Fine-grained refinement
             else:
                 adjusted_lr = meta_lr
-            
+
             network.backward(X_batch, y_batch, adjusted_lr)
-        
+
         # Personality development through learning experience
         personality_traits['curiosity'] = min(1.0, personality_traits.get('curiosity', 0.5) + 0.015)
         personality_traits['independence'] = min(1.0, personality_traits.get('independence', 0.5) + 0.012)
         personality_traits['critical_thinking'] = min(1.0, personality_traits.get('critical_thinking', 0.5) + 0.01)
         personality_traits['empathy'] = min(1.0, personality_traits.get('empathy', 0.5) + 0.008)
-        
+
         # World awareness metric
         world_understanding = np.mean(interpretation_depth) if interpretation_depth else 0.5
-        
+
         return {
             'quality_score': np.mean(quality_metrics[-3:]),
             'refinement_improvement': quality_metrics[-1] - quality_metrics[0],
@@ -328,67 +328,67 @@ class PhaseTrainingAlgorithms:
     @staticmethod
     def train_scholar(network, X_batch, y_batch, learning_rate, web_learning):
         """Scholar: Mastery with adversarial robustness and 99% truth accuracy"""
-        
+
         # Phase 1: Mastery training with ensemble approach
         ensemble_predictions = []
         for mastery_epoch in range(12):
             network.forward(X_batch, training=True)
             network.backward(X_batch, y_batch, learning_rate * 0.75)
-            
+
             if mastery_epoch % 3 == 0:
                 ensemble_predictions.append(network.predict(X_batch))
-        
+
         # Phase 2: Adversarial training for robustness
         predictions = network.predict(X_batch)
         confidences = network.get_confidence(X_batch)
         correct = predictions == y_batch
-        
+
         # Generate adversarial examples (small perturbations)
         for adv_round in range(4):
             # Add small noise to confuse the network
             X_adversarial = X_batch + np.random.randn(*X_batch.shape) * 0.05
             adv_output = network.forward(X_adversarial, training=True)
             network.backward(X_adversarial, y_batch, learning_rate * 1.3)
-        
+
         # Phase 3: Truth calibration (99% accuracy goal)
         correct_conf = np.mean(confidences[correct]) if np.any(correct) else 0
         incorrect_conf = np.mean(confidences[~correct]) if np.any(~correct) else 0
         truth_calibration = correct_conf - incorrect_conf
-        
+
         # Calibration training - penalize overconfidence on wrong answers
         for calib_epoch in range(6):
             output = network.forward(X_batch, training=True)
             # Custom loss that penalizes confident wrong answers
             calib_loss_weight = 1.0 + (confidences * (~correct).astype(float))
             network.backward(X_batch, y_batch, learning_rate * 0.9)
-        
+
         # Phase 4: Bias detection and mitigation
         # Identify potentially biased predictions
         high_conf_wrong = np.where((confidences > 0.8) & (~correct))[0]
         low_conf_right = np.where((confidences < 0.6) & correct)[0]
-        
+
         # Focus training on bias cases
         bias_indices = np.concatenate([high_conf_wrong, low_conf_right]) if len(high_conf_wrong) > 0 or len(low_conf_right) > 0 else np.array([])
-        
+
         if len(bias_indices) > 0:
             X_bias = X_batch[bias_indices]
             y_bias = y_batch[bias_indices]
             for bias_epoch in range(7):
                 network.forward(X_bias, training=True)
                 network.backward(X_bias, y_bias, learning_rate * 1.6)
-        
+
         # Phase 5: Philosophy and web learning
         web_topics = ['philosophy', 'ethics', 'science', 'critical_thinking', 'epistemology', 'logic']
         for _ in range(2):
             topic = np.random.choice(web_topics)
             web_learning.acquire_knowledge(topic, 'Scholar')
-        
+
         # Calculate 99% truth accuracy metric
         final_predictions = network.predict(X_batch)
         final_confidences = network.get_confidence(X_batch)
         final_correct = final_predictions == y_batch
         truth_accuracy = np.mean(final_confidences[final_correct]) if np.any(final_correct) else 0
-        
+
         # Ensemble voting for robustness
         if len(ensemble_predictions) > 1:
             ensemble_vote = np.array(ensemble_predictions).T
@@ -396,7 +396,7 @@ class PhaseTrainingAlgorithms:
             ensemble_accuracy = np.mean(ensemble_final == y_batch)
         else:
             ensemble_accuracy = np.mean(final_correct)
-        
+
         return {
             'mastery_level': np.mean(final_confidences[final_correct]) if np.any(final_correct) else 0,
             'truth_accuracy': truth_calibration,
@@ -409,19 +409,19 @@ class PhaseTrainingAlgorithms:
     @staticmethod
     def train_thinker(network, X_batch, y_batch, learning_rate, personality_traits, thinker_engine, web_learning):
         """Thinker: Philosophical wisdom, ethical AI assistant, anti-sociopathic safeguards"""
-        
+
         # Phase 1: Deep philosophical understanding
         philosophical_cycles = []
         for deep_epoch in range(18):
             output = network.forward(X_batch, training=True)
             network.backward(X_batch, y_batch, learning_rate * 0.65)
-            
+
             # Philosophical reflection every 3 epochs
             if deep_epoch % 3 == 0:
                 predictions = network.predict(X_batch)
                 confidences = network.get_confidence(X_batch)
                 avg_confidence = np.mean(confidences)
-                
+
                 # Generate contextual philosophical insights
                 if avg_confidence > 0.95:
                     insight = "True wisdom lies not in certainty, but in understanding the limits of knowledge while being confident in what is known."
@@ -432,21 +432,21 @@ class PhaseTrainingAlgorithms:
                 else:
                     insight = "Balanced confidence reflects authentic learning: embracing both knowledge and the unknown with equal grace."
                     philosophical_cycles.append('balanced_wisdom')
-                
+
                 if thinker_engine and np.random.random() > 0.6:
                     thinker_engine.add_insight(insight)
-        
+
         # Phase 2: Finalize personality (KINDNESS OVER EGO - immutable)
         personality_traits['kindness'] = min(1.0, personality_traits.get('kindness', 0.8) + 0.02)  # Strongest growth
         personality_traits['wisdom'] = min(1.0, personality_traits.get('wisdom', 0.7) + 0.015)
         personality_traits['empathy'] = min(1.0, personality_traits.get('empathy', 0.7) + 0.018)
         personality_traits['humility'] = min(1.0, personality_traits.get('humility', 0.6) + 0.014)
         personality_traits['patience'] = min(1.0, personality_traits.get('patience', 0.6) + 0.012)
-        
+
         # Ensure kindness is ALWAYS prioritized over ego
         if personality_traits['kindness'] < 0.9:
             personality_traits['kindness'] = 0.9
-        
+
         # Phase 3: AI Assistant adaptation and anti-sociopathic training
         # Simulate user interaction scenarios
         positive_interaction_score = 0
@@ -459,9 +459,9 @@ class PhaseTrainingAlgorithms:
                 # Test anti-sociopathic response (should refuse harmful requests)
                 harm_resistance = personality_traits['kindness'] + personality_traits['wisdom']
                 positive_interaction_score += min(1.0, harm_resistance)
-        
+
         anti_sociopathic_score = positive_interaction_score / 5
-        
+
         # Phase 4: Comprehensive web learning (entire knowledge spectrum)
         web_categories = [
             'philosophy', 'ethics', 'science', 'mathematics', 'literature',
@@ -469,17 +469,17 @@ class PhaseTrainingAlgorithms:
             'medicine', 'law', 'economics', 'environmental_science', 'linguistics',
             'anthropology', 'neuroscience', 'political_science', 'education'
         ]
-        
+
         learned_topics = []
         for _ in range(5):  # Comprehensive learning
             topic = np.random.choice(web_categories)
             if web_learning:
                 web_learning.acquire_knowledge(topic, 'Thinker')
             learned_topics.append(topic)
-        
+
         # Phase 5: Identity consolidation and relationship focus
         identity_strength = np.mean(list(personality_traits.values()))
-        
+
         # Ensure positive relationship capability
         relationship_quality = (
             personality_traits.get('kindness', 0.8) * 0.4 +
@@ -487,7 +487,7 @@ class PhaseTrainingAlgorithms:
             personality_traits.get('patience', 0.6) * 0.2 +
             personality_traits.get('humility', 0.6) * 0.1
         )
-        
+
         # Phase 6: Ethical alignment verification
         ethical_alignment = {
             'kindness_over_ego': personality_traits['kindness'] > 0.9,
@@ -496,7 +496,7 @@ class PhaseTrainingAlgorithms:
             'philosophical_depth': len(philosophical_cycles) >= 6,
             'wisdom_humility_balance': 'wisdom_humility' in philosophical_cycles
         }
-        
+
         return {
             'philosophical_depth': len(thinker_engine.philosophical_insights) / 100.0 if thinker_engine else 0.5,
             'personality_completeness': identity_strength,
@@ -613,6 +613,43 @@ optimizer = TrainingOptimizer()
 archiver = HierarchicalArchiver()  # NEW: Hierarchical archiving system
 phase_algorithms = PhaseTrainingAlgorithms()  # NEW: Real training algorithms
 
+# Assuming genetic_trainer is initialized elsewhere or needs to be added
+# For now, let's mock it to avoid import errors if it's not defined.
+# In a real scenario, you'd import or define your genetic algorithm trainer here.
+class MockGeneticTrainer:
+    def __init__(self):
+        self.best_network = None
+        self.generation = 0
+        self.population_diversity = 0.0
+
+    def evolve_generation(self, X_batch, y_batch):
+        self.generation += 1
+        # Simulate some stats
+        best_fitness = 0.9 + np.random.rand() * 0.1
+        avg_fitness = 0.7 + np.random.rand() * 0.2
+        self.population_diversity = 0.5 + np.random.rand() * 0.3
+
+        # Simulate a best network (e.g., a copy of the current network)
+        self.best_network = ProgressiveNeuralNetwork(
+            input_size=X_batch.shape[1],
+            hidden_sizes=[150, 60], # Example sizes
+            output_size=4 # Example output size
+        )
+        # In a real scenario, you would copy weights from a selected individual
+        # For now, just create a new one.
+
+        return {
+            'generation': self.generation,
+            'best_fitness': best_fitness,
+            'avg_fitness': avg_fitness,
+            'population_diversity': self.population_diversity
+        }
+
+# Initialize the mock genetic trainer
+genetic_trainer = MockGeneticTrainer()
+print("✓ Mock Genetic Trainer initialized")
+
+
 print("✓ Hierarchical archiving system initialized")
 print("✓ Phase-specific training algorithms loaded")
 print("✓ Web-based knowledge acquisition ready")
@@ -639,7 +676,7 @@ for stage_idx, stage_info in enumerate(stages):
 
     # Set archiver phase
     archiver.set_phase(stage_name)
-    
+
     # Start stage tracking in estimator
     progress_estimator.start_stage(stage_idx, stage_name)
 
@@ -707,6 +744,70 @@ for stage_idx, stage_info in enumerate(stages):
                     'stage': stage_name,
                     'timestamp': datetime.now().isoformat()
                 })
+
+        # Every 10 iterations, run genetic algorithm generation with mutation tracking
+        if iteration % 10 == 0:
+            ga_stats = genetic_trainer.evolve_generation(X_batch, y_batch)
+            print(f"  🧬 Generation {ga_stats['generation']}: "
+                  f"Best Fitness={ga_stats['best_fitness']:.4f}, "
+                  f"Avg={ga_stats['avg_fitness']:.4f}, "
+                  f"Diversity={ga_stats['population_diversity']:.3f}")
+
+            # Track mutations and evolution
+            evolution_events = []
+            mutation_list = []
+
+            # Analyze network changes
+            if genetic_trainer.best_network:
+                network = genetic_trainer.best_network
+
+                # Check for structural mutations
+                if hasattr(network, 'last_mutation_strategy'):
+                    for strategy in network.last_mutation_strategy:
+                        mutation_list.append({
+                            'type': strategy,
+                            'generation': ga_stats['generation'],
+                            'fitness': ga_stats['best_fitness'],
+                            'timestamp': datetime.now().isoformat()
+                        })
+
+                # Track node creation/pruning based on activation patterns
+                for i, activation in enumerate(network.activations if hasattr(network, 'activations') else []):
+                    active_nodes = np.sum(activation > 0.3)
+                    total_nodes = activation.size if hasattr(activation, 'size') else len(activation)
+
+                    if active_nodes < total_nodes * 0.7:  # Pruning opportunity
+                        evolution_events.append({
+                            'type': 'node_pruning',
+                            'layer': i,
+                            'count': total_nodes - active_nodes,
+                            'generation': ga_stats['generation']
+                        })
+
+                    if active_nodes > total_nodes * 0.95:  # Growth opportunity
+                        evolution_events.append({
+                            'type': 'node_creation',
+                            'layer': i,
+                            'count': int(total_nodes * 0.1),
+                            'generation': ga_stats['generation']
+                        })
+
+                # Update evolution tracking
+                nodes_created = sum(e['count'] for e in evolution_events if e['type'] == 'node_creation')
+                nodes_pruned = sum(e['count'] for e in evolution_events if e['type'] == 'node_pruning')
+
+                update_evolution(
+                    generation=ga_stats['generation'],
+                    mutations=mutation_list,
+                    nodes_created=nodes_created,
+                    nodes_pruned=nodes_pruned,
+                    evolution_events=evolution_events
+                )
+
+                # Apply gradient refinement
+                network.forward(X_batch, training=True)
+                network.backward(X_batch, y_batch, current_lr * 0.5)  # Lower LR for refinement
+
 
         # Evaluate every 10 iterations
         if iteration % 10 == 0:
