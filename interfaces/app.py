@@ -179,10 +179,10 @@ def update_web_knowledge(knowledge_items, stats):
 def update_evolution(generation, mutations, nodes_created, nodes_pruned, evolution_events):
     """Update evolution and mutation data"""
     global training_state
-    training_state['generation'] = generation
+    training_state['generation'] = int(generation)
     training_state['mutations'] = mutations[-20:]  # Keep last 20
-    training_state['nodes_created'] = nodes_created
-    training_state['nodes_pruned'] = nodes_pruned
+    training_state['nodes_created'] = int(nodes_created)
+    training_state['nodes_pruned'] = int(nodes_pruned)
     training_state['evolution_events'] = evolution_events[-20:]  # Keep last 20
 
 @app.route('/')

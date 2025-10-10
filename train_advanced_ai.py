@@ -20,6 +20,7 @@ from knowledge.web_learning import WebKnowledgeAcquisition
 from core.progress_estimator import AdvancedProgressEstimator
 from core.ai_assistant import AIAssistant
 from interfaces.ai_api import update_ai_state
+from core.self_modifier import SelfModifyingAI
 
 # =============================================================================
 # ARCHIVING SYSTEM - Hierarchical Zip Management
@@ -612,6 +613,7 @@ ai_assistant = AIAssistant(network=network, thinker=thinker, personality=persona
 optimizer = TrainingOptimizer()
 archiver = HierarchicalArchiver()  # NEW: Hierarchical archiving system
 phase_algorithms = PhaseTrainingAlgorithms()  # NEW: Real training algorithms
+self_modifier = SelfModifyingAI()  # NEW: Self-modifying AI system
 
 # Import the actual genetic trainer from core
 try:
@@ -756,6 +758,15 @@ for stage_idx, stage_info in enumerate(stages):
                   f"Best Fitness={ga_stats['best_fitness']:.4f}, "
                   f"Avg={ga_stats['avg_fitness']:.4f}, "
                   f"Diversity={ga_stats['population_diversity']:.3f}")
+            
+            # Autonomous self-modification every 50 iterations
+            if iteration % 50 == 0 and iteration > 0:
+                improvement_result = self_modifier.autonomous_improvement_cycle({
+                    'understanding_score': understanding_score,
+                    'accuracy': accuracy,
+                    'training_speed': 1.0 / max(1, iteration)
+                })
+                print(f"  🤖 Self-Modification: {improvement_result['mutations_applied']} autonomous improvements applied")
 
             # Track mutations and evolution
             evolution_events = []
