@@ -617,11 +617,11 @@ phase_algorithms = PhaseTrainingAlgorithms()  # NEW: Real training algorithms
 try:
     from core.genetic_trainer import GeneticTrainer
     genetic_trainer = GeneticTrainer(
+        network_template=network,
         population_size=20,
-        mutation_rate=0.15,
-        crossover_rate=0.7,
         elite_size=2
     )
+    genetic_trainer.initialize_population()
     print("✓ Genetic Trainer initialized")
 except ImportError:
     # Fallback mock if genetic trainer has issues
