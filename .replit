@@ -1,5 +1,5 @@
 run = "python train_advanced_ai.py"
-modules = ["web", "bash", "python-3.11"]
+modules = ["python-3.12", "web", "bash"]
 
 [workflows]
 runButton = "Project"
