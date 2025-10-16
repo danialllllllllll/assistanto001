@@ -166,7 +166,10 @@ header h1 {
     font-size: 0.9em;
 }
 
-.traits-container, .insights-container, .values-container, .history-container {
+.traits-container,
+.insights-container,
+.values-container,
+.history-container {
     margin-top: 12px;
 }
 
@@ -370,14 +373,30 @@ header h1 {
     .dashboard-grid {
         grid-template-columns: 1fr;
     }
-    
+
     header h1 {
         font-size: 1.8em;
     }
-    
+
     .status-bar {
         flex-direction: column;
         gap: 8px;
         text-align: center;
     }
-}
+
+    body {
+        background-color: #f3f4f6;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th,
+    td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    }

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Training Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="bg-gray-100 font-sans">
+    {% if show_login %}
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+            <h1 class="text-2xl font-bold mb-6 text-center">AI Dashboard Login</h1>
+            {% if error %}
+            <p class="text-red-500 mb-4">{{ error }}</p>
+            {% endif %}
+            <form method="post" action="/login" class="space-y-4">
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="password" name="password" class="mt-1 block w-full p-2 border rounded-md">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">Login</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="container mx-auto p-4">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold">AI Training Dashboard</h1>
+            <a href="/logout" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">Logout</a>
+        </div>
+        {% if show_kill_switch %}
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Kill Switch</h2>
+            {% if error %}
+            <p class="text-red-500 mb-4">{{ error }}</p>
+            {% endif %}
+            <form method="post" action="/kill_switch" class="space-y-4">
+                <div>
+                    <label for="phrase" class="block text-sm font-medium text-gray-700">Enter Kill Switch Phrase</label>
+                    <input type="text" id="phrase" name="phrase" class="mt-1 block w-full p-2 border rounded-md">
+                </div>
+                <button type="submit" class="bg-red-600 text-white p-2 rounded-md hover:bg-red-700">Activate Kill Switch</button>
+            </form>
+        </div>
+        {% endif %}
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Training Progress</h2>
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="border p-2">Metric</th>
+                        <th class="border p-2">Value</th>
+                    </tr>
+                </thead>
+                <tbody id="metrics-table">
+                    <tr><td class="border p-2">Stage</td><td class="border p-2" id="stage">Loading...</td></tr>
+                    <tr><td class="border p-2">Understanding</td><td class="border p-2"><div id="understanding" class="w-full bg-gray-200 rounded-full h-4"><div id="understanding-bar" class="bg-blue-600 h-4 rounded-full" style="width: 0%"></div></div></td></tr>
+                    <tr><td class="border p-2">Confidence</td><td class="border p-2"><div id="confidence" class="w-full bg-gray-200 rounded-full h-4"><div id="confidence-bar" class="bg-green-600 h-4 rounded-full" style="width: 0%"></div></div></td></tr>
+                    <tr><td class="border p-2">Core Values Compliance</td><td class="border p-2" id="compliance">Loading...</td></tr>
+                </tbody>
+            </table>
+            <h3 class="text-lg font-semibold mt-4 mb-2">Personality Traits</h3>
+            <div id="personality" class="grid grid-cols-2 gap-2"></div>
+            <h3 class="text-lg font-semibold mt-4 mb-2">Philosophical Insights</h3>
+            <ul id="philosophy" class="list-disc pl-5"></ul>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4">Neural Network Visualization</h2>
+            <img id="neural-viz" src="/visualize" alt="Neural Network" class="w-full max-w-lg mx-auto">
+            <p class="text-sm text-gray-600 mt-2">Recent Events: <span id="evolution-events"></span></p>
+        </div>
+        <div class="mt-6">
+            <a href="/kill_switch" class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700">Go to Kill Switch</a>
+        </div>
+    </div>
+    {% endif %}
+    <script src="/script.js"></script>
+</body>
+</html>
