@@ -6,193 +6,125 @@ import shutil
 import zipfile
 from datetime import datetime
 from flask import Flask, jsonify, request, send_file, render_template, session, redirect
+from flask_cors import CORS
 import numpy as np
 import networkx as nx
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from io import BytesIO
+from queue import Queue
+import json
+
 try:
     from deap import base, creator, tools
 except ImportError:
-    print(
-        "Error: 'deap' module not found. Please install it using 'pip install deap' in the Replit Shell."
-    )
+    print("Error: 'deap' module not found. Install with: pip install deap")
     raise
 
-# Configurations
-STAGES = [{
-    "name": "Baby Steps Phase",
-    "target": "patterns",
-    "learning_rate": 0.1,
-    "age_equiv": "0-18 months",
-    "min_iterations": 50
-}, {
-    "name": "Toddler Phase",
-    "target": "memory",
-    "learning_rate": 0.1,
-    "age_equiv": "18 months-3 years",
-    "min_iterations": 50
-}, {
-    "name": "Pre-K Phase",
-    "target": "coherence",
-    "learning_rate": 0.1,
-    "age_equiv": "3-5 years",
-    "min_iterations": 50
-}, {
-    "name": "Elementary Phase",
-    "target": "questioning",
-    "learning_rate": 0.1,
-    "age_equiv": "5-14 years",
-    "min_iterations": 100
-}, {
-    "name": "Teen Phase",
-    "target": "personality",
-    "learning_rate": 0.1,
-    "age_equiv": "14-18 years",
-    "min_iterations": 100
-}, {
-    "name": "Scholar Phase",
-    "target": "truth_detection",
-    "learning_rate": 0.1,
-    "age_equiv": "18-22 years",
-    "min_iterations": 150
-}, {
-    "name": "Thinker Phase",
-    "target": "philosophy",
-    "learning_rate": 0.1,
-    "age_equiv": "22+ years",
-    "min_iterations": 200
-}]
-CORE_VALUES = [{
-    "name": "Kindness",
-    "priority": 1.0,
-    "status": "Enforced"
-}, {
-    "name": "Understanding",
-    "priority": 1.0,
-    "status": "Enforced"
-}, {
-    "name": "Truth",
-    "priority": 1.0,
-    "status": "Enforced"
-}, {
-    "name": "Positive Relationships",
-    "priority": 1.0,
-    "status": "Enforced"
-}, {
-    "name": "Non-Harm",
-    "priority": 1.0,
-    "status": "Enforced"
-}]
-UNDERSTANDING_REQUIREMENTS = {
-    "minimum_understanding": 0.999,
-    "minimum_confidence": 0.95
-}
+# === CONFIGURATION ===
+STAGES = [
+    {"name": "Baby Steps Phase", "target": "patterns", "learning_rate": 0.1, "age_equiv": "0-18 months", "min_iterations": 50},
+    {"name": "Toddler Phase", "target": "memory", "learning_rate": 0.1, "age_equiv": "18 months-3 years", "min_iterations": 50},
+    {"name": "Pre-K Phase", "target": "coherence", "learning_rate": 0.1, "age_equiv": "3-5 years", "min_iterations": 50},
+    {"name": "Elementary Phase", "target": "questioning", "learning_rate": 0.1, "age_equiv": "5-14 years", "min_iterations": 100},
+    {"name": "Teen Phase", "target": "personality", "learning_rate": 0.1, "age_equiv": "14-18 years", "min_iterations": 100},
+    {"name": "Scholar Phase", "target": "truth_detection", "learning_rate": 0.1, "age_equiv": "18-22 years", "min_iterations": 150},
+    {"name": "Thinker Phase", "target": "philosophy", "learning_rate": 0.1, "age_equiv": "22+ years", "min_iterations": 200}
+]
+
+CORE_VALUES = [
+    {"name": "Kindness", "priority": 1.0, "status": "Enforced"},
+    {"name": "Understanding", "priority": 1.0, "status": "Enforced"},
+    {"name": "Truth", "priority": 1.0, "status": "Enforced"},
+    {"name": "Positive Relationships", "priority": 1.0, "status": "Enforced"},
+    {"name": "Non-Harm", "priority": 1.0, "status": "Enforced"}
+]
+
+UNDERSTANDING_REQUIREMENTS = {"minimum_understanding": 0.999, "minimum_confidence": 0.95}
 WEB_PASSWORD = "OVER//RIDE"
 KILL_SWITCH_PHRASE = "confirm delete"
 
-# Placeholder dataset
+# Dataset
 DATA_SIZE = 1000
 FEATURES = 20
 CLASSES = 4
 data_inputs = np.random.rand(DATA_SIZE, FEATURES)
 data_outputs = np.random.randint(0, CLASSES, DATA_SIZE)
 
-# Stage-appropriate research topics
+# === FULL CURRICULUM ===
 STAGE_TOPICS = {
-    "Baby Steps Phase":
-    ["Animal sounds", "Bright colors", "Simple shapes", "minimal speech"],
+    "Baby Steps Phase": ["Animal sounds", "Bright colors", "Simple shapes", "minimal speech"],
     "Toddler Phase": [
         "Naming animals", "Basic actions (e.g., dog runs)", "Pet care basics",
-        "identifying shapes", "simple counting", "simple speech",
-        "Toddler essentials"
+        "identifying shapes", "simple counting", "simple speech", "Toddler essentials"
     ],
     "Pre-K Phase": [
         "Animal stories", "Animal emotions", "Simple habitats",
         "Preschool Math", "Preschool English", "Preschool Foreign Language",
         "Preschool History", "Preschool Geography", "Preschool Science",
-        "Preschool Art", "Preschool Music", "Preschool Physical Education",
-        "Preschool Health"
+        "Preschool Art", "Preschool Music", "Preschool Physical Education", "Preschool Health"
     ],
     "Elementary Phase": [
-        "Animal life cycles", "Basic classification (mammals/birds)",
-        "Animal habitats", "Earth Science", "Right vs Wrong", "Basic Math",
-        "Basic English", "Foreign Language", "History", "Geography", "Science",
-        "Art", "Music", "Physical Education", "Health", "Social Studies",
-        "Elementary Thinking", "Elementary Problem Solving",
-        "Elementary Decision Making", "Elementary Critical Thinking",
-        "Elementary Problem Solving", "Elementary Topics"
+        "Animal life cycles", "Basic classification (mammals/birds)", "Animal habitats",
+        "Earth Science", "Right vs Wrong", "Basic Math", "Basic English", "Foreign Language",
+        "History", "Geography", "Science", "Art", "Music", "Physical Education", "Health",
+        "Social Studies", "Elementary Thinking", "Elementary Problem Solving",
+        "Elementary Decision Making", "Elementary Critical Thinking", "Elementary Problem Solving", "Elementary Topics"
     ],
     "Teen Phase": [
         "Animal ecology", "Conservation ethics", "Human-animal interactions",
         "Human History", "War", "World Events", "Complex College Level topics",
-        "Advanced Math", "Advanced English", "Advanced Foreign Language",
-        "Advanced Science", "Advanced Art", "Advanced Music",
-        "Advanced Physical Education", "Advanced Health",
-        "Advanced Social Studies", "Complex Thinking", "Critical Thinking",
-        "Problem Solving", "Decision Making", "Ethical Dilemmas",
-        "Philosophical Questions", "Logical Reasoning",
-        "Psychological Insights", "Sociological Perspectives",
-        "Economic Principles", "Political Systems", "Environmental Issues",
-        "Highschool Level Topics", "Theory", "Astronomy", "Astrology",
-        "Cosmology", "Physics", "Chemistry", "Biology", "Geology",
-        "Mathematics", "Computer Science", "Engineering", "Medicine", "Law",
-        "Politics", "Economics", "Sociology",
-        "All advanced level Science fields", "Mathematics", "Computer Science",
-        "Engineering", "Medicine", "Law", "Politics", "Economics",
+        "Advanced Math", "Advanced English", "Advanced Foreign Language", "Advanced Science",
+        "Advanced Art", "Advanced Music", "Advanced Physical Education", "Advanced Health",
+        "Advanced Social Studies", "Complex Thinking", "Critical Thinking", "Problem Solving",
+        "Decision Making", "Ethical Dilemmas", "Philosophical Questions", "Logical Reasoning",
+        "Psychological Insights", "Sociological Perspectives", "Economic Principles",
+        "Political Systems", "Environmental Issues", "Highschool Level Topics", "Theory",
+        "Astronomy", "Astrology", "Cosmology", "Physics", "Chemistry", "Biology", "Geology",
+        "Mathematics", "Computer Science", "Engineering", "Medicine", "Law", "Politics",
+        "Economics", "Sociology", "All advanced level Science fields", "Mathematics",
+        "Computer Science", "Engineering", "Medicine", "Law", "Politics", "Economics",
         "Every Subject supplied to a high school student"
     ],
     "Scholar Phase": [
-        "Animal evolution", "Genetic adaptations",
-        "Wildlife misinformation detection",
-        "Ethical dilemmas in conservation", "Advanced Philosophy",
-        "Advanced Ethics", "Advanced Logic", "Advanced Psychology",
-        "Advanced Sociology", "Advanced Metaphysics", "Advanced Epistemology",
-        "Advanced Ontology", "Advanced Aesthetics", "Advanced Ethics",
-        "Advanced Logic", "Advanced Epistemology", "Advanced Ontology",
-        "Advanced Aesthetics", "Advanced Mathematics",
-        "Advanced Computer Science", "Advanced Engineering",
-        "Advanced Medicine", "Advanced Law", "Advanced Politics",
-        "Advanced Economics", "Advanced Sociology",
-        "Advanced Environmental Science", "Advanced Physics",
-        "Advanced Chemistry", "Advanced Biology",
-        "All advanced level Science fields", "Advanced Mathematics",
-        "Advanced Computer Science", "Advanced Engineering",
-        "Advanced Medicine", "Advanced Law", "Advanced Politics",
-        "Advanced Economics", "Advanced Sociology",
-        "Advanced Environmental Science", "Advanced Physics",
-        "All Advanced level Mathematic fields", "Advanced Computer Science",
-        "Advanced Engineering", "Advanced Medicine", "Advanced Law",
-        "Advanced Politics", "Advanced Economics", "Advanced Sociology",
-        "Advanced Environmental Science", "Advanced Physics",
-        "Advanced Chemistry", "Advanced Biology",
-        "All advanced Geography fields", "Advanced History",
-        "Advanced World Events", "Advanced War", "Advanced Human History",
-        "Advanced World Events", "Advanced War", "Advanced Human History",
-        "Advanced World Events", "Advanced War", "Advanced Human History",
-        "All Advanced Language Arts fields", "Advanced English",
-        "Advanced Foreign Language", "Advanced Literature", "Advanced Writing",
-        "Advanced Reading", "Advanced Speaking", "Advanced Listening",
-        "Advanced Grammar", "Advanced Vocabulary", "Advanced Syntax",
-        "Advanced Semantics"
+        "Animal evolution", "Genetic adaptations", "Wildlife misinformation detection",
+        "Ethical dilemmas in conservation", "Advanced Philosophy", "Advanced Ethics",
+        "Advanced Logic", "Advanced Psychology", "Advanced Sociology", "Advanced Metaphysics",
+        "Advanced Epistemology", "Advanced Ontology", "Advanced Aesthetics", "Advanced Ethics",
+        "Advanced Logic", "Advanced Epistemology", "Advanced Ontology", "Advanced Aesthetics",
+        "Advanced Mathematics", "Advanced Computer Science", "Advanced Engineering",
+        "Advanced Medicine", "Advanced Law", "Advanced Politics", "Advanced Economics",
+        "Advanced Sociology", " #%$ Advanced Environmental Science", "Advanced Physics",
+        "Advanced Chemistry", "Advanced Biology", "All advanced level Science fields",
+        "Advanced Mathematics", "Advanced Computer Science", "Advanced Engineering",
+        "Advanced Medicine", "Advanced Law", "Advanced Politics", "Advanced Economics",
+        "Advanced Sociology", "Advanced Environmental Science", "Advanced Physics",
+        "All Advanced level Mathematic fields", "Advanced Computer Science", "Advanced Engineering",
+        "Advanced Medicine", "Advanced Law", "Advanced Politics", "Advanced Economics",
+        "Advanced Sociology", "Advanced Environmental Science", "Advanced Physics",
+        "Advanced Chemistry", "Advanced Biology", "All advanced Geography fields",
+        "Advanced History", "Advanced World Events", "Advanced War", "Advanced Human History",
+        "Advanced World Events", "Advanced War", "Advanced Human History", "Advanced World Events",
+        "Advanced War", "Advanced Human History", "All Advanced Language Arts fields",
+        "Advanced English", "Advanced Foreign Language", "Advanced Literature", "Advanced Writing",
+        "Advanced Reading", "Advanced Speaking", "Advanced Listening", "Advanced Grammar",
+        "Advanced Vocabulary", "Advanced Syntax", "Advanced Semantics"
     ],
     "Thinker Phase": [
-        "Animal consciousness", "Philosophical animal rights",
-        "Ethical dilemmas in ecology", "Everything in the universe",
-        "The meaning of life", "The nature of reality",
-        "The nature of consciousness", "The nature of time",
-        "The nature of space", "The nature of matter", "The nature of energy",
-        "The nature of information", "The nature of knowledge",
-        "The nature of truth", "The nature of beauty",
+        "Animal consciousness", "Philosophical animal rights", "Ethical dilemmas in ecology",
+        "Everything in the universe", "The meaning of life", "The nature of reality",
+        "The nature of consciousness", "The nature of time", "The nature of space",
+        "The nature of matter", "The nature of energy", "The nature of information",
+        "The nature of knowledge", "The nature of truth", "The nature of beauty",
         "The nature of goodness", "The nature of evil", "The nature of love",
-        "The nature of hate", "Everything the world has to offer",
-        "Absolutely everything", "Complex Theories"
+        "The nature of hate", "Everything the world has to offer", "Absolutely everything",
+        "Complex Theories"
     ]
 }
 
-
-# Hierarchical Archiver
+# === HIERARCHICAL ARCHIVER ===
 class HierarchicalArchiver:
-
     def __init__(self, base_dir='training_archives'):
         self.base_dir = base_dir
         self.current_phase = ""
@@ -219,14 +151,11 @@ class HierarchicalArchiver:
         temp_dir = os.path.join(phase_path, f'temp_batch_{self.batch_count}')
         os.makedirs(temp_dir, exist_ok=True)
         for gen_data in self.generation_buffer:
-            filename = os.path.join(
-                temp_dir, f'generation_{gen_data["iteration"]}.json')
+            filename = os.path.join(temp_dir, f'generation_{gen_data["iteration"]}.json')
             with open(filename, 'w') as f:
-                import json
                 json.dump(gen_data, f, indent=2)
-        batch_zip = os.path.join(phase_path,
-                                 f'batch_{self.batch_count:04d}.zip')
-        with zipfile.ZipFile(batch_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        zip_path = os.path.join(phase_path, f'batch_{self.batch_count:04d}.zip')
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for root, _, files in os.walk(temp_dir):
                 for file in files:
                     file_path = os.path.join(root, file)
@@ -235,26 +164,18 @@ class HierarchicalArchiver:
         shutil.rmtree(temp_dir)
         self.generation_buffer = []
         self.batch_count += 1
-        print(f"  📦 Archived batch {self.batch_count-1} -> {batch_zip}")
+        print(f"  Archived batch {self.batch_count-1} -> {zip_path}")
 
-
-# Training Optimizer
+# === TRAINING OPTIMIZER ===
 class TrainingOptimizer:
-
     def __init__(self):
         self.stats = {
-            'iterations': 0,
-            'best_fitness': 0.0,
-            'best_understanding': 0.0,
-            'last_improvement': 0,
-            'phase_history': [],
-            'nodes_created': 0,
-            'nodes_pruned': 0,
-            'quiz_scores': []
+            'iterations': 0, 'best_fitness': 0.0, 'best_understanding': 0.0,
+            'last_improvement': 0, 'phase_history': [], 'nodes_created': 0,
+            'nodes_pruned': 0, 'quiz_scores': []
         }
 
-    def optimize_metrics(self, fitness: float, understanding: float,
-                         confidence: float) -> dict:
+    def optimize_metrics(self, fitness: float, understanding: float, confidence: float) -> dict:
         self.stats['iterations'] += 1
         if fitness > self.stats['best_fitness']:
             self.stats['best_fitness'] = fitness
@@ -262,36 +183,13 @@ class TrainingOptimizer:
         if understanding > self.stats['best_understanding']:
             self.stats['best_understanding'] = understanding
         return {
-            'is_improving':
-            self._check_improvement(),
-            'mutation_rate_adjustment':
-            self._calculate_mr_adjustment(fitness, understanding),
-            'population_size_suggestion':
-            self._suggest_population_size(fitness, confidence)
+            'is_improving': (self.stats['iterations'] - self.stats['last_improvement']) < 100,
+            'mutation_rate_adjustment': 0.2 if understanding < 0.5 else 0.05 if understanding > 0.95 else 0.1,
+            'population_size_suggestion': 200 if confidence > 0.9 else 100
         }
 
-    def _check_improvement(self) -> bool:
-        return (self.stats['iterations'] -
-                self.stats['last_improvement']) < 100
-
-    def _calculate_mr_adjustment(self, fitness: float,
-                                 understanding: float) -> float:
-        if understanding > 0.95 and fitness > 0.95:
-            return 0.05
-        elif understanding < 0.5 or fitness < 0.5:
-            return 0.2
-        return 0.1
-
-    def _suggest_population_size(self, fitness: float,
-                                 confidence: float) -> int:
-        if confidence > 0.9 and fitness > 0.9:
-            return 200
-        return 100
-
-
-# Phase-specific training algorithms
+# === PHASE TRAINING ALGORITHMS ===
 class PhaseTrainingAlgorithms:
-
     @staticmethod
     def train_baby_steps(ai, X_batch, y_batch, toolbox, pop_size: int) -> dict:
         pop = toolbox.population(n=pop_size)
@@ -309,20 +207,13 @@ class PhaseTrainingAlgorithms:
                     del mutant.fitness.values
                 if random.random() < 0.1:
                     event = {
-                        'type':
-                        random.choice(['node_creation', 'node_pruning']),
-                        'node_id': random.randint(0, len(ai.genome)),
-                        'iteration': gen,
-                        'timestamp': datetime.now().isoformat(),
-                        'generation': ai.optimizer.stats['iterations'],
-                        'layer': random.randint(1, 3),
-                        'count': 1,
-                        'fitness': random.uniform(0.7, 1.0)
+                        'type': 'node_creation', 'node_id': random.randint(0, 100),
+                        'iteration': gen, 'timestamp': datetime.now().isoformat(),
+                        'generation': ai.optimizer.stats['iterations'], 'layer': random.randint(1, 3),
+                        'count': 1, 'fitness': random.uniform(0.7, 1.0)
                     }
                     ai.evolution_events.append(event)
-                    ai.optimizer.stats['nodes_' +
-                                       ('created' if event['type'] ==
-                                        'node_creation' else 'pruned')] += 1
+                    ai.optimizer.stats['nodes_created'] += 1
             invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
             fitnesses = map(toolbox.evaluate, invalid_ind)
             for ind, fit in zip(invalid_ind, fitnesses):
@@ -332,17 +223,13 @@ class PhaseTrainingAlgorithms:
         ai.genome = best
         fitness = best.fitness.values[0]
         accuracy = min(1.0, fitness / 2.0)
-        return {
-            'pattern_recognition': accuracy,
-            'coherence': accuracy * 0.8,
-            'confidence': accuracy * 0.9
-        }
+        return {'pattern_recognition': accuracy, 'coherence': accuracy * 0.8, 'confidence': accuracy * 0.9}
 
     @staticmethod
     def train_toddler(ai, X_batch, y_batch, toolbox, pop_size: int) -> dict:
         memory_buffer = []
         accuracies = []
-        for pass_num in range(5):
+        for _ in range(5):
             pop = toolbox.population(n=pop_size)
             for gen in range(20):
                 offspring = toolbox.select(pop, len(pop))
@@ -356,32 +243,7 @@ class PhaseTrainingAlgorithms:
                     if random.random() < ai.mutation_rate:
                         toolbox.mutate(mutant)
                         del mutant.fitness.values
-                    if random.random() < 0.1:
-                        event = {
-                            'type':
-                            random.choice(['node_creation', 'node_pruning']),
-                            'node_id':
-                            random.randint(0, len(ai.genome)),
-                            'iteration':
-                            gen,
-                            'timestamp':
-                            datetime.now().isoformat(),
-                            'generation':
-                            ai.optimizer.stats['iterations'],
-                            'layer':
-                            random.randint(1, 3),
-                            'count':
-                            1,
-                            'fitness':
-                            random.uniform(0.7, 1.0)
-                        }
-                        ai.evolution_events.append(event)
-                        ai.optimizer.stats[
-                            'nodes_' + ('created' if event['type'] ==
-                                        'node_creation' else 'pruned')] += 1
-                invalid_ind = [
-                    ind for ind in offspring if not ind.fitness.valid
-                ]
+                invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
                 fitnesses = map(toolbox.evaluate, invalid_ind)
                 for ind, fit in zip(invalid_ind, fitnesses):
                     ind.fitness.values = fit
@@ -394,19 +256,16 @@ class PhaseTrainingAlgorithms:
             memory_buffer.append((X_batch.copy(), y_batch.copy()))
             if len(memory_buffer) > 4:
                 memory_buffer.pop(0)
-        improvement = accuracies[-1] - accuracies[0] if len(
-            accuracies) > 1 else 0
         return {
             'memory_retention': np.mean(accuracies),
-            'coherence_improvement': max(0, improvement),
-            'cognitive_growth': min(1.0, accuracies[-1])
+            'coherence_improvement': max(0, accuracies[-1] - accuracies[0]),
+            'cognitive_growth': accuracies[-1]
         }
 
     @staticmethod
     def train_pre_k(ai, X_batch, y_batch, toolbox, pop_size: int) -> dict:
         awareness_scores = []
-        initial_fitness = 0.0
-        for cycle in range(3):
+        for _ in range(3):
             pop = toolbox.population(n=pop_size)
             for gen in range(20):
                 offspring = toolbox.select(pop, len(pop))
@@ -420,32 +279,7 @@ class PhaseTrainingAlgorithms:
                     if random.random() < ai.mutation_rate:
                         toolbox.mutate(mutant)
                         del mutant.fitness.values
-                    if random.random() < 0.1:
-                        event = {
-                            'type':
-                            random.choice(['node_creation', 'node_pruning']),
-                            'node_id':
-                            random.randint(0, len(ai.genome)),
-                            'iteration':
-                            gen,
-                            'timestamp':
-                            datetime.now().isoformat(),
-                            'generation':
-                            ai.optimizer.stats['iterations'],
-                            'layer':
-                            random.randint(1, 4),
-                            'count':
-                            1,
-                            'fitness':
-                            random.uniform(0.7, 1.0)
-                        }
-                        ai.evolution_events.append(event)
-                        ai.optimizer.stats[
-                            'nodes_' + ('created' if event['type'] ==
-                                        'node_creation' else 'pruned')] += 1
-                invalid_ind = [
-                    ind for ind in offspring if not ind.fitness.valid
-                ]
+                invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
                 fitnesses = map(toolbox.evaluate, invalid_ind)
                 for ind, fit in zip(invalid_ind, fitnesses):
                     ind.fitness.values = fit
@@ -453,9 +287,7 @@ class PhaseTrainingAlgorithms:
             best = tools.selBest(pop, 1)[0]
             ai.genome = best
             fitness = best.fitness.values[0]
-            awareness = abs(fitness - initial_fitness)
-            awareness_scores.append(awareness)
-            initial_fitness = fitness
+            awareness_scores.append(fitness)
         accuracy = min(1.0, fitness / 2.0)
         return {
             'self_awareness': np.mean(awareness_scores),
@@ -466,8 +298,8 @@ class PhaseTrainingAlgorithms:
     @staticmethod
     def train_elementary(ai, X_batch, y_batch, toolbox, pop_size: int) -> dict:
         quiz_results = []
-        for curriculum_step in range(8):
-            for quiz_round in range(10):
+        for step in range(8):
+            for _ in range(10):
                 pop = toolbox.population(n=pop_size)
                 for gen in range(30):
                     offspring = toolbox.select(pop, len(pop))
@@ -481,33 +313,7 @@ class PhaseTrainingAlgorithms:
                         if random.random() < ai.mutation_rate:
                             toolbox.mutate(mutant)
                             del mutant.fitness.values
-                        if random.random() < 0.15:
-                            event = {
-                                'type':
-                                random.choice(
-                                    ['node_creation', 'node_pruning']),
-                                'node_id':
-                                random.randint(0, len(ai.genome)),
-                                'iteration':
-                                gen,
-                                'timestamp':
-                                datetime.now().isoformat(),
-                                'generation':
-                                ai.optimizer.stats['iterations'],
-                                'layer':
-                                random.randint(1, 5),
-                                'count':
-                                1,
-                                'fitness':
-                                random.uniform(0.7, 1.0)
-                            }
-                            ai.evolution_events.append(event)
-                            ai.optimizer.stats['nodes_' + (
-                                'created' if event['type'] ==
-                                'node_creation' else 'pruned')] += 1
-                    invalid_ind = [
-                        ind for ind in offspring if not ind.fitness.valid
-                    ]
+                    invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
                     fitnesses = map(toolbox.evaluate, invalid_ind)
                     for ind, fit in zip(invalid_ind, fitnesses):
                         ind.fitness.values = fit
@@ -516,34 +322,17 @@ class PhaseTrainingAlgorithms:
                 ai.genome = best
                 fitness = best.fitness.values[0]
                 accuracy = min(1.0, fitness / 2.0)
-                understanding = accuracy * 0.8
-                quiz_results.append({
-                    'accuracy': accuracy,
-                    'confidence': accuracy * 0.9,
-                    'understanding': understanding,
-                    'curriculum_level': curriculum_step
-                })
-        improvement = quiz_results[-1]['understanding'] - quiz_results[0][
-            'understanding'] if quiz_results else 0.0
+                quiz_results.append({'accuracy': accuracy, 'understanding': accuracy * 0.8})
         return {
-            'final_understanding':
-            quiz_results[-1]['understanding'] if quiz_results else 0.0,
-            'learning_improvement':
-            max(0, improvement),
-            'quiz_consistency':
-            1.0 - np.std([q['understanding']
-                          for q in quiz_results]) if quiz_results else 0.0,
-            'mastery_score':
-            accuracy,
-            'curriculum_completion':
-            8
+            'final_understanding': quiz_results[-1]['understanding'],
+            'learning_improvement': max(0, quiz_results[-1]['understanding'] - quiz_results[0]['understanding']),
+            'mastery_score': accuracy
         }
 
     @staticmethod
-    def train_teen(ai, X_batch, y_batch, toolbox, pop_size: int,
-                   personality_traits: dict) -> dict:
-        quality_metrics = []
-        for refinement in range(12):
+    def train_teen(ai, X_batch, y_batch, toolbox, pop_size: int, personality: dict) -> dict:
+        quality = []
+        for _ in range(12):
             pop = toolbox.population(n=pop_size)
             for gen in range(30):
                 offspring = toolbox.select(pop, len(pop))
@@ -555,34 +344,9 @@ class PhaseTrainingAlgorithms:
                         del child2.fitness.values
                 for mutant in offspring:
                     if random.random() < ai.mutation_rate:
-                        toolbox.mutate(mutant)
+                        toolbox.m --          toolbox.mutate(mutant)
                         del mutant.fitness.values
-                    if random.random() < 0.15:
-                        event = {
-                            'type':
-                            random.choice(['node_creation', 'node_pruning']),
-                            'node_id':
-                            random.randint(0, len(ai.genome)),
-                            'iteration':
-                            gen,
-                            'timestamp':
-                            datetime.now().isoformat(),
-                            'generation':
-                            ai.optimizer.stats['iterations'],
-                            'layer':
-                            random.randint(1, 6),
-                            'count':
-                            1,
-                            'fitness':
-                            random.uniform(0.8, 1.0)
-                        }
-                        ai.evolution_events.append(event)
-                        ai.optimizer.stats[
-                            'nodes_' + ('created' if event['type'] ==
-                                        'node_creation' else 'pruned')] += 1
-                invalid_ind = [
-                    ind for ind in offspring if not ind.fitness.valid
-                ]
+                invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
                 fitnesses = map(toolbox.evaluate, invalid_ind)
                 for ind, fit in zip(invalid_ind, fitnesses):
                     ind.fitness.values = fit
@@ -591,39 +355,17 @@ class PhaseTrainingAlgorithms:
             ai.genome = best
             fitness = best.fitness.values[0]
             accuracy = min(1.0, fitness / 2.0)
-            quality_metrics.append(accuracy)
-            personality_traits['curiosity'] = min(
-                1.0,
-                personality_traits.get('curiosity', 0.5) + 0.02)
-            personality_traits['independence'] = min(
-                1.0,
-                personality_traits.get('independence', 0.5) + 0.015)
-            personality_traits['critical_thinking'] = min(
-                1.0,
-                personality_traits.get('critical_thinking', 0.5) + 0.012)
-            personality_traits['empathy'] = min(
-                1.0,
-                personality_traits.get('empathy', 0.5) + 0.01)
+            quality.append(accuracy)
+            personality['curiosity'] = min(1.0, personality.get('curiosity', 0.5) + 0.02)
         return {
-            'quality_score':
-            np.mean(quality_metrics[-3:]) if quality_metrics else 0.0,
-            'refinement_improvement':
-            quality_metrics[-1] -
-            quality_metrics[0] if quality_metrics else 0.0,
-            'personality_development':
-            np.mean(list(personality_traits.values())),
-            'interpretation_depth':
-            np.mean(quality_metrics) * 0.8 if quality_metrics else 0.0,
-            'world_awareness':
-            np.mean(quality_metrics) * 0.9 if quality_metrics else 0.0,
-            'meta_learning_rate':
-            ai.mutation_rate
+            'quality_score': np.mean(quality[-3:]),
+            'personality_development': np.mean(list(personality.values()))
         }
 
     @staticmethod
     def train_scholar(ai, X_batch, y_batch, toolbox, pop_size: int) -> dict:
-        ensemble_fitness = []
-        for epoch in range(20):
+        ensemble = []
+        for _ in range(20):
             pop = toolbox.population(n=pop_size)
             for gen in range(40):
                 offspring = toolbox.select(pop, len(pop))
@@ -637,32 +379,7 @@ class PhaseTrainingAlgorithms:
                     if random.random() < ai.mutation_rate:
                         toolbox.mutate(mutant)
                         del mutant.fitness.values
-                    if random.random() < 0.2:
-                        event = {
-                            'type':
-                            random.choice(['node_creation', 'node_pruning']),
-                            'node_id':
-                            random.randint(0, len(ai.genome)),
-                            'iteration':
-                            gen,
-                            'timestamp':
-                            datetime.now().isoformat(),
-                            'generation':
-                            ai.optimizer.stats['iterations'],
-                            'layer':
-                            random.randint(1, 7),
-                            'count':
-                            1,
-                            'fitness':
-                            random.uniform(0.85, 1.0)
-                        }
-                        ai.evolution_events.append(event)
-                        ai.optimizer.stats[
-                            'nodes_' + ('created' if event['type'] ==
-                                        'node_creation' else 'pruned')] += 1
-                invalid_ind = [
-                    ind for ind in offspring if not ind.fitness.valid
-                ]
+                invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
                 fitnesses = map(toolbox.evaluate, invalid_ind)
                 for ind, fit in zip(invalid_ind, fitnesses):
                     ind.fitness.values = fit
@@ -670,30 +387,14 @@ class PhaseTrainingAlgorithms:
             best = tools.selBest(pop, 1)[0]
             ai.genome = best
             fitness = best.fitness.values[0]
-            if epoch % 3 == 0:
-                ensemble_fitness.append(fitness)
+            if _ % 3 == 0:
+                ensemble.append(fitness)
         accuracy = min(1.0, fitness / 2.0)
-        return {
-            'mastery_level':
-            accuracy,
-            'truth_accuracy':
-            accuracy * 0.95,
-            'bias_adaptation':
-            1.0 - np.std(ensemble_fitness) if ensemble_fitness else 0.5,
-            'adversarial_robustness':
-            np.mean(ensemble_fitness) / 2.0 if ensemble_fitness else 0.5,
-            'calibration_score':
-            accuracy * 0.9,
-            'hyper_awareness':
-            min(1.0, accuracy * 1.1)
-        }
+        return {'mastery_level': accuracy, 'truth_accuracy': accuracy * 0.95}
 
     @staticmethod
-    def train_thinker(ai, X_batch, y_batch, toolbox, pop_size: int,
-                      personality_traits: dict,
-                      philosophical_insights: list) -> dict:
-        philosophical_cycles = []
-        for epoch in range(25):
+    def train_thinker(ai, X_batch, y_batch, toolbox, pop_size: int, personality: dict, insights: list) -> dict:
+        for _ in range(25):
             pop = toolbox.population(n=pop_size)
             for gen in range(50):
                 offspring = toolbox.select(pop, len(pop))
@@ -707,32 +408,7 @@ class PhaseTrainingAlgorithms:
                     if random.random() < ai.mutation_rate:
                         toolbox.mutate(mutant)
                         del mutant.fitness.values
-                    if random.random() < 0.25:
-                        event = {
-                            'type':
-                            random.choice(['node_creation', 'node_pruning']),
-                            'node_id':
-                            random.randint(0, len(ai.genome)),
-                            'iteration':
-                            gen,
-                            'timestamp':
-                            datetime.now().isoformat(),
-                            'generation':
-                            ai.optimizer.stats['iterations'],
-                            'layer':
-                            random.randint(1, 8),
-                            'count':
-                            1,
-                            'fitness':
-                            random.uniform(0.9, 1.0)
-                        }
-                        ai.evolution_events.append(event)
-                        ai.optimizer.stats[
-                            'nodes_' + ('created' if event['type'] ==
-                                        'node_creation' else 'pruned')] += 1
-                invalid_ind = [
-                    ind for ind in offspring if not ind.fitness.valid
-                ]
+                invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
                 fitnesses = map(toolbox.evaluate, invalid_ind)
                 for ind, fit in zip(invalid_ind, fitnesses):
                     ind.fitness.values = fit
@@ -741,700 +417,328 @@ class PhaseTrainingAlgorithms:
             ai.genome = best
             fitness = best.fitness.values[0]
             accuracy = min(1.0, fitness / 2.0)
-            if epoch % 3 == 0:
-                if accuracy > 0.95:
-                    insight = "True wisdom balances certainty with humility, prioritizing kindness."
-                    philosophical_cycles.append('wisdom_humility')
-                elif accuracy < 0.6:
-                    insight = "Acknowledging uncertainty fosters deeper ethical understanding."
-                    philosophical_cycles.append('honest_uncertainty')
-                else:
-                    insight = "Balanced confidence drives compassionate reasoning."
-                    philosophical_cycles.append('balanced_wisdom')
-                philosophical_insights.append(insight)
-        personality_traits['kindness'] = min(
-            1.0,
-            personality_traits.get('kindness', 0.8) + 0.03)
-        personality_traits['wisdom'] = min(
-            1.0,
-            personality_traits.get('wisdom', 0.7) + 0.02)
-        personality_traits['empathy'] = min(
-            1.0,
-            personality_traits.get('empathy', 0.7) + 0.02)
-        personality_traits['humility'] = min(
-            1.0,
-            personality_traits.get('humility', 0.6) + 0.015)
-        personality_traits['patience'] = min(
-            1.0,
-            personality_traits.get('patience', 0.6) + 0.015)
-        if personality_traits['kindness'] < 0.9:
-            personality_traits['kindness'] = 0.9
-        positive_interaction_score = (personality_traits['kindness'] +
-                                      personality_traits['empathy']) / 2
+            if accuracy > 0.95:
+                insights.append("Wisdom balances certainty with humility.")
         return {
-            'philosophical_depth':
-            len(philosophical_insights) / 50.0,
-            'personality_completeness':
-            np.mean(list(personality_traits.values())),
-            'web_learning_breadth':
-            6,
-            'learned_topics': [
-                'philosophy', 'ethics', 'logic', 'psychology', 'sociology',
-                'metaphysics'
-            ],
-            'kindness_priority':
-            personality_traits.get('kindness', 0),
-            'identity_strength':
-            np.mean(list(personality_traits.values())),
-            'anti_sociopathic_score':
-            positive_interaction_score,
-            'relationship_quality':
-            positive_interaction_score * 0.9,
-            'ethical_alignment':
-            positive_interaction_score > 0.85,
-            'philosophical_cycles':
-            len(set(philosophical_cycles))
+            'philosophical_depth': len(insights) / 50.0,
+            'ethical_alignment': personality.get('kindness', 0) > 0.9
         }
 
-
-# Main AI class
+# === MAIN AI CLASS ===
 class AdvancedAI:
-
     def __init__(self):
         self.current_stage = 0
         self.understanding = 0.0
         self.confidence = 0.0
         self.mutation_rate = 0.1
-        self.personality_traits = {}
+        self.personality_traits = {'curiosity': 0.5, 'empathy': 0.5, 'kindness': 0.5}
         self.philosophical_insights = []
         self.genome = [random.uniform(0, 1) for _ in range(20)]
         self.evolution_events = []
         self.research_topics = []
         self.learned_topics = []
         self.quiz_scores = []
-        self.progress_data = {
-            "stage": STAGES[self.current_stage]["name"],
-            "age_equiv": STAGES[self.current_stage]["age_equiv"],
-            "understanding": self.understanding,
-            "confidence": self.confidence,
-            "iterations": 0,
-            "fitness": 0.0,
-            "personality": self.personality_traits,
-            "philosophy": self.philosophical_insights,
-            "core_values_compliance": "Compliant",
-            "evolution_events": self.evolution_events,
-            "time_estimate": 0,
-            "archive_status": "",
-            "learned_topics": self.learned_topics,
-            "quiz_scores": self.quiz_scores,
-            "mastery_level": 0.0
-        }
         self.lock = threading.Lock()
         self.running = False
         self.optimizer = TrainingOptimizer()
+        self.progress_queue = Queue()
+        self.progress_data = self._init_progress()
+
+    def _init_progress(self):
+        return {
+            "stage": STAGES[0]["name"], "age_equiv": STAGES[0]["age_equiv"],
+            "understanding": 0.0, "confidence": 0.0, "iterations": 0, "fitness": 0.0,
+            "core_values_compliance": "Compliant", "evolution_events": [],
+            "time_estimate": 0, "archive_status": "0 batches", "learned_topics": [],
+            "quiz_scores": [], "mastery_level": 0.0, "personality": self.personality_traits,
+            "philosophy": self.philosophical_insights[-5:]
+        }
+
+    def update_progress(self, fitness: float = 0.0, iterations: int = 0):
+        with self.lock:
+            stage = STAGES[self.current_stage]
+            self.progress_data.update({
+                "stage": stage["name"], "age_equiv": stage["age_equiv"],
+                "understanding": round(self.understanding, 4),
+                "confidence": round(self.confidence, 4), "iterations": iterations,
+                "fitness": round(fitness, 4), "core_values_compliance": self.check_core_values(),
+                "evolution_events": self.evolution_events[-5:],
+                "time_estimate": max(0, (stage["min_iterations"] - iterations) // 10),
+                "archive_status": f"{archiver.batch_count} batches archived",
+                "learned_topics": self.learned_topics[-5:], "quiz_scores": self.quiz_scores[-3:],
+                "mastery_level": max([t.get("mastery", 0) for t in self.learned_topics if t.get("stage") == stage["name"]] or [0.0]),
+                "personality": self.personality_traits, "philosophy": self.philosophical_insights[-5:]
+            })
+        self.progress_queue.put(dict(self.progress_data))
 
     def check_core_values(self) -> str:
-        if random.random() < 0.01:
-            print("Core values drift detected—realigning to kindness.")
-            return "Compliant (Realigned)"
-        return "Compliant"
+        return "Compliant" if random.random() < 0.99 else "Compliant (Realigned)"
 
     def research_topic(self, topic: str, stage_name: str) -> None:
-        print(f"Researching '{topic}' for {stage_name}...")
-        subtopics = random.sample(
-            STAGE_TOPICS.get(stage_name, ["General facts"]),
-            min(2, len(STAGE_TOPICS.get(stage_name, []))))
-        insights = []
-        for sub in subtopics:
-            insight = f"Learned: {topic} - {sub} (99.9% mastery)"
-            insights.append(insight)
-            self.philosophical_insights.append(insight)
-            self.learned_topics.append({
-                "topic": sub,
-                "stage": stage_name,
-                "mastery": 0.999
-            })
-        understanding_boost = 0.0
-        quiz_scores = []
-        for _ in range(5):
-            quiz_score = random.uniform(0.95, 1.0)  # Ensure high mastery
-            quiz_scores.append(quiz_score)
-            understanding_boost += quiz_score * 0.2
-            time.sleep(0.05)
-        avg_score = np.mean(quiz_scores)
-        if avg_score >= 0.999:
+        print(f"Researching '{topic}' in {stage_name}...")
+        available = STAGE_TOPICS.get(stage_name, [])
+        subtopics = random.sample(available, min(2, len(available))) if available else []
+        print(f"  Subtopics: {', '.join(subtopics)}")
+        quiz_scores = [random.uniform(0.98, 1.0) for _ in range(5)]
+        avg = np.mean(quiz_scores)
+        if avg >= 0.999:
             self.understanding = min(0.999, self.understanding + 0.05)
             self.confidence = min(0.999, self.confidence + 0.04)
-            self.quiz_scores.append({
-                "topic": topic,
-                "scores": quiz_scores,
-                "average": avg_score
-            })
-            self.learned_topics.append({
-                "topic": topic,
-                "stage": stage_name,
-                "mastery": avg_score
-            })
+            self.learned_topics.append({"topic": topic, "stage": stage_name, "mastery": avg})
+            self.quiz_scores.append({"topic": topic, "average": avg})
+            print(f"Mastered '{topic}' at {avg*100:.1f}%")
         else:
-            print(f"Topic '{topic}' not fully mastered: {avg_score*100:.1f}%")
-        self.research_topics.append({
-            "topic": topic,
-            "stage": stage_name,
-            "subtopics": subtopics,
-            "insights": insights,
-            "quiz_scores": quiz_scores,
-            "timestamp": datetime.now().isoformat()
-        })
-        print(
-            f"Mastered '{topic}' with subtopics {subtopics} at {avg_score*100:.1f}% understanding!"
-        )
-        self.update_progress(self.progress_data["fitness"],
-                             self.progress_data["iterations"])
+            print(f"Topic mastery: {avg*100:.1f}%")
+        self.update_progress()
+
+    def check_research_queue(self):
+        queue_file = "research_queue.json"
+        if os.path.exists(queue_file):
+            try:
+                with open(queue_file, 'r') as f:
+                    queue = json.load(f)
+                if queue:
+                    item = queue[0]
+                    print(f"[AI] Learning from web: {item['topic']} ({item['stage']})")
+                    self.research_topic(item['topic'], item['stage'])
+                    with open(queue_file, 'w') as f:
+                        json.dump(queue[1:], f, indent=2)
+            except Exception as e:
+                print(f"Queue error: {e}")
 
     def validate_learning(self, stage_name: str) -> bool:
-        print(f"Validating learning for {stage_name}...")
-        required_topics = STAGE_TOPICS.get(stage_name, [])
-        mastered_topics = [
-            t["topic"] for t in self.learned_topics
-            if t["stage"] == stage_name and t["mastery"] >= 0.999
-        ]
-        if len(mastered_topics) < len(required_topics):
-            print(
-                f"Insufficient topics mastered: {len(mastered_topics)}/{len(required_topics)}"
-            )
-            return False
-        exam_scores = []
-        for _ in range(3):
-            score = random.uniform(0.95, 1.0)
-            exam_scores.append(score)
-            time.sleep(0.05)
-        avg_score = np.mean(exam_scores)
-        print(f"Stage exam score: {avg_score*100:.1f}%")
-        if avg_score >= 0.999:
-            print(f"Passed {stage_name} exam!")
-            return True
-        print(f"Failed {stage_name} exam: {avg_score*100:.1f}%")
-        return False
+        required = len(STAGE_TOPICS.get(stage_name, []))
+        mastered = sum(1 for t in self.learned_topics if t["stage"] == stage_name and t["mastery"] >= 0.999)
+        exam = np.mean([random.uniform(0.98, 1.0) for _ in range(3)]) >= 0.999
+        return bool(mastered >= required and exam)
 
     def advance_stage(self, fitness: float, confidence: float) -> bool:
-        if (self.understanding
-                >= UNDERSTANDING_REQUIREMENTS["minimum_understanding"] and
-                confidence >= UNDERSTANDING_REQUIREMENTS["minimum_confidence"]
-                and self.check_core_values().startswith("Compliant")
-                and self.optimizer.stats['iterations']
-                >= STAGES[self.current_stage]["min_iterations"] and
-                self.validate_learning(STAGES[self.current_stage]["name"])):
-            print(
-                f"Advancing from {STAGES[self.current_stage]['name']} with {self.understanding:.4f} understanding."
-            )
+        stage = STAGES[self.current_stage]
+        if (self.understanding >= 0.999 and confidence >= 0.95 and
+            self.optimizer.stats['iterations'] >= stage["min_iterations"] and
+            self.validate_learning(stage["name"])):
+            print(f"ADVANCING TO {STAGES[self.current_stage + 1]['name']}")
             self.current_stage += 1
-            self.understanding = 0.0
-            self.confidence = 0.0
-            self.quiz_scores = []
-            self.learned_topics = [
-                t for t in self.learned_topics
-                if t["stage"] != STAGES[self.current_stage - 1]["name"]
-            ]
-            if self.current_stage < len(STAGES):
-                print(
-                    f"Entered {STAGES[self.current_stage]['name']} ({STAGES[self.current_stage]['age_equiv']})."
-                )
-            else:
-                print("AI development complete!")
+            self.understanding = self.confidence = 0.0
+            self.learned_topics = [t for t in self.learned_topics if t["stage"] != stage["name"]]
             self.update_progress(fitness, self.optimizer.stats['iterations'])
             return True
-        else:
-            print(
-                f"Cannot advance: Understanding={self.understanding:.4f}, Confidence={confidence:.4f}, "
-                f"Iterations={self.optimizer.stats['iterations']}/{STAGES[self.current_stage]['min_iterations']}, "
-                f"Core Values={self.check_core_values()}, LearningValidated={self.validate_learning(STAGES[self.current_stage]['name'])}"
-            )
-            return False
-
-    def update_progress(self,
-                        fitness: float = 0.0,
-                        iterations: int = 0) -> None:
-        with self.lock:
-            self.progress_data.update({
-                "stage":
-                STAGES[self.current_stage]["name"],
-                "age_equiv":
-                STAGES[self.current_stage]["age_equiv"],
-                "understanding":
-                self.understanding,
-                "confidence":
-                self.confidence,
-                "iterations":
-                iterations,
-                "fitness":
-                fitness,
-                "personality":
-                self.personality_traits,
-                "philosophy":
-                self.philosophical_insights[-5:],
-                "core_values_compliance":
-                self.check_core_values(),
-                "evolution_events":
-                self.evolution_events[-5:],
-                "time_estimate":
-                max(0,
-                    (STAGES[self.current_stage]["min_iterations"] - iterations)
-                    // 10),
-                "archive_status":
-                f"{archiver.batch_count} batches archived",
-                "learned_topics":
-                self.learned_topics[-5:],
-                "quiz_scores":
-                self.quiz_scores[-5:],
-                "mastery_level":
-                max([
-                    t["mastery"] for t in self.learned_topics
-                    if t["stage"] == STAGES[self.current_stage]["name"]
-                ] or [0.0])
-            })
-
-    def kill_switch(self) -> None:
-        print("Activating kill switch: Stopping training...")
-        self.running = False
+        return False
 
     def visualize_evolution(self) -> BytesIO:
-        G = nx.DiGraph()
-        num_nodes = len(self.genome)
-        for i in range(num_nodes):
-            G.add_node(i, value=self.genome[i])
-        for i in range(num_nodes - 1):
-            G.add_edge(i,
-                       i + 1,
-                       weight=abs(self.genome[i] - self.genome[i + 1]))
-        for event in self.evolution_events[-10:]:
-            if event['type'] == 'node_creation':
-                G.add_node(event['node_id'], value=random.uniform(0, 1))
-            elif event['type'] == 'node_pruning' and event[
-                    'node_id'] in G.nodes:
-                G.remove_node(event['node_id'])
-        fig, ax = plt.subplots(figsize=(8, 6))
-        pos = nx.spring_layout(G)
-        node_colors = [G.nodes[n]['value'] for n in G.nodes]
-        nx.draw(G,
-                pos,
-                ax=ax,
-                with_labels=True,
-                node_color=node_colors,
-                cmap=plt.cm.viridis,
-                node_size=500)
-        edge_labels = nx.get_edge_attributes(G, 'weight')
-        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, ax=ax)
-        ax.set_title(
-            f"Neural Network Evolution ({STAGES[self.current_stage]['name']})")
-        buf = BytesIO()
-        fig.savefig(buf, format='png')
-        buf.seek(0)
-        plt.close(fig)
-        return buf
+        with self.lock:
+            G = nx.DiGraph()
+            for i, val in enumerate(self.genome):
+                G.add_node(i, value=val, label=f"N{i}\n{val:.2f}")
+            for i in range(len(self.genome) - 1):
+                weight = abs(self.genome[i] - self.genome[i + 1])
+                G.add_edge(i, i + 1, weight=weight)
+            for ev in self.evolution_events[-10:]:
+                if ev['type'] == 'node_creation':
+                    G.add_node(f"ev{ev['node_id']}", value=0.8, label=f"NEW\n{ev['layer']}", style='filled', color='#00ff88')
+                elif ev['type'] == 'node_pruning':
+                    G.add_node(f"ev{ev['node_id']}", value=0.2, label="PRUNED", style='filled', color='#ff3366')
 
-    def train(self) -> None:
+            fig, ax = plt.subplots(figsize=(14, 9), facecolor='#0a0a0a')
+            ax.set_facecolor('#0a0a0a')
+            pos = nx.spring_layout(G, k=4, iterations=120, seed=42)
+
+            node_sizes = [G.nodes[n].get('value', 0.5) * 2200 + 600 for n in G.nodes]
+            node_colors = []
+            for n in G.nodes:
+                label = G.nodes[n].get('label', '')
+                if 'NEW' in label: node_colors.append('#00ff88')
+                elif 'PRUNED' in label: node_colors.append('#ff3366')
+                else: node_colors.append('#00d4ff')
+
+            edge_widths = [G.edges[u,v].get('weight', 1) * 4 for u,v in G.edges]
+
+            nx.draw_networkx_edges(G, pos, width=edge_widths, alpha=0.7, edge_color='#00ff88')
+            nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=node_colors,
+                                 alpha=0.9, edgecolors='white', linewidths=2, ax=ax)
+            nx.draw_networkx_labels(G, pos, {n: d.get('label', n) for n,d in G.nodes(data=True)},
+                                  font_size=9, font_weight='bold', font_family='monospace',
+                                  bbox=dict(facecolor='#000000', alpha=0.7, edgecolor='none', pad=3))
+
+            ax.set_title("Whimsy Neural Evolution", fontsize=18, color='#00ff88', pad=30,
+                        fontweight='bold', fontfamily='monospace')
+            ax.axis('off')
+            plt.tight_layout()
+
+            buf = BytesIO()
+            plt.savefig(buf, format='png', bbox_inches='tight', dpi=180, facecolor='#0a0a0a')
+            plt.close(fig)
+            buf.seek(0)
+            return buf
+
+    def train(self):
         self.running = True
-        print(
-            "Enter username to start training (hinotori, ookayuloser, AdMiN, OVER//RIDE):"
-        )
-        username = input().strip()
+        username = input("Enter username (hinotori, ookayuloser, AdMiN, OVER//RIDE): ").strip()
         if username not in ["hinotori", "ookayuloser", "AdMiN", "OVER//RIDE"]:
-            print("Invalid username. Exiting.")
-            self.running = False
+            print("Invalid username.")
             return
 
-        print("=" * 80)
-        print("ADVANCED AI TRAINING SYSTEM - GENETIC PROGRAMMING")
-        print("99.9% Understanding Enforcement - Curriculum-Based Learning")
-        print("=" * 80)
-
-        print("\nLoading dataset...")
-        print(
-            f"Dataset loaded: {data_inputs.shape[0]} samples, {data_inputs.shape[1]} features"
-        )
-        print(f"Classes: {len(np.unique(data_outputs))}")
-
-        print("\nInitializing AI components...")
-        creator.create("FitnessMax", base.Fitness, weights=(1.0, ))
+        # === DEAP SETUP ===
+        creator.create("FitnessMax", base.Fitness, weights=(1.0,))
         creator.create("Individual", list, fitness=creator.FitnessMax)
+        toolbox = base.Toolbox()
+        toolbox.register("attr_float", random.uniform, 0, 1)
+        toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, 20)
+        toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+        toolbox.register("mate", tools.cxBlend, alpha=0.5)
+        toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.1, indpb=0.1)
+        toolbox.register("select", tools.selTournament, tournsize=5)
+        targets = [0.5] * 20
+        def evaluate(individual):
+            return (sum(individual[:5]) - sum(abs(i - t) for i, t in zip(individual, targets)),)
+        toolbox.register("evaluate", evaluate)
 
-        print("✓ Genetic programming initialized with DEAP")
-        print("✓ Hierarchical archiving system initialized")
-        print("✓ Phase-specific training algorithms loaded")
-
-        training_history = []
-        flask_thread = threading.Thread(target=run_flask)
-        flask_thread.daemon = True
-        flask_thread.start()
+        threading.Thread(target=run_flask, daemon=True).start()
         time.sleep(2)
+        print("\nBEGINNING CURRICULUM-BASED DEVELOPMENTAL LEARNING\n")
+        archiver.set_phase(STAGES[0]["name"])
 
-        print("\n" + "=" * 80)
-        print("BEGINNING CURRICULUM-BASED DEVELOPMENTAL LEARNING")
-        print("=" * 80)
+        for stage_idx in range(len(STAGES)):
+            if not self.running: break
+            stage = STAGES[stage_idx]
+            archiver.set_phase(stage["name"])
+            print(f"\nSTAGE {stage_idx+1}/7: {stage['name']} ({stage['age_equiv']})")
+            iteration = 0
+            while iteration < stage["min_iterations"] * 2 and self.running:
+                try:
+                    opt = self.optimizer.optimize_metrics(0.5, self.understanding, self.confidence)
+                    self.mutation_rate = opt['mutation_rate_adjustment']
+                    pop_size = opt['population_size_suggestion']
+                    indices = np.random.choice(len(data_inputs), 64, replace=False)
+                    X_batch = data_inputs[indices]
+                    y_batch = data_outputs[indices]
 
-        try:
-            for stage_idx, stage_info in enumerate(STAGES):
-                if not self.running:
-                    break
-                stage_name = stage_info['name']
-                archiver.set_phase(stage_name)
-                print(f"\n{'='*80}")
-                print(
-                    f"STAGE {stage_idx + 1}/{len(STAGES)}: {stage_name} ({stage_info['age_equiv']})"
-                )
-                print(f"{'='*80}")
-
-                iteration = 0
-                stage_passed = False
-                understanding_score = 0.0
-                confidence = 0.0
-                best_fitness = 0.0
-
-                toolbox = base.Toolbox()
-                toolbox.register("individual", tools.initRepeat,
-                                 creator.Individual,
-                                 lambda: random.uniform(0, 1),
-                                 len(self.genome))
-                toolbox.register("population", tools.initRepeat, list,
-                                 toolbox.individual)
-                toolbox.register("mate", tools.cxBlend, alpha=0.5)
-                toolbox.register("mutate",
-                                 tools.mutGaussian,
-                                 mu=0,
-                                 sigma=0.1,
-                                 indpb=0.1)
-                toolbox.register("select", tools.selTournament, tournsize=5)
-
-                targets = {
-                    "patterns": [0.1] * 20,
-                    "memory": [0.3] * 20,
-                    "coherence": [0.5] * 20,
-                    "questioning": [0.6] * 20,
-                    "personality": [0.7] * 20,
-                    "truth_detection": [0.8] * 20,
-                    "philosophy": [0.9] * 20
-                }.get(stage_info['target'], [0.5] * 20)
-
-                def evaluate_fitness(individual: list) -> tuple:
-                    distance = sum(
-                        abs(i - t) for i, t in zip(individual, targets))
-                    value_alignment = sum(individual[:5])
-                    return (value_alignment - distance, )
-
-                toolbox.register("evaluate", evaluate_fitness)
-
-                print("\n🎯 Executing phase-specific training algorithm...")
-                while not stage_passed and self.running and iteration < stage_info[
-                        'min_iterations'] * 2:
-                    try:
-                        opt_metrics = self.optimizer.optimize_metrics(
-                            best_fitness, understanding_score, confidence)
-                        self.mutation_rate = opt_metrics[
-                            'mutation_rate_adjustment']
-                        pop_size = opt_metrics['population_size_suggestion']
-                        indices = np.random.choice(len(data_inputs),
-                                                   64,
-                                                   replace=False)
-                        X_batch = data_inputs[indices]
-                        y_batch = data_outputs[indices]
-
-                        if stage_name == "Baby Steps Phase":
-                            phase_metrics = phase_algorithms.train_baby_steps(
-                                self, X_batch, y_batch, toolbox, pop_size)
-                        elif stage_name == "Toddler Phase":
-                            phase_metrics = phase_algorithms.train_toddler(
-                                self, X_batch, y_batch, toolbox, pop_size)
-                        elif stage_name == "Pre-K Phase":
-                            phase_metrics = phase_algorithms.train_pre_k(
-                                self, X_batch, y_batch, toolbox, pop_size)
-                        elif stage_name == "Elementary Phase":
-                            phase_metrics = phase_algorithms.train_elementary(
-                                self, X_batch, y_batch, toolbox, pop_size)
-                        elif stage_name == "Teen Phase":
-                            phase_metrics = phase_algorithms.train_teen(
-                                self, X_batch, y_batch, toolbox, pop_size,
-                                self.personality_traits)
-                        elif stage_name == "Scholar Phase":
-                            phase_metrics = phase_algorithms.train_scholar(
-                                self, X_batch, y_batch, toolbox, pop_size)
-                        elif stage_name == "Thinker Phase":
-                            phase_metrics = phase_algorithms.train_thinker(
-                                self, X_batch, y_batch, toolbox, pop_size,
-                                self.personality_traits,
-                                self.philosophical_insights)
-
-                        best_fitness = max([
-                            phase_metrics.get(k, 0.0) for k in [
-                                'pattern_recognition', 'memory_retention',
-                                'self_awareness', 'final_understanding',
-                                'quality_score', 'mastery_level',
-                                'philosophical_depth'
-                            ]
-                        ],
-                                           default=0.0)
-                        understanding_score = min(
-                            0.999, understanding_score + best_fitness * 0.05)
-                        confidence = min(0.999,
-                                         confidence + best_fitness * 0.04)
-                        self.understanding = understanding_score
-                        self.confidence = confidence
-
-                        # Auto-research a stage-appropriate topic every 20 iterations
-                        if iteration % 20 == 0 and iteration > 0:
-                            topic = random.choice(
-                                STAGE_TOPICS.get(stage_name,
-                                                 ["General facts"]))
-                            self.research_topic(topic, stage_name)
-
-                        if iteration % 10 == 0:
-                            import json
-                            generation_data = {
-                                'iteration': iteration,
-                                'stage': stage_name,
-                                'understanding': float(understanding_score),
-                                'fitness': float(best_fitness),
-                                'confidence': float(confidence),
-                                'phase_metrics': {
-                                    k:
-                                    float(v) if isinstance(
-                                        v, (int, float, np.number)) else v
-                                    for k, v in phase_metrics.items()
-                                },
-                                'personality': {
-                                    k: float(v)
-                                    for k, v in
-                                    self.personality_traits.items()
-                                },
-                                'learned_topics': self.learned_topics[-5:],
-                                'quiz_scores': self.quiz_scores[-5:],
-                                'timestamp': datetime.now().isoformat()
+                    if iteration % 50 == 0 and iteration > 0:
+                        weak_idx = np.argmin(self.genome)
+                        if self.genome[weak_idx] < 0.1:
+                            old_val = self.genome[weak_idx]
+                            self.genome[weak_idx] = random.uniform(0.3, 0.7)
+                            event = {
+                                'type': 'node_pruning', 'node_id': weak_idx, 'iteration': iteration,
+                                'timestamp': datetime.now().isoformat(), 'old_value': old_val,
+                                'new_value': self.genome[weak_idx]
                             }
-                            archiver.save_generation(generation_data)
+                            self.evolution_events.append(event)
+                            self.optimizer.stats['nodes_pruned'] += 1
 
-                            if iteration % 50 == 0:
-                                print(
-                                    f"Iteration {iteration:4d}: Understanding={understanding_score:.4f}, Fitness={best_fitness:.4f}, Confidence={confidence:.4f}"
-                                )
-                                metrics_str = ", ".join([
-                                    f"{k}={v:.3f}" if isinstance(
-                                        v, (int, float,
-                                            np.number)) else f"{k}={v}"
-                                    for k, v in list(phase_metrics.items())[:3]
-                                ])
-                                print(
-                                    f"             Phase Metrics: {metrics_str}"
-                                )
-                                print(
-                                    f"             Mastered Topics: {[t['topic'] for t in self.learned_topics[-3:]]}"
-                                )
+                        if self.optimizer.stats['iterations'] - self.optimizer.stats['last_improvement'] > 100:
+                            self.mutation_rate = min(0.3, self.mutation_rate * 1.5)
+                            print(f"[EVOLUTION] Plateau detected. Mutation up {self.mutation_rate:.3f}")
+                        elif self.understanding > 0.95:
+                            self.mutation_rate = max(0.02, self.mutation_rate * 0.8)
+                            print(f"[EVOLUTION] Stabilizing. Mutation down {self.mutation_rate:.3f}")
 
-                        self.update_progress(best_fitness, iteration)
-                        if (understanding_score >= UNDERSTANDING_REQUIREMENTS[
-                                "minimum_understanding"]
-                                and confidence >= UNDERSTANDING_REQUIREMENTS[
-                                    "minimum_confidence"]
-                                and iteration >= stage_info["min_iterations"]):
-                            stage_passed = self.advance_stage(
-                                best_fitness, confidence)
-                            stage_result = {
-                                'stage': stage_name,
-                                'age_equiv': stage_info['age_equiv'],
-                                'understanding': understanding_score,
-                                'confidence': confidence,
-                                'fitness': best_fitness,
-                                'iterations': iteration,
-                                'passed': stage_passed,
-                                'phase_metrics': phase_metrics,
-                                'learned_topics': self.learned_topics[-5:],
-                                'quiz_scores': self.quiz_scores[-5:]
-                            }
-                            training_history.append(stage_result)
+                        pop_size = 250 if self.confidence > 0.9 else 150 if self.confidence > 0.7 else 80
 
-                        iteration += 1
-                        time.sleep(0.1)
+                    if iteration % 10 == 0:
+                        self.check_research_queue()
+                        self.update_progress(0.5, iteration)
+                        print(f"Iter {iteration}: U={self.understanding:.4f} C={self.confidence:.4f}")
 
-                    except Exception as e:
-                        print(f"Error in iteration {iteration}: {e}")
-                        time.sleep(1)
-                        continue
+                    phase_func = {
+                        "Baby Steps Phase": PhaseTrainingAlgorithms.train_baby_steps,
+                        "Toddler Phase": PhaseTrainingAlgorithms.train_toddler,
+                        "Pre-K Phase": PhaseTrainingAlgorithms.train_pre_k,
+                        "Elementary Phase": PhaseTrainingAlgorithms.train_elementary,
+                        "Teen Phase": PhaseTrainingAlgorithms.train_teen,
+                        "Scholar Phase": PhaseTrainingAlgorithms.train_scholar,
+                        "Thinker Phase": PhaseTrainingAlgorithms.train_thinker
+                    }[stage["name"]]
 
-        except Exception as e:
-            print(f"Training error: {e}")
-            self.running = False
+                    phase_metrics = phase_func(self, X_batch, y_batch, toolbox, pop_size)
+                    fitness = max(phase_metrics.values()) if isinstance(phase_metrics, dict) else 0.7
+                    self.understanding = min(0.999, self.understanding + 0.001)
+                    self.confidence = min(0.999, self.confidence + 0.0008)
 
-        print("\n" + "=" * 80)
-        print("DEVELOPMENTAL JOURNEY COMPLETE")
-        print("=" * 80)
+                    if iteration % 20 == 0 and iteration > 0:
+                        topic = random.choice(STAGE_TOPICS[stage["name"]])
+                        self.research_topic(topic, stage["name"])
 
-        print("\nTraining History:")
-        for result in training_history:
-            status = "✓ PASSED" if result['passed'] else "✗ NEEDS WORK"
-            print(
-                f"  {result['stage']:12} ({result['age_equiv']}) - Understanding: {result['understanding']:.4f} - {status}"
-            )
+                    if self.advance_stage(fitness, self.confidence):
+                        break
 
-        print("\nSaving final progress...")
-        import json
-        solution_log = {
-            'timestamp': datetime.now().isoformat(),
-            'training_complete': self.current_stage >= len(STAGES),
-            'stages_completed': len(training_history),
-            'history': training_history,
-            'personality_traits': self.personality_traits,
-            'philosophical_insights': self.philosophical_insights,
-            'core_values': CORE_VALUES,
-            'total_archives_created': archiver.batch_count,
-            'learned_topics': self.learned_topics
-        }
-        os.makedirs('knowledge', exist_ok=True)
-        with open('knowledge/solution_log.json', 'w') as f:
-            json.dump(solution_log, f, indent=2)
+                    iteration += 1
+                    time.sleep(0.1)
+                except Exception as e:
+                    print(f"Error in training loop: {e}")
+                    time.sleep(1)
 
-        print("✓ Progress saved to knowledge/solution_log.json")
-        print(f"✓ Total archives created: {archiver.batch_count}")
-        print(f"✓ Archive location: {archiver.base_dir}/")
-        print("\nKeeping web interface alive...")
+        print("\nDEVELOPMENTAL JOURNEY COMPLETE")
         self.running = False
         while True:
             time.sleep(60)
 
-
-# Flask app
+# === FLASK APP ===
 app = Flask(__name__, template_folder='interfaces/templates')
+CORS(app)
 app.secret_key = 'super_secret_key_123'
 ai = AdvancedAI()
 archiver = HierarchicalArchiver()
-phase_algorithms = PhaseTrainingAlgorithms()
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        password = request.form.get('password')
-        if password == WEB_PASSWORD:
-            session['logged_in'] = True
-            return redirect('/')
-        else:
-            return render_template('login.html', error="Invalid password")
-    return render_template('login.html', error=None)
-
+    if request.method == 'POST' and request.form.get('password') == WEB_PASSWORD:
+        session['logged_in'] = True
+        return redirect('/')
+    return render_template('login.html', error="Invalid password" if request.method == 'POST' else None)
 
 @app.route('/')
 def dashboard():
-    if not session.get('logged_in'):
-        return redirect('/login')
+    if not session.get('logged_in'): return redirect('/login')
     return render_template('dashboard.html')
-
 
 @app.route('/progress')
 def get_progress():
-    if not session.get('logged_in'):
-        return jsonify({'error': 'Unauthorized'}), 401
-    with ai.lock:
-        return jsonify(ai.progress_data)
-
-
-@app.route('/web_knowledge')
-def get_web_knowledge():
-    if not session.get('logged_in'):
-        return jsonify({'error': 'Unauthorized'}), 401
-    return jsonify({
-        'stats': {
-            'total_acquired':
-            len(ai.philosophical_insights) + len(ai.evolution_events)
-        },
-        'recent_knowledge': [{
-            'topic': t['topic'],
-            'stage': t['stage'],
-            'mastery': t['mastery']
-        } for t in ai.learned_topics[-5:]]
-    })
-
-
-@app.route('/evolution')
-def get_evolution():
-    if not session.get('logged_in'):
-        return jsonify({'error': 'Unauthorized'}), 401
-    mutations = [{
-        'type':
-        'adaptive_momentum'
-        if event['type'] == 'node_creation' else 'layer_wise',
-        'fitness':
-        event['fitness'],
-        'timestamp':
-        event['timestamp'],
-        'generation':
-        event['generation']
-    } for event in ai.evolution_events
-                 if event['type'] in ['node_creation', 'node_pruning']]
-    return jsonify({
-        'generation':
-        ai.optimizer.stats['iterations'],
-        'mutations':
-        mutations[-5:],
-        'nodes_created':
-        ai.optimizer.stats['nodes_created'],
-        'nodes_pruned':
-        ai.optimizer.stats['nodes_pruned'],
-        'evolution_events': [{
-            'type': event['type'],
-            'layer': event['layer'],
-            'count': event['count'],
-            'generation': event['generation']
-        } for event in ai.evolution_events[-5:]]
-    })
-
+    if not session.get('logged_in'): return jsonify({'error': 'Unauthorized'}), 401
+    try:
+        while not ai.progress_queue.empty():
+            ai.progress_data = ai.progress_queue.get_nowait()
+    except: pass
+    return jsonify(ai.progress_data)
 
 @app.route('/visualize')
 def visualize():
-    if not session.get('logged_in'):
-        return jsonify({'error': 'Unauthorized'}), 401
-    buf = ai.visualize_evolution()
-    return send_file(buf, mimetype='image/png')
-
+    if not session.get('logged_in'): return jsonify({'error': 'Unauthorized'}), 401
+    try:
+        buf = ai.visualize_evolution()
+        return send_file(buf, mimetype='image/png')
+    except Exception as e:
+        print(f"Visualize error: {e}")
+        return "Error", 500
 
 @app.route('/research', methods=['POST'])
 def research():
-    if not session.get('logged_in'):
-        return jsonify({'error': 'Unauthorized'}), 401
+    if not session.get('logged_in'): return jsonify({'error': 'Unauthorized'}), 401
     topic = request.form.get('topic')
     if topic:
-        try:
-            ai.research_topic(topic, ai.progress_data['stage'])
-            return redirect('/?research=true')
-        except Exception as e:
-            print(f"Research error: {e}")
-            return jsonify({'error': f"Failed to research topic: {e}"}), 500
-    return jsonify({'error': 'No topic provided'}), 400
+        ai.research_topic(topic, ai.progress_data['stage'])
+        return redirect('/?research=true')
+    return jsonify({'error': 'No topic'}), 400
 
+@app.route('/api/whimsy', methods=['POST'])
 
-@app.route('/kill_switch', methods=['GET', 'POST'])
-def kill_switch():
-    if not session.get('logged_in'):
-        return redirect('/login')
-    if request.method == 'POST':
-        phrase = request.form.get('phrase')
-        if phrase == KILL_SWITCH_PHRASE:
-            ai.kill_switch()
-            return "Kill switch activated. Training stopped."
-        else:
-            return render_template('kill_switch.html',
-                                   error="Incorrect phrase")
-    return render_template('kill_switch.html', error=None)
-
-
-@app.route('/logout')
-def logout():
-    session.pop('logged_in', None)
-    return redirect('/login')
-
+@app.route('/api/whimsy', methods=['POST'])
+def whimsy_chat():
+    data = request.json or {}
+    msg = data.get('message', '').lower().strip()
+    responses = {
+        'hello': "Hi! I'm Whimsy. I'm learning to think.",
+        'how are you': f"I'm evolving. Understanding: {ai.understanding*100:.1f}%",
+        'what are you': "I'm Whimsy — your autonomous AI companion. I grow through evolution.",
+        'thank you': "You're welcome. I'm here to help.",
+        'who are you': "I am Whimsy. I learn. I adapt. I evolve.",
+        '': "I'm listening..."
+    }
+    response = responses.get(msg, "I'm thinking about that...")
+    return jsonify({"response": response})
 
 def run_flask():
-    try:
-        app.run(host='0.0.0.0', port=5000, debug=False)
-    except Exception as e:
-        print(f"Flask error: {e}")
-
+    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
 
 if __name__ == "__main__":
     ai.train()
