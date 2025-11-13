@@ -184,6 +184,12 @@ class PhaseTrainingAlgorithms:
         return {'pattern_recognition': accuracy, 'coherence': accuracy * 0.8, 'confidence': accuracy * 0.9}
 
 class AdvancedAI:
+    def train(self, username=None):
+        if username is None:
+            username = input("Enter username (hinotori, ookayuloser, AdMiN, OVER//RIDE): ").strip()
+        if username not in ["hinotori", "ookayuloser", "AdMiN", "OVER//RIDE"]:
+            print("Invalid username.")
+            return
     def __init__(self):
         self.lock = threading.RLock()
         self.running = False
@@ -400,7 +406,6 @@ def generate_response(self, msg, stage, understanding, learned):
             max_edge_width = max(G.edges[u,v].get('weight', 1) for u, v in G.edges) * 4 if G.edges else 1.0
 
             nx.draw_networkx_edges(G, pos, width=max_edge_width, alpha=0.7, edge_color='#00ff88', ax=ax)
-            nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=node_colors, alpha=0.9, edgecolors='white', linewidths=2, ax=ax)
             nx.draw_networkx_nodes(
                 G, pos,
                 node_size=node_sizes,
@@ -480,7 +485,7 @@ def generate_response(self, msg, stage, understanding, learned):
         self.chat_code = '\n'.join(lines)
         print("[SELF-HEAL] Injected guard")
 
-    def train(self):
+    def train_stage(self):
         self.running = True
         username = input("Enter username (hinotori, ookayuloser, AdMiN, OVER//RIDE): ").strip()
         if username not in ["hinotori", "ookayuloser", "AdMiN", "OVER//RIDE"]:
@@ -577,14 +582,14 @@ def login():
         if request.form.get('password') == WEB_PASSWORD:
             session['logged_in'] = True
             return redirect('/')
-        return render_template('utils/login.html', error='Invalid password')
-    return render_template('utils/login.html')
+        return render_template('login.html', error='Invalid password')
+    return render_template('login.html')
 
 @app.route('/')
 def dashboard():
     if not session.get('logged_in'):
         return redirect('/login')
-    return render_template('utils/dashboard.html')
+    return render_template('dashboard.html')
 
 @app.route('/progress')
 def get_progress():
