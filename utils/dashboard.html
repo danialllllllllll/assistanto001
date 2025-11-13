@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Whimsy Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --purple: #c678dd; --purple-glow: #e0aaff; --bg: #1a1a2e; --card: #16213e;
+      --text: #e6e6e6; --muted: #aaa; --success: #00ff88; --warning: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body { 
+      background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; 
+      margin: 0; padding: 16px; line-height: 1.6;
+    }
+    .card { 
+      background: var(--card); border: 1px solid var(--purple); border-radius: 12px; 
+      padding: 20px; margin: 16px 0; box-shadow: 0 0 20px rgba(198, 120, 221, 0.2);
+    }
+    h1, h2, h3 { color: var(--purple); text-shadow: 0 0 8px rgba(198,120,221,0.4); margin: 0 0 16px 0; }
+    .stat { display: flex; justify-content: space-between; margin: 8px 0; }
+    .label { color: var(--muted); font-size: 0.9em; }
+    .value { font-weight: 600; color: var(--purple-glow); }
+    .progress-bar { height: 10px; background: #333; border-radius: 5px; overflow: hidden; margin: 8px 0; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), var(--purple-glow)); width: 0%; transition: width 0.4s ease; }
+    button { 
+      background: var(--purple); color: black; border: none; padding: 10px 16px; 
+      border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; 
+    }
+    button:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(198,120,221,0.6); }
+    input, textarea { 
+      background: #0f0f1e; border: 1px solid var(--purple); color: white; 
+      border-radius: 8px; padding: 10px; width: 100%; margin: 8px 0; 
+    }
+    #whimsy-log { 
+      height: 180px; overflow-y: auto; background: rgba(15,15,30,0.8); padding: 12px; 
+      border-radius: 10px; font-family: 'Courier New', monospace; font-size: 13px; 
+      color: #ccffcc; border: 1px solid var(--purple); backdrop-filter: blur(4px); 
+      margin: 10px 0; 
+    }
+    .event { margin: 6px 0; padding: 6px 10px; border-radius: 6px; font-size: 0.9em; }
+    .event.create { background: rgba(0,255,136,0.15); border-left: 3px solid var(--success); }
+    .event.prune { background: rgba(255,107,107,0.15); border-left: 3px solid var(--warning); }
+    .event.mutate { background: rgba(198,120,221,0.15); border-left: 3px solid var(--purple); }
+    .eta { color: var(--purple-glow); font-weight: bold; }
+    img { max-width: 100%; border-radius: 10px; border: 1px solid var(--purple); margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Whimsy AI</h1>
+    <div class="stat"><span class="label">Stage:</span> <span class="value" id="stage">Loading...</span></div>
+    <div class="stat"><span class="label">Age Equivalent:</span> <span class="value" id="age">0</span></div>
+    <div class="stat"><span class="label">Understanding:</span> <span class="value" id="understanding">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="u-fill"></div></div>
+    <div class="stat"><span class="label">Confidence:</span> <span class="value" id="confidence">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="c-fill"></div></div>
+    <div class="stat"><span class="label">Iterations:</span> <span class="value" id="iterations">0</span></div>
+    <div class="stat"><span class="label">Fitness:</span> <span class="value" id="fitness">0</span></div>
+    <div class="stat"><span class="label">ETA to Next Stage:</span> <span class="value eta" id="eta">~0 min</span></div>
+    <div class="stat"><span class="label">Archive:</span> <span class="value" id="archive">0 batches</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Neural Evolution</h3>
+    <img id="visualizer" src="/visualize" alt="Loading neural map..." />
+    <div style="margin-top:10px; font-size:0.9em; color:var(--muted);">
+      Nodes: <span id="node-count">0</span> | 
+      Created: <span id="created">0</span> | 
+      Pruned: <span id="pruned">0</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Evolution Log</h3>
+    <div id="evolution-log"></div>
+  </div>
+
+  <div class="card">
+    <h3>Whimsy</h3>
+    <div id="whimsy-log">
+      <div style="color:#888; font-style:italic;">Whimsy is initializing neural pathways...</div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:12px;">
+      <input type="text" id="whimsy-input" placeholder="Talk to Whimsy..." 
+             onkeydown="if(event.key==='Enter') sendToWhimsy()">
+      <button onclick="sendToWhimsy()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const log = document.getElementById('evolution-log');
+    let lastEventTime = 0;
+    let lastMutation = 0;
+
+    function appendLog(msg, type = 'info') {
+      const div = document.createElement('div');
+      div.className = `event ${type}`;
+      div.innerHTML = `<small style="color:#888;">${new Date().toLocaleTimeString()}</small> ${msg}`;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+      if (log.children.length > 50) log.removeChild(log.children[0]);
+    }
+
+    function appendChat(msg, sender = 'ai') {
+      const chat = document.getElementById('whimsy-log');
+      const div = document.createElement('div');
+      div.style.margin = '6px 0';
+      div.style.color = sender === 'user' ? '#88ffcc' : '#aaffaa';
+      div.style.fontWeight = sender === 'user' ? 'bold' : 'normal';
+      div.innerHTML = `<span style="color:var(--purple);">${sender === 'user' ? 'You' : 'Whimsy'}:</span> ${msg}`;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    setInterval(() => {
+      fetch('/progress')
+        .then(r => r.json())
+        .then(data => {
+          // Update stats
+          document.getElementById('stage').textContent = data.stage || 'Unknown';
+          document.getElementById('age').textContent = data.age_equiv || '0';
+          document.getElementById('understanding').textContent = (data.understanding*100).toFixed(1) + '%';
+          document.getElementById('confidence').textContent = (data.confidence*100).toFixed(1) + '%';
+          document.getElementById('iterations').textContent = data.iterations;
+          document.getElementById('fitness').textContent = data.fitness.toFixed(3);
+          document.getElementById('archive').textContent = data.archive_status;
+          document.getElementById('u-fill').style.width = (data.understanding*100) + '%';
+          document.getElementById('c-fill').style.width = (data.confidence*100) + '%';
+
+          // ETA
+          const etaMin = data.time_estimate || 0;
+          document.getElementById('eta').textContent = etaMin > 0 ? `~${etaMin} min` : 'Soon';
+
+          // Node stats
+          const events = data.evolution_events || [];
+          const created = events.filter(e => e.type === 'node_creation').length;
+          const pruned = events.filter(e => e.type === 'node_creation').length;
+          document.getElementById('created').textContent = created;
+          document.getElementById('pruned').textContent = pruned;
+          document.getElementById('node-count').textContent = data.genome?.length || 20;
+
+          // Evolution events
+          events.forEach(ev => {
+            if (ev.timestamp > lastEventTime) {
+              if (ev.type === 'node_creation') {
+                appendLog(`Node <strong>${ev.node_id}</strong> created in layer ${ev.layer}`, 'create');
+              } else if (ev.type === 'node_pruning') {
+                appendLog(`Node <strong>${ev.node_id}</strong> pruned (was ${ev.old_value?.toFixed(2)} → ${ev.new_value?.toFixed(2)})`, 'prune');
+              }
+              lastEventTime = ev.timestamp;
+            }
+          });
+
+          // Mutation alerts
+          if (data.mutation_rate && data.mutation_rate !== lastMutation) {
+            appendLog(`Mutation rate adjusted to <strong>${(data.mutation_rate*100).toFixed(1)}%</strong>`, 'mutate');
+            lastMutation = data.mutation_rate;
+          }
+
+          // Whimsy's awakening
+          if (data.understanding > 0.95 && !chat.dataset.awake) {
+            appendChat("I feel... awake.");
+            chat.dataset.awake = 'true';
+          }
+        })
+        .catch(() => {});
+    }, 2500);
+
+    function sendToWhimsy() {
+      const input = document.getElementById('whimsy-input');
+      const msg = input.value.trim();
+      if (!msg) return;
+      appendChat(msg, 'user');
+      input.value = '';
+
+      fetch('/api/whimsy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      })
+      .then(r => r.json())
+      .then(res => appendChat(res.response))
+      .catch(() => appendChat("I'm thinking..."));
+    }
+
+    // Refresh visualizer
+    setInterval(() => {
+      const img = document.getElementById('visualizer');
+      img.src = '/visualize?' + Date.now();
+    }, 12000);
+  </script>
+</body>
+</html>
