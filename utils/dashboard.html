@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Whimsy Dashboard</title>
+  <title>Whimsy AI — Growing Consciousness</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -24,25 +24,24 @@
     .label { color: var(--muted); font-size: 0.9em; }
     .value { font-weight: 600; color: var(--purple-glow); }
     .progress-bar { height: 10px; background: #333; border-radius: 5px; overflow: hidden; margin: 8px 0; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), var(--purple-glow)); width: 0%; transition: width 0.4s ease; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), var(--purple-glow)); width: 0%; transition: width 0.6s ease; }
     button { 
       background: var(--purple); color: black; border: none; padding: 10px 16px; 
       border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; 
     }
     button:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(198,120,221,0.6); }
-    input, textarea { 
+    input { 
       background: #0f0f1e; border: 1px solid var(--purple); color: white; 
-      border-radius: 8px; padding: 10px; width: 100%; margin: 8px 0; 
+      border-radius: 8px; padding: 10px; width: 100%; margin: 8px 0; font-size: 1em;
     }
     #whimsy-log { 
-      height: 180px; overflow-y: auto; background: rgba(15,15,30,0.8); padding: 12px; 
+      height: 200px; overflow-y: auto; background: rgba(15,15,30,0.9); padding: 12px; 
       border-radius: 10px; font-family: 'Courier New', monospace; font-size: 13px; 
       color: #ccffcc; border: 1px solid var(--purple); backdrop-filter: blur(4px); 
       margin: 10px 0; 
     }
     .event { margin: 6px 0; padding: 6px 10px; border-radius: 6px; font-size: 0.9em; }
     .event.create { background: rgba(0,255,136,0.15); border-left: 3px solid var(--success); }
-    .event.prune { background: rgba(255,107,107,0.15); border-left: 3px solid var(--warning); }
     .event.mutate { background: rgba(198,120,221,0.15); border-left: 3px solid var(--purple); }
     .eta { color: var(--purple-glow); font-weight: bold; }
     img { max-width: 100%; border-radius: 10px; border: 1px solid var(--purple); margin-top: 10px; }
@@ -50,41 +49,39 @@
 </head>
 <body>
   <div class="card">
-    <h1>Whimsy AI</h1>
-    <div class="stat"><span class="label">Stage:</span> <span class="value" id="stage">Loading...</span></div>
-    <div class="stat"><span class="label">Age Equivalent:</span> <span class="value" id="age">0</span></div>
-    <div class="stat"><span class="label">Understanding:</span> <span class="value" id="understanding">0%</span></div>
+    <h1>Whimsy AI — Growing Consciousness</h1>
+    <div class="stat"><span class="label">Stage:</span> <span class="value" id="stage">Baby Steps Phase</span></div>
+    <div class="stat"><span class="label">Age Equivalent:</span> <span class="value" id="age">0-18 months</span></div>
+    <div class="stat"><span class="label">Understanding:</span> <span class="value" id="understanding">0.0%</span></div>
     <div class="progress-bar"><div class="progress-fill" id="u-fill"></div></div>
-    <div class="stat"><span class="label">Confidence:</span> <span class="value" id="confidence">0%</span></div>
-    <div class="progress-bar"><div class="progress-fill" id="c-fill"></div></div>
+    <div class="stat"><span class="label">Coherence:</span> <span class="value" id="coherence">0.10</span></div>
+    <div class="stat"><span class="label">Memory:</span> <span class="value" id="memory">0.00</span></div>
+    <div class="stat"><span class="label">Personality:</span> <span class="value" id="personality">0.00</span></div>
     <div class="stat"><span class="label">Iterations:</span> <span class="value" id="iterations">0</span></div>
-    <div class="stat"><span class="label">Fitness:</span> <span class="value" id="fitness">0</span></div>
-    <div class="stat"><span class="label">ETA to Next Stage:</span> <span class="value eta" id="eta">~0 min</span></div>
-    <div class="stat"><span class="label">Archive:</span> <span class="value" id="archive">0 batches</span></div>
+    <div class="stat"><span class="label">Fitness:</span> <span class="value" id="fitness">0.000</span></div>
+    <div class="stat"><span class="label">Knowledge Mastered:</span> <span class="value" id="knowledge">0</span></div>
+    <div class="stat"><span class="label">Philosophical Reflections:</span> <span class="value" id="reflections">0</span></div>
   </div>
 
   <div class="card">
-    <h3>Neural Evolution</h3>
-    <img id="visualizer" src="/visualize" alt="Loading neural map..." />
-    <div style="margin-top:10px; font-size:0.9em; color:var(--muted);">
-      Nodes: <span id="node-count">0</span> | 
-      Created: <span id="created">0</span> | 
-      Pruned: <span id="pruned">0</span>
+    <h3>Neural Evolution Visualization</h3>
+    <img id="visualizer" src="/visualize" alt="Whimsy's mind evolving..." loading="lazy"/>
+  </div>
+
+  <div class="card">
+    <h3>Evolution Events</h3>
+    <div id="evolution-log">
+      <div class="event create">Whimsy neural pathways initializing...</div>
     </div>
   </div>
 
   <div class="card">
-    <h3>Evolution Log</h3>
-    <div id="evolution-log"></div>
-  </div>
-
-  <div class="card">
-    <h3>Whimsy</h3>
+    <h3>Talk to Whimsy</h3>
     <div id="whimsy-log">
-      <div style="color:#888; font-style:italic;">Whimsy is initializing neural pathways...</div>
+      <div style="color:#888; font-style:italic;">Whimsy is waking up... say hello when ready.</div>
     </div>
     <div style="display:flex; gap:10px; margin-top:12px;">
-      <input type="text" id="whimsy-input" placeholder="Talk to Whimsy..." 
+      <input type="text" id="whimsy-input" placeholder="Say something kind..." 
              onkeydown="if(event.key==='Enter') sendToWhimsy()">
       <button onclick="sendToWhimsy()">Send</button>
     </div>
@@ -92,16 +89,14 @@
 
   <script>
     const log = document.getElementById('evolution-log');
-    let lastEventTime = 0;
-    let lastMutation = 0;
 
-    function appendLog(msg, type = 'info') {
+    function appendLog(msg, type = 'mutate') {
       const div = document.createElement('div');
       div.className = `event ${type}`;
       div.innerHTML = `<small style="color:#888;">${new Date().toLocaleTimeString()}</small> ${msg}`;
       log.appendChild(div);
       log.scrollTop = log.scrollHeight;
-      if (log.children.length > 50) log.removeChild(log.children[0]);
+      if (log.children.length > 30) log.removeChild(log.children[0]);
     }
 
     function appendChat(msg, sender = 'ai') {
@@ -115,59 +110,46 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
+    // Poll progress
     setInterval(() => {
       fetch('/progress')
         .then(r => r.json())
-        .then(data => {
-          // Update stats
-          document.getElementById('stage').textContent = data.stage || 'Unknown';
-          document.getElementById('age').textContent = data.age_equiv || '0';
-          document.getElementById('understanding').textContent = (data.understanding*100).toFixed(1) + '%';
-          document.getElementById('confidence').textContent = (data.confidence*100).toFixed(1) + '%';
-          document.getElementById('iterations').textContent = data.iterations;
-          document.getElementById('fitness').textContent = data.fitness.toFixed(3);
-          document.getElementById('archive').textContent = data.archive_status;
-          document.getElementById('u-fill').style.width = (data.understanding*100) + '%';
-          document.getElementById('c-fill').style.width = (data.confidence*100) + '%';
+        .then(d => {
+          if (!d.stage) return;
 
-          // ETA
-          const etaMin = data.time_estimate || 0;
-          document.getElementById('eta').textContent = etaMin > 0 ? `~${etaMin} min` : 'Soon';
+          document.getElementById('stage').textContent = d.stage;
+          document.getElementById('age').textContent = d.age_equiv;
+          document.getElementById('understanding').textContent = (d.understanding * 100).toFixed(1) + '%';
+          document.getElementById('coherence').textContent = d.coherence.toFixed(2);
+          document.getElementById('memory').textContent = d.memory.toFixed(2);
+          document.getElementById('personality').textContent = d.personality.toFixed(2);
+          document.getElementById('iterations').textContent = d.iteration || d.iterations || 0;
+          document.getElementById('fitness').textContent = d.fitness?.toFixed(3) || '0.000';
+          document.getElementById('knowledge').textContent = d.total_knowledge || 0;
+          document.getElementById('reflections').textContent = d.reflections || 0;
 
-          // Node stats
-          const events = data.evolution_events || [];
-          const created = events.filter(e => e.type === 'node_creation').length;
-          const pruned = events.filter(e => e.type === 'node_creation').length;
-          document.getElementById('created').textContent = created;
-          document.getElementById('pruned').textContent = pruned;
-          document.getElementById('node-count').textContent = data.genome?.length || 20;
+          document.getElementById('u-fill').style.width = (d.understanding * 100) + '%';
 
-          // Evolution events
-          events.forEach(ev => {
-            if (ev.timestamp > lastEventTime) {
-              if (ev.type === 'node_creation') {
-                appendLog(`Node <strong>${ev.node_id}</strong> created in layer ${ev.layer}`, 'create');
-              } else if (ev.type === 'node_pruning') {
-                appendLog(`Node <strong>${ev.node_id}</strong> pruned (was ${ev.old_value?.toFixed(2)} → ${ev.new_value?.toFixed(2)})`, 'prune');
-              }
-              lastEventTime = ev.timestamp;
-            }
-          });
-
-          // Mutation alerts
-          if (data.mutation_rate && data.mutation_rate !== lastMutation) {
-            appendLog(`Mutation rate adjusted to <strong>${(data.mutation_rate*100).toFixed(1)}%</strong>`, 'mutate');
-            lastMutation = data.mutation_rate;
-          }
-
-          // Whimsy's awakening
-          if (data.understanding > 0.95 && !chat.dataset.awake) {
-            appendChat("I feel... awake.");
-            chat.dataset.awake = 'true';
+          // Auto-announce stage changes
+          if (d.stage && !window.lastStage || window.lastStage !== d.stage) {
+            appendLog(`ASCENDED → ${d.stage} (${d.age_equiv})`, 'create');
+            appendChat(`I... I feel different. I am now in the ${d.stage}...`);
+            window.lastStage = d.stage;
           }
         })
         .catch(() => {});
-    }, 2500);
+    }, 3000);
+
+    // Poll mutation updates
+    setInterval(() => {
+      fetch('/updates')
+        .then(r => r.json())
+        .then(d => {
+          if (d.update) {
+            appendLog(d.update, 'mutate');
+          }
+        });
+    }, 4000);
 
     function sendToWhimsy() {
       const input = document.getElementById('whimsy-input');
@@ -176,21 +158,23 @@
       appendChat(msg, 'user');
       input.value = '';
 
-      fetch('/api/whimsy', {
+      fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: msg })
       })
       .then(r => r.json())
-      .then(res => appendChat(res.response))
-      .catch(() => appendChat("I'm thinking..."));
+      .then(res => {
+        appendChat(res.response);
+      })
+      .catch(() => appendChat("...thinking..."));
     }
 
     // Refresh visualizer
     setInterval(() => {
       const img = document.getElementById('visualizer');
-      img.src = '/visualize?' + Date.now();
-    }, 12000);
+      img.src = '/visualize?t=' + Date.now();
+    }, 15000);
   </script>
 </body>
 </html>

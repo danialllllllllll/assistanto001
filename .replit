@@ -1,10 +1,21 @@
+# .replit  ← This is the only file Replit actually reads
+run = "python learning/train_advanced_ai.py"
+language = "python3"
 modules = ["python-3.11"]
-[agent]
-expertMode = true
 
-[nix]
-channel = "stable-25_05"
+[env]
+PYTHONPATH = "$PYTHONPATH:$REPL_HOME/learning"
+
+[deployment]
+# Optional: for permanent URL later
+run = ["python", "learning/train_advanced_ai.py"]
 
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[agent]
+expertMode = true
+
+[nix]
+packages = ["cairo", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "gobject-introspection", "gtk3", "libxcrypt", "pkg-config", "qhull", "systemdMinimal", "tcl", "tk", "xsimd"]
