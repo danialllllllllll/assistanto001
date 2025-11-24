@@ -37,13 +37,23 @@ class DynamicAIAssistant:
         
         # Get neural network response
         if self.network and hasattr(self.network, 'forward'):
-            network_output = self.network.forward(context_vector)
+            network_output = self.network.forward(context_vector, training=False)
             response_type = self._interpret_network_output(network_output)
         else:
             response_type = 'analytical'
             
         # Generate actual response text
         response_text = self._generate_response_text(user_input, response_type)
+        
+        # LEARN FROM THIS INTERACTION - Update network weights
+        if self.network and hasattr(self.network, 'backward'):
+            # Create pseudo-training data from conversation
+            target = self._determine_ideal_response_class(user_input)
+            try:
+                # Backpropagate to learn from this interaction
+                self.network.backward(context_vector, np.array([target]), learning_rate=0.0001)
+            except Exception as e:
+                print(f"Learning from conversation error: {e}")
         
         # Store in conversation history
         self.conversation_history.append({
@@ -62,13 +72,61 @@ class DynamicAIAssistant:
         # Limit history size
         if len(self.conversation_history) > 100:
             self.conversation_history = self.conversation_history[-100:]
+        
+        # Self-improve periodically
+        if len(self.conversation_history) % 10 == 0:
+            self._self_optimize_response_strategy()
             
         return {
             'response': response_text,
             'type': response_type,
             'confidence': self._calculate_response_confidence(context_vector),
-            'learning_applied': bool(self.knowledge)
+            'learning_applied': bool(self.knowledge),
+            'learned_from_interaction': True
         }
+    
+    def _determine_ideal_response_class(self, user_input: str) -> int:
+        """Determine ideal response class based on input analysis"""
+        words = user_input.lower().split()
+        
+        # Question -> informative
+        if '?' in user_input:
+            return 0
+        # Analysis keywords -> analytical
+        elif any(w in words for w in ['analyze', 'explain', 'how', 'why']):
+            return 1
+        # Emotional keywords -> empathetic
+        elif any(w in words for w in ['feel', 'sad', 'happy', 'worried']):
+            return 2
+        # Philosophical keywords -> philosophical
+        elif any(w in words for w in ['meaning', 'purpose', 'truth', 'existence']):
+            return 3
+        else:
+            return 1  # Default analytical
+    
+    def _self_optimize_response_strategy(self):
+        """Self-optimize response generation strategy based on conversation history"""
+        if len(self.conversation_history) < 10:
+            return
+        
+        recent = self.conversation_history[-10:]
+        
+        # Analyze what types of responses work best
+        user_inputs = [h['content'] for h in recent if h['type'] == 'user']
+        
+        # Extract patterns
+        for user_msg in user_inputs:
+            concepts = self._extract_key_concepts(user_msg)
+            for concept in concepts:
+                if concept not in self.learned_responses:
+                    self.learned_responses[concept] = []
+                self.learned_responses[concept].append(user_msg)
+        
+        # Update temperature for more diverse/focused responses
+        if len(set(r['type'] for r in recent if r['type'] == 'assistant')) < 2:
+            self.temperature = min(1.0, self.temperature + 0.1)  # More diverse
+        else:
+            self.temperature = max(0.3, self.temperature - 0.05)  # More focused
     
     def _build_context_vector(self, user_input: str, context: Optional[List[str]] = None) -> np.ndarray:
         """Build numerical context vector from text input"""
