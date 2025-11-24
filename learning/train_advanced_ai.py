@@ -19,7 +19,19 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from learning.self_evolver import SelfEvolver
 from learning.web_learning import AdvancedWebLearning
 from learning.ai_assistant import DynamicAIAssistant
+from learning import SelfEvolver, NodeVisualizer, LearningNodeManager
 
+# In your training loop:
+evolver = SelfEvolver()
+visualizer = NodeVisualizer()
+node_manager = LearningNodeManager(initial_nodes=20)
+
+# Every generation:
+if evolver.should_evolve(generation):
+    suggestions = evolver.generate_evolution_suggestions(
+        current_fitness, prev_fitness, generation
+    )
+    # AI autonomously edits itself!
 # DEAP — Pyright-safe
 from deap import base, creator, tools
 

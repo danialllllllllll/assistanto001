@@ -1,318 +1,179 @@
+"""
+SelfEvolver: Autonomous code evolution system
+Modifies AI code every 5 generations to optimize hyperparameters and architecture
+"""
 
 import os
 import json
-import ast
-import random
-import numpy as np
+import hashlib
 from datetime import datetime
-from typing import Dict, Any, List, Optional
-import inspect
-import importlib
-import sys
+from typing import Dict, List, Any, Tuple
 
-class SelfEvolver:
-    """
-    True self-evolution engine that analyzes and improves its own code
-    """
-    def __init__(self, network, trainer):
-        self.network = network
-        self.trainer = trainer
-        self.generation = 0
-        self.improvement_log = []
-        self.code_mutations = []
-        self.performance_history = []
-        self.optimized_functions = {}
-        
-    def analyze_own_code(self) -> Dict[str, Any]:
-        """Analyze self-evolver.py and other AI modules for optimization opportunities"""
-        analysis = {
-            'functions': [],
-            'complexity': {},
-            'bottlenecks': [],
-            'optimization_opportunities': []
-        }
-        
-        # Analyze this file
-        try:
-            with open(__file__, 'r') as f:
-                tree = ast.parse(f.read())
-                
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef):
-                    analysis['functions'].append({
-                        'name': node.name,
-                        'lines': len(node.body),
-                        'complexity': self._calculate_complexity(node)
-                    })
-                    
-        except Exception as e:
-            print(f"Code analysis error: {e}")
-            
-        return analysis
-    
-    def _calculate_complexity(self, node) -> int:
-        """Calculate cyclomatic complexity of a function"""
-        complexity = 1
-        for child in ast.walk(node):
-            if isinstance(child, (ast.If, ast.While, ast.For, ast.ExceptHandler)):
-                complexity += 1
-        return complexity
-    
-    def evolve_learning_rate(self, current_performance: float) -> float:
-        """Dynamically evolve optimal learning rate based on performance"""
-        if not self.performance_history:
-            return 0.001
-            
-        recent_performance = self.performance_history[-10:]
-        trend = np.mean(np.diff(recent_performance)) if len(recent_performance) > 1 else 0
-        
-        if trend > 0:
-            # Improving - slightly increase learning rate
-            new_lr = self.network.learning_rate * 1.05
-        elif trend < -0.01:
-            # Degrading - reduce learning rate
-            new_lr = self.network.learning_rate * 0.8
-        else:
-            # Stable - small random mutation
-            new_lr = self.network.learning_rate * (1 + random.gauss(0, 0.1))
-            
-        return np.clip(new_lr, 0.0001, 0.1)
-    
-    def optimize_network_architecture(self) -> Dict[str, Any]:
-        """Evolve network architecture based on performance"""
-        changes = {
-            'layers_added': 0,
-            'layers_removed': 0,
-            'nodes_added': 0,
-            'nodes_pruned': 0
-        }
-        
-        current_fitness = self.trainer.best_fitness if hasattr(self.trainer, 'best_fitness') else 0
-        
-        # If performance is high, try growing
-        if current_fitness > 0.8 and len(self.network.weights) < 6:
-            # Add a layer
-            new_layer_size = random.choice([32, 64, 128])
-            self._add_layer(new_layer_size)
-            changes['layers_added'] = 1
-            changes['nodes_added'] = new_layer_size
-            print(f"[EVOLUTION] Added layer with {new_layer_size} nodes")
-            
-        # If performance is low, try pruning
-        elif current_fitness < 0.3:
-            pruned = self._prune_weak_connections(threshold=0.05)
-            changes['nodes_pruned'] = pruned
-            print(f"[EVOLUTION] Pruned {pruned} weak connections")
-            
-        return changes
-    
-    def _add_layer(self, size: int):
-        """Add a new layer to the network"""
-        if not hasattr(self.network, 'weights') or len(self.network.weights) == 0:
-            return
-            
-        # Insert new layer before output
-        insert_idx = len(self.network.weights) - 1
-        
-        prev_size = self.network.weights[insert_idx].shape[0]
-        next_size = self.network.weights[insert_idx].shape[1]
-        
-        # Create new layer weights
-        new_weight_in = np.random.randn(prev_size, size) * 0.01
-        new_weight_out = np.random.randn(size, next_size) * 0.01
-        new_bias_in = np.zeros(size)
-        new_bias_out = np.zeros(next_size)
-        
-        # Insert into network
-        self.network.weights.insert(insert_idx, new_weight_in)
-        self.network.biases.insert(insert_idx, new_bias_in)
-        
-        # Update next layer
-        self.network.weights[insert_idx + 1] = new_weight_out
-        
-    def _prune_weak_connections(self, threshold: float = 0.05) -> int:
-        """Prune connections with weights below threshold"""
-        pruned_count = 0
-        
-        for i in range(len(self.network.weights)):
-            mask = np.abs(self.network.weights[i]) > threshold
-            pruned_count += np.sum(~mask)
-            self.network.weights[i] *= mask
-            
-        return pruned_count
-    
-    def generate_training_strategy(self, stage_name: str) -> Dict[str, Any]:
-        """Generate optimized training strategy for current stage"""
-        strategy = {
-            'batch_size': 64,
-            'learning_rate': 0.001,
-            'mutation_rate': 0.1,
-            'focus_areas': []
-        }
-        
-        # Stage-specific optimization
-        if 'Baby' in stage_name:
-            strategy['learning_rate'] = 0.005
-            strategy['focus_areas'] = ['pattern_recognition', 'basic_classification']
-        elif 'Elementary' in stage_name:
-            strategy['learning_rate'] = 0.002
-            strategy['focus_areas'] = ['understanding', 'self_quizzing']
-        elif 'Scholar' in stage_name or 'Thinker' in stage_name:
-            strategy['learning_rate'] = 0.0005
-            strategy['focus_areas'] = ['reasoning', 'philosophy', 'truth_verification']
-            
-        return strategy
-    
-    def self_improve(self, performance_metrics: Dict[str, float]) -> Dict[str, Any]:
-        """Main self-improvement cycle with understanding-first approach"""
-        self.generation += 1
-        
-        # Track understanding separately from raw fitness
-        understanding = performance_metrics.get('fitness', 0)
-        confidence = performance_metrics.get('confidence', 0)
-        
-        # Understanding-weighted performance
-        true_performance = understanding * 0.8 + confidence * 0.2
-        self.performance_history.append(true_performance)
-        
-        improvements = {
-            'generation': self.generation,
-            'timestamp': datetime.now().isoformat(),
-            'understanding': understanding,
-            'confidence': confidence,
-            'true_performance': true_performance,
-            'code_analysis': {},
-            'architecture_changes': {},
-            'strategy_updates': {},
-            'code_mutations': []
-        }
-        
-        # Analyze own code every 10 generations
-        if self.generation % 10 == 0:
-            improvements['code_analysis'] = self.analyze_own_code()
-        
-        # Evolve learning parameters based on understanding, not just fitness
-        new_lr = self.evolve_learning_rate(true_performance)
-        if hasattr(self.network, 'learning_rate'):
-            self.network.learning_rate = new_lr
-            improvements['strategy_updates']['learning_rate'] = new_lr
-        
-        # Optimize architecture only when understanding plateaus
-        if len(self.performance_history) > 20:
-            recent_trend = np.mean(np.diff(self.performance_history[-20:]))
-            if abs(recent_trend) < 0.001:  # Plateau detected
-                improvements['architecture_changes'] = self.optimize_network_architecture()
-        
-        # MUTATE OWN CODE (excluding guard rails)
-        if self.generation % 50 == 0:
-            code_mutations = self._mutate_own_code()
-            improvements['code_mutations'] = code_mutations
-        
-        # Log improvements
-        self.improvement_log.append(improvements)
-        
-        # Save evolution history
-        self._save_evolution_history()
-        
-        return improvements
-    
-    def _mutate_own_code(self) -> List[Dict[str, Any]]:
-        """Mutate own code to improve functionality (EXCLUDING guard rails)"""
-        mutations = []
-        
-        PROTECTED_FILES = [
-            'core_values_guard.py',
-            'self_model.py',
-            'reasoning_rules.py'
-        ]
-        
-        try:
-            # Mutate response generation strategies
-            mutation = self._optimize_response_generation()
-            if mutation:
-                mutations.append(mutation)
-            
-            # Mutate learning rate adaptation
-            mutation = self._optimize_learning_parameters()
-            if mutation:
-                mutations.append(mutation)
-            
-            # Add new capabilities
-            mutation = self._add_new_capability()
-            if mutation:
-                mutations.append(mutation)
-            
-            print(f"[CODE MUTATION] Applied {len(mutations)} code improvements")
-            
-        except Exception as e:
-            print(f"Code mutation error: {e}")
-        
-        return mutations
-    
-    def _optimize_response_generation(self) -> Optional[Dict[str, Any]]:
-        """Optimize response generation logic"""
-        # Dynamically improve temperature adaptation
-        if hasattr(self.trainer, 'best_fitness'):
-            optimal_temp = 0.7 + (self.trainer.best_fitness * 0.3)
-            
-            return {
-                'type': 'response_optimization',
-                'change': 'temperature_adaptation',
-                'value': optimal_temp,
-                'generation': self.generation
-            }
-        return None
-    
-    def _optimize_learning_parameters(self) -> Optional[Dict[str, Any]]:
-        """Optimize learning hyperparameters"""
-        if len(self.performance_history) > 10:
-            trend = np.mean(np.diff(self.performance_history[-10:]))
-            
-            if trend > 0:
-                # Improving - slightly increase exploration
-                new_beta1 = min(0.95, getattr(self.network, 'beta1', 0.9) + 0.01)
-            else:
-                # Stagnating - increase exploration more
-                new_beta1 = max(0.85, getattr(self.network, 'beta1', 0.9) - 0.02)
-            
-            if hasattr(self.network, 'beta1'):
-                self.network.beta1 = new_beta1
-            
-            return {
-                'type': 'learning_optimization',
-                'change': 'adam_beta1',
-                'value': new_beta1,
-                'generation': self.generation
-            }
-        return None
-    
-    def _add_new_capability(self) -> Optional[Dict[str, Any]]:
-        """Add new learning capability"""
-        # Example: Add pattern recognition improvement
-        if self.generation % 100 == 0:
-            return {
-                'type': 'new_capability',
-                'change': 'enhanced_pattern_recognition',
-                'description': 'Added advanced pattern matching for user queries',
-                'generation': self.generation
-            }
-        return None
-    
-    def _save_evolution_history(self):
-        """Save evolution history to file"""
-        os.makedirs('knowledge', exist_ok=True)
-        with open('knowledge/self_evolution.json', 'w') as f:
-            json.dump({
-                'generation': self.generation,
-                'improvement_log': self.improvement_log[-50:],
-                'performance_history': self.performance_history[-100:]
-            }, f, indent=2)
-    
-    def get_evolution_stats(self) -> Dict[str, Any]:
-        """Get evolution statistics"""
+class EvolutionSuggestion:
+    def __init__(self, generation: int, change_type: str, target: str, old_value: Any, new_value: Any, reasoning: str):
+        self.generation = generation
+        self.change_type = change_type  # 'hyperparameter', 'architecture', 'learning_rate'
+        self.target = target
+        self.old_value = old_value
+        self.new_value = new_value
+        self.reasoning = reasoning
+        self.timestamp = datetime.now().isoformat()
+
+    def to_dict(self):
         return {
             'generation': self.generation,
-            'total_improvements': len(self.improvement_log),
-            'performance_trend': np.mean(np.diff(self.performance_history[-20:])) if len(self.performance_history) > 20 else 0,
-            'current_performance': self.performance_history[-1] if self.performance_history else 0
+            'change_type': self.change_type,
+            'target': self.target,
+            'old_value': str(self.old_value),
+            'new_value': str(self.new_value),
+            'reasoning': self.reasoning,
+            'timestamp': self.timestamp
+        }
+
+class CodeEvolutionLog:
+    def __init__(self, log_file: str = 'learning/evolution_log.json'):
+        self.log_file = log_file
+        self.suggestions: List[EvolutionSuggestion] = []
+        self.load()
+
+    def load(self):
+        """Load existing evolution log"""
+        if os.path.exists(self.log_file):
+            with open(self.log_file, 'r') as f:
+                data = json.load(f)
+                self.suggestions = data.get('suggestions', [])
+
+    def add_suggestion(self, suggestion: EvolutionSuggestion):
+        """Record an evolution suggestion"""
+        self.suggestions.append(suggestion)
+        self.save()
+
+    def save(self):
+        """Persist evolution log to disk"""
+        os.makedirs(os.path.dirname(self.log_file) or '.', exist_ok=True)
+        with open(self.log_file, 'w') as f:
+            json.dump({
+                'suggestions': [s.to_dict() if isinstance(s, EvolutionSuggestion) else s for s in self.suggestions],
+                'total_changes': len(self.suggestions)
+            }, f, indent=2)
+
+    def get_changes_by_generation(self, generation: int) -> List[Dict]:
+        """Get all changes made at a specific generation"""
+        return [s.to_dict() if isinstance(s, EvolutionSuggestion) else s for s in self.suggestions if (s.generation if isinstance(s, EvolutionSuggestion) else s.get('generation')) == generation]
+
+class SelfEvolver:
+    def __init__(self, log_file: str = 'learning/evolution_log.json'):
+        self.evolution_log = CodeEvolutionLog(log_file)
+        self.hyperparameters = {
+            'learning_rate': 0.001,
+            'mutation_rate': 0.1,
+            'population_size': 50,
+            'tournament_size': 3,
+            'elite_size': 2
+        }
+        self.generation_counter = 0
+        self.fitness_history = []
+
+    def should_evolve(self, generation: int) -> bool:
+        """Check if it's time to evolve (every 5 generations)"""
+        return generation > 0 and generation % 5 == 0
+
+    def generate_evolution_suggestions(self, current_fitness: float, prev_fitness: float, generation: int) -> List[EvolutionSuggestion]:
+        """Generate code evolution suggestions based on fitness"""
+        suggestions = []
+        fitness_improvement = current_fitness - prev_fitness
+
+        # Suggest learning rate adjustment
+        if fitness_improvement < 0.01:  # Stagnation
+            new_lr = self.hyperparameters['learning_rate'] * 1.5
+            suggestions.append(EvolutionSuggestion(
+                generation=generation,
+                change_type='hyperparameter',
+                target='learning_rate',
+                old_value=self.hyperparameters['learning_rate'],
+                new_value=new_lr,
+                reasoning='Fitness stagnation detected. Increasing learning rate to escape local optimum.'
+            ))
+            self.hyperparameters['learning_rate'] = new_lr
+        elif fitness_improvement > 0.1:  # Good progress
+            new_lr = self.hyperparameters['learning_rate'] * 0.95
+            suggestions.append(EvolutionSuggestion(
+                generation=generation,
+                change_type='hyperparameter',
+                target='learning_rate',
+                old_value=self.hyperparameters['learning_rate'],
+                new_value=new_lr,
+                reasoning='Strong fitness improvement. Fine-tuning learning rate for precision.'
+            ))
+            self.hyperparameters['learning_rate'] = new_lr
+
+        # Suggest mutation rate adjustment
+        if current_fitness > 0.9:
+            new_mutation = self.hyperparameters['mutation_rate'] * 0.8
+            suggestions.append(EvolutionSuggestion(
+                generation=generation,
+                change_type='hyperparameter',
+                target='mutation_rate',
+                old_value=self.hyperparameters['mutation_rate'],
+                new_value=new_mutation,
+                reasoning='High fitness achieved. Reducing mutation to refine solutions.'
+            ))
+            self.hyperparameters['mutation_rate'] = new_mutation
+        elif current_fitness < 0.5:
+            new_mutation = self.hyperparameters['mutation_rate'] * 1.2
+            suggestions.append(EvolutionSuggestion(
+                generation=generation,
+                change_type='hyperparameter',
+                target='mutation_rate',
+                old_value=self.hyperparameters['mutation_rate'],
+                new_value=new_mutation,
+                reasoning='Low fitness detected. Increasing mutation for exploration.'
+            ))
+            self.hyperparameters['mutation_rate'] = new_mutation
+
+        # Log all suggestions
+        for suggestion in suggestions:
+            self.evolution_log.add_suggestion(suggestion)
+
+        return suggestions
+
+    def evolve_architecture(self, current_nodes: int, generation: int) -> Dict:
+        """Suggest architecture changes"""
+        suggestion = None
+
+        if current_nodes < 10:
+            new_nodes = int(current_nodes * 1.5)
+            suggestion = EvolutionSuggestion(
+                generation=generation,
+                change_type='architecture',
+                target='num_nodes',
+                old_value=current_nodes,
+                new_value=new_nodes,
+                reasoning='Insufficient nodes. Expanding network capacity for better learning.'
+            )
+        elif current_nodes > 100:
+            new_nodes = int(current_nodes * 0.8)
+            suggestion = EvolutionSuggestion(
+                generation=generation,
+                change_type='architecture',
+                target='num_nodes',
+                old_value=current_nodes,
+                new_value=new_nodes,
+                reasoning='Excessive nodes causing overfitting. Pruning network.'
+            )
+
+        if suggestion:
+            self.evolution_log.add_suggestion(suggestion)
+            return suggestion.to_dict()
+
+        return {}
+
+    def get_evolution_state(self) -> Dict:
+        """Get current evolution state"""
+        return {
+            'hyperparameters': self.hyperparameters,
+            'generation': self.generation_counter,
+            'fitness_history': self.fitness_history,
+            'total_changes': len(self.evolution_log.suggestions),
+            'evolution_log': [s.to_dict() if isinstance(s, EvolutionSuggestion) else s for s in self.evolution_log.suggestions]
         }
