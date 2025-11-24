@@ -1,7 +1,7 @@
 import numpy as np
 import json
-from core.neural_network import ProgressiveNeuralNetwork
-from core.metrics import UnderstandingMetrics
+from learning.neural_network import ProgressiveNeuralNetwork
+from learning.metrics import UnderstandingMetrics
 
 class UnderstandingTrainer:
     """Gradient descent-based trainer optimized for 99.9% understanding + confidence"""

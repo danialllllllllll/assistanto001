@@ -3,7 +3,8 @@ import numpy as np
 import threading
 import time
 import logging
-from .training_bridge import TrainingBridge, TrainingMetrics
+from datetime import datetime
+from learning.training_bridge import TrainingBridge, TrainingMetrics
 
 class EnhancedTraining:
     """
@@ -125,9 +126,10 @@ class EnhancedTraining:
         """
         Get current enhancement status
         """
-        return {
-            'total_iterations': self.enhancement_stats['iterations'],
-            'recent_metrics': self.enhancement_stats['performance_metrics'][-5:],
-            'status': 'active' if self._running else 'inactive',
-            'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-        }
+        with self.lock:
+            return {
+                'total_iterations': self.enhancement_stats['iterations'],
+                'recent_metrics': self.enhancement_stats['performance_metrics'][-5:],
+                'status': 'active' if self._running else 'inactive',
+                'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+            }

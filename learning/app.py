@@ -7,7 +7,7 @@ import threading
 import time
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='../utils')
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
@@ -17,7 +17,7 @@ app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max request
 
 # Import and register AI API blueprint
-from interfaces.ai_api import ai_api, update_ai_state
+from learning.ai_api import ai_api, update_ai_state
 app.register_blueprint(ai_api)
 
 # Global progress estimator for background ETA
@@ -188,7 +188,7 @@ def update_evolution(generation, mutations, nodes_created, nodes_pruned, evoluti
 @app.route('/')
 def dashboard():
     """Serve the main dashboard"""
-    return render_template(utils/dashboard.html')
+    return render_template('dashboard.html')
 
 @app.route('/api/status')
 def get_status():
