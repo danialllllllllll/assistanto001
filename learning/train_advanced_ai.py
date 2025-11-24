@@ -62,7 +62,7 @@ class WhimsyAI:
         self.reflections: list[str] = []
         self.running: bool = True
         self.mutation_logs: Queue = Queue()
-        
+
         # Initialize advanced AI systems
         self.web_learner = AdvancedWebLearning()
         self.self_evolver: Any = None  # Will be initialized with trainer
@@ -104,28 +104,28 @@ class WhimsyAI:
         toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.2, indpb=0.2)
         toolbox.register("select", tools.selTournament, tournsize=3)
         toolbox.register("evaluate", lambda ind: (sum(ind) + random.gauss(0, 0.1),))
-        
+
         # Initialize self-evolution system
         class SimpleNetwork:
             def __init__(self):
                 self.learning_rate = 0.001
                 self.weights = []
-        
+
         simple_network = SimpleNetwork()
-        
+
         class SimpleTrainer:
             def __init__(self):
                 self.best_fitness = 0.0
-                
+
         simple_trainer = SimpleTrainer()
-        
+
         self.self_evolver = SelfEvolver(simple_network, simple_trainer)
         self.ai_assistant = DynamicAIAssistant(
             network=simple_network,
             knowledge={},
             web_learner=self.web_learner
         )
-        
+
         print("[SYSTEMS] Self-evolution and AI assistant initialized")
 
         while self.running and self.stage < len(STAGES):
@@ -180,10 +180,10 @@ class WhimsyAI:
                         self.knowledge.append(f"{topic}: {learned.get('confidence', 0):.2f} confidence")
                 except Exception as e:
                     print(f"Web learning error: {e}")
-                    
+
             if self.stage >= 5 and self.iteration % 40 == 0:
                 self.reflections.append(f"Reflection {len(self.reflections)+1}")
-                
+
             # Self-evolution at each stage completion
             if self.iteration % 100 == 0 and self.self_evolver:
                 try:
@@ -195,34 +195,15 @@ class WhimsyAI:
                 except Exception as e:
                     print(f"Self-evolution error: {e}")
 
-                if self.iteration % 12 == 0:
-                    self.mutation_logs.put(
+            if self.iteration % 12 == 0:
+                self.mutation_logs.put(
+                    f"[GROWTH] Iter {self.iteration} | "
+                    f"U:{self.understanding:.3f} | "
+                    f"P:{self.personality:.1f}"
+                )
 
-
-@app.route("/api/evolution")
-def evolution_stats():
-    if not session.get("logged_in"):
-        return jsonify({})
-    
-    if whimsy.self_evolver:
-        return jsonify(whimsy.self_evolver.get_evolution_stats())
-    
-    return jsonify({"error": "Self-evolver not initialized"})
-
-@app.route("/api/web_knowledge")
-def web_knowledge():
-    if not session.get("logged_in"):
-        return jsonify({})
-        
-    return jsonify(whimsy.web_learner.get_knowledge_summary())
-
-                        f"[GROWTH] Iter {self.iteration} | "
-                        f"U:{self.understanding:.3f} | "
-                        f"P:{self.personality:.1f}"
-                    )
-
-                self.iteration += 1
-                time.sleep(0.06)
+            self.iteration += 1
+            time.sleep(0.06)
 
             if self.understanding > 0.99 and self.confidence > 0.95:
                 if not self.advance_stage():
@@ -280,7 +261,7 @@ def chat():
     if not session.get("logged_in"):
         return jsonify({"response": "login required"})
     msg = request.json.get("message", "")
-    
+
     # Use dynamic AI assistant if available
     if whimsy.ai_assistant:
         try:
@@ -289,7 +270,7 @@ def chat():
         except Exception as e:
             print(f"AI assistant error: {e}")
             return jsonify({"response": f"Processing... ({str(e)})"})
-    
+
     # Fallback
     return jsonify({"response": whimsy.generate_response(msg)})
 
@@ -306,6 +287,23 @@ def visualize():
     img.save(buf, format="PNG")
     buf.seek(0)
     return send_file(buf, mimetype="image/png")
+
+@app.route("/api/evolution")
+def evolution_stats():
+    if not session.get("logged_in"):
+        return jsonify({})
+
+    if whimsy.self_evolver:
+        return jsonify(whimsy.self_evolver.get_evolution_stats())
+
+    return jsonify({"error": "Self-evolver not initialized"})
+
+@app.route("/api/web_knowledge")
+def web_knowledge():
+    if not session.get("logged_in"):
+        return jsonify({})
+
+    return jsonify(whimsy.web_learner.get_knowledge_summary())
 
 # === RUN ===
 if __name__ == "__main__":

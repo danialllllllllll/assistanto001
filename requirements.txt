@@ -12,3 +12,6 @@ matplotlib>=3.9.2
 networkx>=3.3
 psutil>=7.1.2
 scipy
+beautifulsoup4
+Pillow
+requests

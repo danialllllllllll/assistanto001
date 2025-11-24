@@ -22,10 +22,11 @@ externalPort = 8080
 expertMode = true
 
 [nix]
-packages = ["cairo", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "gobject-introspection", "gtk3", "libxcrypt", "pkg-config", "qhull", "systemdMinimal", "tcl", "tk", "xsimd"]
+packages = ["cairo", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "gobject-introspection", "gtk3", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "pkg-config", "qhull", "systemdMinimal", "tcl", "tk", "xsimd", "zlib"]
 channel = "stable-25_05"
 
 [workflows]
+runButton = "Train Whimsy AI"
 
 [[workflows.workflow]]
 name = "on Run from .replit"
@@ -43,3 +44,12 @@ args = "python learning/train_advanced_ai.py"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python learning/*"
+
+[[workflows.workflow]]
+name = "Train Whimsy AI"
+author = 22331225
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python learning/train_advanced_ai.py"

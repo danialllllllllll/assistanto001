@@ -60,8 +60,16 @@ class AdvancedWebLearning:
     def _learn_from_wikipedia(self, topic: str) -> Dict[str, Any]:
         """Learn from Wikipedia"""
         try:
-            url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{topic.replace(' ', '_')}"
-            response = requests.get(url, timeout=10)
+            # URL encode the topic properly
+            import urllib.parse
+            encoded_topic = urllib.parse.quote(topic.replace(' ', '_'))
+            url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{encoded_topic}"
+            
+            headers = {
+                'User-Agent': 'WhimsyAI/1.0 (Educational AI Training System)'
+            }
+            
+            response = requests.get(url, timeout=10, headers=headers)
             
             if response.status_code == 200:
                 data = response.json()
@@ -69,8 +77,17 @@ class AdvancedWebLearning:
                     'title': data.get('title', topic),
                     'extract': data.get('extract', ''),
                     'description': data.get('description', ''),
-                    'key_concepts': self._extract_concepts(data.get('extract', ''))
+                    'key_concepts': self._extract_concepts(data.get('extract', '')),
+                    'url': data.get('content_urls', {}).get('desktop', {}).get('page', '')
                 }
+            elif response.status_code == 404:
+                print(f"Wikipedia: Topic '{topic}' not found")
+            else:
+                print(f"Wikipedia API returned status {response.status_code}")
+        except requests.exceptions.Timeout:
+            print(f"Wikipedia request timed out for topic: {topic}")
+        except requests.exceptions.RequestException as e:
+            print(f"Wikipedia request error: {e}")
         except Exception as e:
             print(f"Wikipedia learning error: {e}")
             
@@ -82,8 +99,15 @@ class AdvancedWebLearning:
         
         # Example: ArXiv for scientific papers
         try:
-            arxiv_url = f"http://export.arxiv.org/api/query?search_query=all:{topic}&max_results=5"
-            response = requests.get(arxiv_url, timeout=10)
+            import urllib.parse
+            encoded_topic = urllib.parse.quote(topic)
+            arxiv_url = f"http://export.arxiv.org/api/query?search_query=all:{encoded_topic}&max_results=5"
+            
+            headers = {
+                'User-Agent': 'WhimsyAI/1.0 (Educational AI Training System)'
+            }
+            
+            response = requests.get(arxiv_url, timeout=15, headers=headers)
             
             if response.status_code == 200:
                 # Parse XML response
@@ -94,12 +118,22 @@ class AdvancedWebLearning:
                     summary_match = re.search(r'<summary>(.*?)</summary>', entry, re.DOTALL)
                     
                     if title_match and summary_match:
+                        title = re.sub(r'\s+', ' ', title_match.group(1).strip())
+                        summary = re.sub(r'\s+', ' ', summary_match.group(1).strip())[:500]
                         papers.append({
-                            'title': title_match.group(1).strip(),
-                            'summary': summary_match.group(1).strip()[:500]
+                            'title': title,
+                            'summary': summary
                         })
-                        
-                api_data['arxiv'] = papers
+                
+                if papers:
+                    api_data['arxiv'] = papers
+                    print(f"ArXiv: Found {len(papers)} papers on '{topic}'")
+            else:
+                print(f"ArXiv API returned status {response.status_code}")
+        except requests.exceptions.Timeout:
+            print(f"ArXiv request timed out for topic: {topic}")
+        except requests.exceptions.RequestException as e:
+            print(f"ArXiv request error: {e}")
         except Exception as e:
             print(f"ArXiv API error: {e}")
             
