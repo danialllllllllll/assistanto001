@@ -14,9 +14,32 @@ run = ["python", "learning/train_advanced_ai.py"]
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
 [agent]
 expertMode = true
 
 [nix]
 packages = ["cairo", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "gobject-introspection", "gtk3", "libxcrypt", "pkg-config", "qhull", "systemdMinimal", "tcl", "tk", "xsimd"]
 channel = "stable-25_05"
+
+[workflows]
+
+[[workflows.workflow]]
+name = "on Run from .replit"
+mode = "parallel"
+author = 22331225
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python -m http.server 8080"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python learning/train_advanced_ai.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python learning/*"

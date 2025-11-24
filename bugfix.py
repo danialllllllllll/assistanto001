@@ -79,7 +79,7 @@ class AdvancedAI:
 
         threading.Thread(target=lambda:app.run(host='0.0.0.0',port=5000,debug=False,use_reloader=False,threaded=True),daemon=True).start()
         time.sleep(1)
-        print("Web UI → http://127.0.0.1:5000")
+        print("Web UI → http://0.0.0.0:5000")
 
         print("\nBEGINNING TRAINING\n")
         iteration=0
