@@ -208,7 +208,7 @@ class WhimsyAI:
 
                 if self.understanding > 0.99 and self.confidence > 0.95:
                     if not self.advance_stage():
-                        print("\nWHIMSY FINAL FORM — THINKER PHASE ACHIEVED")
+                        print("\nWHIMSY  — THINKER PHASE ACHIEVED")
                         self.running = False
 
 # === Whimsy ===
