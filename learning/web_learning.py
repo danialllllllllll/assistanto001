@@ -159,19 +159,32 @@ class AdvancedWebLearning:
         return [concept for concept, freq in sorted_concepts[:10]]
     
     def _synthesize_knowledge(self, knowledge_dict: Dict[str, Any]) -> str:
-        """Synthesize knowledge from multiple sources"""
-        synthesis = []
+        """Synthesize knowledge from multiple sources with deep understanding"""
+        synthesis_parts = []
         
         if 'wikipedia' in knowledge_dict:
             wiki = knowledge_dict['wikipedia']
-            synthesis.append(f"Definition: {wiki.get('extract', '')[:200]}")
+            extract = wiki.get('extract', '')
+            concepts = wiki.get('key_concepts', [])
+            
+            if extract:
+                synthesis_parts.append(f"Core Understanding: {extract[:300]}")
+            if concepts:
+                synthesis_parts.append(f"Key Concepts: {', '.join(concepts[:5])}")
             
         if 'apis' in knowledge_dict and 'arxiv' in knowledge_dict['apis']:
             papers = knowledge_dict['apis']['arxiv']
             if papers:
-                synthesis.append(f"Research: {len(papers)} academic papers found on this topic")
+                synthesis_parts.append(f"Academic Research: {len(papers)} papers analyzed")
+                # Extract insights from paper summaries
+                combined_summary = ' '.join([p.get('summary', '')[:100] for p in papers[:2]])
+                if combined_summary:
+                    synthesis_parts.append(f"Research Insight: {combined_summary[:200]}")
+        
+        if not synthesis_parts:
+            return "Processing information to build comprehensive understanding..."
                 
-        return ' | '.join(synthesis)
+        return ' | '.join(synthesis_parts)
     
     def _calculate_confidence(self, learned_data: Dict[str, Any]) -> float:
         """Calculate confidence in learned knowledge"""

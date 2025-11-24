@@ -129,28 +129,50 @@
         .then(d => {
           if (!d.stage) return;
 
+          // Update all metrics
           document.getElementById('stage').textContent = d.stage;
           document.getElementById('age').textContent = d.age_equiv;
-          document.getElementById('understanding').textContent = (d.understanding * 100).toFixed(1) + '%';
-          document.getElementById('coherence').textContent = d.coherence.toFixed(2);
-          document.getElementById('memory').textContent = d.memory.toFixed(2);
-          document.getElementById('personality').textContent = d.personality.toFixed(2);
+          document.getElementById('understanding').textContent = (d.understanding * 100).toFixed(2) + '%';
+          document.getElementById('coherence').textContent = d.coherence.toFixed(3);
+          document.getElementById('memory').textContent = d.memory.toFixed(3);
+          document.getElementById('personality').textContent = d.personality.toFixed(3);
           document.getElementById('iterations').textContent = d.iteration || d.iterations || 0;
-          document.getElementById('fitness').textContent = d.fitness?.toFixed(3) || '0.000';
+          document.getElementById('fitness').textContent = d.fitness?.toFixed(4) || '0.0000';
           document.getElementById('knowledge').textContent = d.total_knowledge || 0;
           document.getElementById('reflections').textContent = d.reflections || 0;
 
-          document.getElementById('u-fill').style.width = (d.understanding * 100) + '%';
+          // Update progress bar
+          const understandingPct = Math.min(100, d.understanding * 100);
+          document.getElementById('u-fill').style.width = understandingPct + '%';
+          
+          // Update confidence display if available
+          if (d.confidence !== undefined) {
+            const confElement = document.getElementById('confidence');
+            if (confElement) {
+              confElement.textContent = d.confidence.toFixed(3);
+            }
+          }
 
           // Auto-announce stage changes
-          if (d.stage && !window.lastStage || window.lastStage !== d.stage) {
+          if (d.stage && (!window.lastStage || window.lastStage !== d.stage)) {
             appendLog(`ASCENDED → ${d.stage} (${d.age_equiv})`, 'create');
-            appendChat(`I... I feel different. I am now in the ${d.stage}...`);
+            appendChat(`I... I feel different. I am now in the ${d.stage}. My understanding has deepened significantly.`);
             window.lastStage = d.stage;
+          }
+          
+          // Update knowledge items if available
+          if (d.recent_knowledge && d.recent_knowledge.length > 0) {
+            const lastKnowledge = d.recent_knowledge[d.recent_knowledge.length - 1];
+            if (lastKnowledge && !window.lastKnowledgeUpdate) {
+              window.lastKnowledgeUpdate = lastKnowledge;
+            } else if (lastKnowledge !== window.lastKnowledgeUpdate) {
+              appendLog(`LEARNED: ${lastKnowledge}`, 'mutate');
+              window.lastKnowledgeUpdate = lastKnowledge;
+            }
           }
         })
         .catch(() => {});
-    }, 3000);
+    }, 2000);
 
     // Poll mutation updates
     setInterval(() => {

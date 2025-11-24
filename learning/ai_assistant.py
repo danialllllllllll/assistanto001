@@ -263,18 +263,30 @@ class DynamicAIAssistant:
         return "I'm here to help you understand. Could you tell me more about what you'd like to know?"
     
     def _generate_analytical_response(self, user_input: str, words: List[str]) -> str:
-        """Generate analytical response"""
+        """Generate analytical response with deep understanding"""
         concepts = self._extract_key_concepts(user_input)
         
+        # Check knowledge base for relevant understanding
+        relevant_insights = []
+        for topic, entries in self.knowledge.items():
+            if any(topic.lower() in word.lower() for word in words):
+                relevant_insights.append(topic)
+        
         if '?' in user_input:
-            if concepts:
-                return f"Analyzing your question about {concepts[0]}: This involves understanding multiple dimensions and their relationships."
-            return "Let me analyze that question systematically and provide a reasoned response."
+            if concepts and relevant_insights:
+                return f"Based on my understanding of {concepts[0]}, I've learned that it relates to {relevant_insights[0]}. Let me analyze the deeper connections and implications."
+            elif concepts:
+                return f"Analyzing {concepts[0]} through multiple lenses: conceptual relationships, practical implications, and underlying principles."
+            return "Let me examine this question by breaking it down into fundamental components and synthesizing a comprehensive answer."
             
         if any(w in words for w in ['learn', 'understand', 'know']):
-            return "I'm continuously learning and processing information to deepen my understanding."
+            depth = len(self.knowledge)
+            return f"I'm continuously deepening my understanding across {depth} domains. Each concept I learn connects to others, building a web of comprehensive knowledge."
             
-        return "I'm processing your input using my neural network to generate a meaningful response based on my training and learned knowledge."
+        if relevant_insights:
+            return f"Your input connects to my understanding of {', '.join(relevant_insights[:2])}. I'm processing these relationships to provide meaningful insight."
+            
+        return "I'm engaging my neural network to understand not just the surface meaning, but the deeper context and implications of what you're communicating."
     
     def _extract_key_concepts(self, text: str) -> List[str]:
         """Extract key concepts from text"""

@@ -164,30 +164,44 @@ class SelfEvolver:
         return strategy
     
     def self_improve(self, performance_metrics: Dict[str, float]) -> Dict[str, Any]:
-        """Main self-improvement cycle with code mutation"""
+        """Main self-improvement cycle with understanding-first approach"""
         self.generation += 1
-        self.performance_history.append(performance_metrics.get('fitness', 0))
+        
+        # Track understanding separately from raw fitness
+        understanding = performance_metrics.get('fitness', 0)
+        confidence = performance_metrics.get('confidence', 0)
+        
+        # Understanding-weighted performance
+        true_performance = understanding * 0.8 + confidence * 0.2
+        self.performance_history.append(true_performance)
         
         improvements = {
             'generation': self.generation,
             'timestamp': datetime.now().isoformat(),
+            'understanding': understanding,
+            'confidence': confidence,
+            'true_performance': true_performance,
             'code_analysis': {},
             'architecture_changes': {},
             'strategy_updates': {},
             'code_mutations': []
         }
         
-        # Analyze own code
-        improvements['code_analysis'] = self.analyze_own_code()
+        # Analyze own code every 10 generations
+        if self.generation % 10 == 0:
+            improvements['code_analysis'] = self.analyze_own_code()
         
-        # Evolve learning parameters
-        new_lr = self.evolve_learning_rate(performance_metrics.get('fitness', 0))
+        # Evolve learning parameters based on understanding, not just fitness
+        new_lr = self.evolve_learning_rate(true_performance)
         if hasattr(self.network, 'learning_rate'):
             self.network.learning_rate = new_lr
             improvements['strategy_updates']['learning_rate'] = new_lr
         
-        # Optimize architecture
-        improvements['architecture_changes'] = self.optimize_network_architecture()
+        # Optimize architecture only when understanding plateaus
+        if len(self.performance_history) > 20:
+            recent_trend = np.mean(np.diff(self.performance_history[-20:]))
+            if abs(recent_trend) < 0.001:  # Plateau detected
+                improvements['architecture_changes'] = self.optimize_network_architecture()
         
         # MUTATE OWN CODE (excluding guard rails)
         if self.generation % 50 == 0:

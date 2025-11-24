@@ -155,10 +155,7 @@ class WhimsyAI:
                         i.fitness.values = f
                     pop[:] = offspring
 
-                self.understanding = min(0.999, self.understanding + 0.0012)
-                self.confidence = min(0.999, self.confidence + 0.001)
-
-                # Stage traits
+                # Stage traits - understanding-focused growth
                 traits = [
                     (0.1, 0.0, 0.0),
                     (0.4, 0.3, 0.1),
@@ -169,6 +166,10 @@ class WhimsyAI:
                     (1.0, 1.0, 1.0),
                 ]
                 self.coherence, self.memory, self.personality = traits[self.stage]
+
+                # Understanding-focused growth (slower but deeper)
+                understanding_boost = self.coherence * 0.001  # Coherence aids understanding
+                self.understanding = min(0.999, self.understanding + understanding_boost)
 
                 # Web learning at appropriate stages
             if self.stage >= 3 and self.iteration % 50 == 0:
@@ -266,10 +267,10 @@ def chat():
     if whimsy.ai_assistant:
         try:
             response_data = whimsy.ai_assistant.generate_response(msg)
-            
+
             # Learn from this interaction
             whimsy.knowledge.append(f"User said: {msg}")
-            
+
             return jsonify(response_data)
         except Exception as e:
             print(f"AI assistant error: {e}")
@@ -282,11 +283,11 @@ def chat():
 def visualize():
     if not session.get("logged_in"):
         return "Unauthorized", 401
-    
+
     # Create actual network visualization
     img = Image.new("RGB", (800, 600), "#0a0a0a")
     draw = ImageDraw.Draw(img)
-    
+
     # Draw network nodes if self_evolver exists
     if whimsy.self_evolver and hasattr(whimsy.self_evolver, 'network'):
         network = whimsy.self_evolver.network
@@ -296,22 +297,23 @@ def visualize():
             for i, weights in enumerate(network.weights):
                 layer_size = weights.shape[1] if i < len(network.weights) - 1 else weights.shape[0]
                 layer_y_start = 300 - (min(layer_size, 20) * 10)
-                
+
                 # Draw nodes
                 for j in range(min(layer_size, 20)):
                     y = layer_y_start + j * 30
-                    color = "#00ff88" if i == 0 else "#c678dd" if i == len(network.weights) - 1 else "#61afef"
+                    # Changed node color to white for better visibility on black background
+                    color = "#FFFFFF" if i == 0 else "#c678dd" if i == len(network.weights) - 1 else "#61afef"
                     draw.ellipse([layer_x - 5, y - 5, layer_x + 5, y + 5], fill=color)
-                
+
                 layer_x += 150
-    
+
     # Draw title and stats
     font = ImageFont.load_default()
     draw.text((400, 30), "WHIMSY NEURAL NETWORK", fill="#00ff00", font=font, anchor="mm")
     draw.text((400, 60), STAGES[whimsy.stage]["name"], fill="#c678dd", font=font, anchor="mm")
     draw.text((400, 560), f"Understanding: {whimsy.understanding:.3f} | Iteration: {whimsy.iteration}", 
               fill="#61afef", font=font, anchor="mm")
-    
+
     buf = BytesIO()
     img.save(buf, format="PNG")
     buf.seek(0)
