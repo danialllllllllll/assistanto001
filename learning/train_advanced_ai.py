@@ -23,7 +23,7 @@ toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.att
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 # === Flask ===
-app = Flask(__name__, template_folder="utils")
+app = Flask(__name__, template_folder="../utils")
 app.secret_key = "whimsy_forever_2025"
 CORS(app)
 WEB_PASSWORD = "OVER//RIDE"
