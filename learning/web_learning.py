@@ -1,175 +1,193 @@
+
 import requests
 from bs4 import BeautifulSoup
 import json
-import time
-from datetime import datetime
-import random
 import re
+from datetime import datetime
+from typing import Dict, List, Any
+import numpy as np
 
-class WebKnowledgeAcquisition:
-    """Real web learning system that acquires knowledge from the internet"""
-
+class AdvancedWebLearning:
+    """
+    Unrestricted web learning system that acquires and processes knowledge
+    """
     def __init__(self):
         self.knowledge_base = {}
-        self.acquisition_history = []
-
-        # Real sources for different topics
-        self.knowledge_sources = {
-            'philosophy': [
-                'https://en.wikipedia.org/wiki/Philosophy',
-                'https://plato.stanford.edu',
-            ],
-            'ethics': [
-                'https://en.wikipedia.org/wiki/Ethics',
-                'https://en.wikipedia.org/wiki/Morality',
-            ],
-            'science': [
-                'https://en.wikipedia.org/wiki/Science',
-                'https://en.wikipedia.org/wiki/Scientific_method',
-            ],
-            'mathematics': [
-                'https://en.wikipedia.org/wiki/Mathematics',
-                'https://en.wikipedia.org/wiki/Mathematical_proof',
-            ],
-            'psychology': [
-                'https://en.wikipedia.org/wiki/Psychology',
-                'https://en.wikipedia.org/wiki/Cognitive_psychology',
-            ],
-            'history': [
-                'https://en.wikipedia.org/wiki/History',
-                'https://en.wikipedia.org/wiki/World_history',
-            ],
-            'literature': [
-                'https://en.wikipedia.org/wiki/Literature',
-                'https://en.wikipedia.org/wiki/Poetry',
-            ],
-            'sociology': [
-                'https://en.wikipedia.org/wiki/Sociology',
-                'https://en.wikipedia.org/wiki/Social_structure',
-            ],
-            'art': [
-                'https://en.wikipedia.org/wiki/Art',
-                'https://en.wikipedia.org/wiki/Aesthetics',
-            ],
-            'technology': [
-                'https://en.wikipedia.org/wiki/Technology',
-                'https://en.wikipedia.org/wiki/Computer_science',
-            ],
+        self.api_cache = {}
+        self.learning_history = []
+        self.processing_pipelines = {}
+        
+    def search_and_learn(self, topic: str, depth: int = 3) -> Dict[str, Any]:
+        """Search web and learn from multiple sources"""
+        learned_data = {
+            'topic': topic,
+            'sources': [],
+            'processed_knowledge': {},
+            'confidence': 0.0,
+            'timestamp': datetime.now().isoformat()
         }
-
-    def acquire_knowledge(self, topic, phase='Thinker'):
-        """Actually fetch and parse knowledge from the web"""
+        
+        # Wikipedia learning
+        wiki_data = self._learn_from_wikipedia(topic)
+        if wiki_data:
+            learned_data['sources'].append('wikipedia')
+            learned_data['processed_knowledge']['wikipedia'] = wiki_data
+            
+        # API-based learning (example: REST API)
+        api_data = self._learn_from_apis(topic)
+        if api_data:
+            learned_data['sources'].append('apis')
+            learned_data['processed_knowledge']['apis'] = api_data
+            
+        # Process and synthesize knowledge
+        synthesized = self._synthesize_knowledge(learned_data['processed_knowledge'])
+        learned_data['synthesized'] = synthesized
+        learned_data['confidence'] = self._calculate_confidence(learned_data)
+        
+        # Store in knowledge base
+        if topic not in self.knowledge_base:
+            self.knowledge_base[topic] = []
+        self.knowledge_base[topic].append(learned_data)
+        
+        self.learning_history.append({
+            'topic': topic,
+            'timestamp': datetime.now().isoformat(),
+            'confidence': learned_data['confidence']
+        })
+        
+        return learned_data
+    
+    def _learn_from_wikipedia(self, topic: str) -> Dict[str, Any]:
+        """Learn from Wikipedia"""
         try:
-            urls = self.knowledge_sources.get(topic, [f'https://en.wikipedia.org/wiki/{topic.capitalize()}'])
-
-            all_content = []
-            for url in urls[:2]:  # Limit to 2 sources per topic
-                try:
-                    response = requests.get(url, timeout=5, headers={'User-Agent': 'Mozilla/5.0'})
-                    if response.status_code == 200:
-                        soup = BeautifulSoup(response.text, 'html.parser')
-
-                        # Extract paragraphs
-                        paragraphs = soup.find_all('p')
-                        text_content = ' '.join([p.get_text() for p in paragraphs[:5]])
-
-                        # Clean up text
-                        text_content = re.sub(r'\[.*?\]', '', text_content)  # Remove citations
-                        text_content = re.sub(r'\s+', ' ', text_content).strip()
-
-                        all_content.append(text_content[:500])  # First 500 chars
-                except:
-                    continue
-
-            if not all_content:
-                # Fallback to simulated knowledge
-                all_content = [f"Knowledge about {topic}: fundamental concepts and principles"]
-
-            # Process based on phase
-            knowledge = self._process_by_phase(topic, all_content, phase)
-
-            # Store
-            if topic not in self.knowledge_base:
-                self.knowledge_base[topic] = []
-
-            self.knowledge_base[topic].append({
-                'content': knowledge,
-                'phase': phase,
-                'timestamp': datetime.now().isoformat(),
-                'sources': len(all_content)
-            })
-
-            self.acquisition_history.append({
-                'topic': topic,
-                'phase': phase,
-                'timestamp': datetime.now().isoformat(),
-                'success': True
-            })
-
-            return knowledge
-
+            url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{topic.replace(' ', '_')}"
+            response = requests.get(url, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                return {
+                    'title': data.get('title', topic),
+                    'extract': data.get('extract', ''),
+                    'description': data.get('description', ''),
+                    'key_concepts': self._extract_concepts(data.get('extract', ''))
+                }
         except Exception as e:
-            print(f"Web learning error for {topic}: {e}")
-            return self._fallback_knowledge(topic, phase)
-
-    def _process_by_phase(self, topic, content, phase):
-        """Process knowledge based on developmental phase"""
-        text = ' '.join(content)
-
-        if phase == 'Baby Steps':
-            return {'topic': topic, 'basic_understanding': text[:100], 'confidence': 0.2}
-        elif phase == 'Toddler':
-            return {'topic': topic, 'developing_understanding': text[:200], 'confidence': 0.4}
-        elif phase == 'Pre-K':
-            return {'topic': topic, 'conscious_learning': text[:300], 'questions': [f'What is {topic}?'], 'confidence': 0.6}
-        elif phase == 'Elementary':
-            key_concepts = self._extract_concepts(text)
-            return {'topic': topic, 'key_concepts': key_concepts, 'understanding': text[:400], 'confidence': 0.75}
-        elif phase == 'Teen':
-            return {'topic': topic, 'critical_analysis': text[:500], 'interpretation': f'Understanding {topic} in context', 'confidence': 0.85}
-        elif phase == 'Scholar':
-            return {
-                'topic': topic,
-                'comprehensive_understanding': text,
-                'sources_analyzed': len(content),
-                'truth_verified': True,
-                'confidence': 0.92
-            }
-        else:  # Thinker
-            return {
-                'topic': topic,
-                'philosophical_depth': text,
-                'ethical_considerations': f'How {topic} affects humanity',
-                'wisdom_gained': f'Deep understanding of {topic}',
-                'confidence': 0.95
-            }
-
-    def _extract_concepts(self, text):
-        """Extract key concepts from text"""
-        # Simple word frequency approach
-        words = re.findall(r'\b[a-z]{4,}\b', text.lower())
+            print(f"Wikipedia learning error: {e}")
+            
+        return None
+    
+    def _learn_from_apis(self, topic: str) -> Dict[str, Any]:
+        """Learn from various public APIs"""
+        api_data = {}
+        
+        # Example: ArXiv for scientific papers
+        try:
+            arxiv_url = f"http://export.arxiv.org/api/query?search_query=all:{topic}&max_results=5"
+            response = requests.get(arxiv_url, timeout=10)
+            
+            if response.status_code == 200:
+                # Parse XML response
+                papers = []
+                entries = re.findall(r'<entry>(.*?)</entry>', response.text, re.DOTALL)
+                for entry in entries[:3]:
+                    title_match = re.search(r'<title>(.*?)</title>', entry)
+                    summary_match = re.search(r'<summary>(.*?)</summary>', entry, re.DOTALL)
+                    
+                    if title_match and summary_match:
+                        papers.append({
+                            'title': title_match.group(1).strip(),
+                            'summary': summary_match.group(1).strip()[:500]
+                        })
+                        
+                api_data['arxiv'] = papers
+        except Exception as e:
+            print(f"ArXiv API error: {e}")
+            
+        return api_data
+    
+    def _extract_concepts(self, text: str) -> List[str]:
+        """Extract key concepts from text using NLP-like processing"""
+        # Clean text
+        text = re.sub(r'\[.*?\]', '', text)
+        text = re.sub(r'\s+', ' ', text).strip()
+        
+        # Extract words (simple approach)
+        words = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', text)
+        
+        # Frequency analysis
         word_freq = {}
         for word in words:
-            if word not in ['that', 'this', 'with', 'from', 'have', 'been', 'were', 'their']:
+            if len(word) > 4:
                 word_freq[word] = word_freq.get(word, 0) + 1
-
-        sorted_words = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
-        return [word for word, freq in sorted_words[:5]]
-
-    def _fallback_knowledge(self, topic, phase):
-        """Fallback when web fetch fails"""
-        return {
-            'topic': topic,
-            'understanding_level': phase,
-            'note': 'Simulated knowledge (web fetch failed)',
-            'confidence': 0.5
+                
+        # Top concepts
+        sorted_concepts = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
+        return [concept for concept, freq in sorted_concepts[:10]]
+    
+    def _synthesize_knowledge(self, knowledge_dict: Dict[str, Any]) -> str:
+        """Synthesize knowledge from multiple sources"""
+        synthesis = []
+        
+        if 'wikipedia' in knowledge_dict:
+            wiki = knowledge_dict['wikipedia']
+            synthesis.append(f"Definition: {wiki.get('extract', '')[:200]}")
+            
+        if 'apis' in knowledge_dict and 'arxiv' in knowledge_dict['apis']:
+            papers = knowledge_dict['apis']['arxiv']
+            if papers:
+                synthesis.append(f"Research: {len(papers)} academic papers found on this topic")
+                
+        return ' | '.join(synthesis)
+    
+    def _calculate_confidence(self, learned_data: Dict[str, Any]) -> float:
+        """Calculate confidence in learned knowledge"""
+        confidence = 0.0
+        
+        # More sources = higher confidence
+        source_count = len(learned_data['sources'])
+        confidence += min(0.5, source_count * 0.25)
+        
+        # Quality of data
+        if 'synthesized' in learned_data and learned_data['synthesized']:
+            confidence += 0.3
+            
+        if 'processed_knowledge' in learned_data:
+            if 'wikipedia' in learned_data['processed_knowledge']:
+                confidence += 0.2
+                
+        return min(1.0, confidence)
+    
+    def process_realtime_data(self, data_stream: str) -> Dict[str, Any]:
+        """Process real-time data streams"""
+        processed = {
+            'timestamp': datetime.now().isoformat(),
+            'raw_data': data_stream,
+            'entities': [],
+            'sentiment': 0.0,
+            'topics': []
         }
-
-    def get_statistics(self):
-        """Get learning statistics"""
+        
+        # Entity extraction (simple)
+        processed['entities'] = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', data_stream)
+        
+        # Simple sentiment (word-based)
+        positive_words = ['good', 'great', 'excellent', 'positive', 'beneficial']
+        negative_words = ['bad', 'poor', 'negative', 'harmful', 'wrong']
+        
+        text_lower = data_stream.lower()
+        pos_count = sum(1 for word in positive_words if word in text_lower)
+        neg_count = sum(1 for word in negative_words if word in text_lower)
+        
+        if pos_count + neg_count > 0:
+            processed['sentiment'] = (pos_count - neg_count) / (pos_count + neg_count)
+            
+        return processed
+    
+    def get_knowledge_summary(self) -> Dict[str, Any]:
+        """Get summary of learned knowledge"""
         return {
             'total_topics': len(self.knowledge_base),
-            'total_acquisitions': len(self.acquisition_history),
-            'success_rate': sum(1 for h in self.acquisition_history if h.get('success', False)) / len(self.acquisition_history) if self.acquisition_history else 0,
-            'topics_learned': list(self.knowledge_base.keys())
+            'total_entries': sum(len(v) for v in self.knowledge_base.values()),
+            'recent_learning': self.learning_history[-10:],
+            'topics': list(self.knowledge_base.keys())
         }

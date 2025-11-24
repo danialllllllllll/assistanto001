@@ -9,6 +9,16 @@ from flask_cors import CORS
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 from typing import Any
+import sys
+import os
+
+# Add learning directory to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+# Import AI components
+from learning.self_evolver import SelfEvolver
+from learning.web_learning import AdvancedWebLearning
+from learning.ai_assistant import DynamicAIAssistant
 
 # DEAP — Pyright-safe
 from deap import base, creator, tools
@@ -52,6 +62,11 @@ class WhimsyAI:
         self.reflections: list[str] = []
         self.running: bool = True
         self.mutation_logs: Queue = Queue()
+        
+        # Initialize advanced AI systems
+        self.web_learner = AdvancedWebLearning()
+        self.self_evolver: Any = None  # Will be initialized with trainer
+        self.ai_assistant: Any = None  # Will be initialized with network
 
     def current_stage(self) -> dict:
         return STAGES[self.stage]
@@ -89,6 +104,29 @@ class WhimsyAI:
         toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.2, indpb=0.2)
         toolbox.register("select", tools.selTournament, tournsize=3)
         toolbox.register("evaluate", lambda ind: (sum(ind) + random.gauss(0, 0.1),))
+        
+        # Initialize self-evolution system
+        class SimpleNetwork:
+            def __init__(self):
+                self.learning_rate = 0.001
+                self.weights = []
+        
+        simple_network = SimpleNetwork()
+        
+        class SimpleTrainer:
+            def __init__(self):
+                self.best_fitness = 0.0
+                
+        simple_trainer = SimpleTrainer()
+        
+        self.self_evolver = SelfEvolver(simple_network, simple_trainer)
+        self.ai_assistant = DynamicAIAssistant(
+            network=simple_network,
+            knowledge={},
+            web_learner=self.web_learner
+        )
+        
+        print("[SYSTEMS] Self-evolution and AI assistant initialized")
 
         while self.running and self.stage < len(STAGES):
             stage_info = self.current_stage()
@@ -132,13 +170,52 @@ class WhimsyAI:
                 ]
                 self.coherence, self.memory, self.personality = traits[self.stage]
 
-                if self.stage == 3 and self.iteration % 30 == 0:
-                    self.knowledge.append(f"Concept {len(self.knowledge)+1}")
-                if self.stage >= 5 and self.iteration % 40 == 0:
-                    self.reflections.append(f"Reflection {len(self.reflections)+1}")
+                # Web learning at appropriate stages
+            if self.stage >= 3 and self.iteration % 50 == 0:
+                topics = ['philosophy', 'ethics', 'science', 'mathematics', 'psychology']
+                topic = topics[self.stage % len(topics)]
+                try:
+                    learned = self.web_learner.search_and_learn(topic)
+                    if learned:
+                        self.knowledge.append(f"{topic}: {learned.get('confidence', 0):.2f} confidence")
+                except Exception as e:
+                    print(f"Web learning error: {e}")
+                    
+            if self.stage >= 5 and self.iteration % 40 == 0:
+                self.reflections.append(f"Reflection {len(self.reflections)+1}")
+                
+            # Self-evolution at each stage completion
+            if self.iteration % 100 == 0 and self.self_evolver:
+                try:
+                    evolution_result = self.self_evolver.self_improve({
+                        'fitness': self.understanding,
+                        'confidence': self.confidence
+                    })
+                    self.mutation_logs.put(f"[EVOLUTION] Gen {evolution_result['generation']}")
+                except Exception as e:
+                    print(f"Self-evolution error: {e}")
 
                 if self.iteration % 12 == 0:
                     self.mutation_logs.put(
+
+
+@app.route("/api/evolution")
+def evolution_stats():
+    if not session.get("logged_in"):
+        return jsonify({})
+    
+    if whimsy.self_evolver:
+        return jsonify(whimsy.self_evolver.get_evolution_stats())
+    
+    return jsonify({"error": "Self-evolver not initialized"})
+
+@app.route("/api/web_knowledge")
+def web_knowledge():
+    if not session.get("logged_in"):
+        return jsonify({})
+        
+    return jsonify(whimsy.web_learner.get_knowledge_summary())
+
                         f"[GROWTH] Iter {self.iteration} | "
                         f"U:{self.understanding:.3f} | "
                         f"P:{self.personality:.1f}"
@@ -203,6 +280,17 @@ def chat():
     if not session.get("logged_in"):
         return jsonify({"response": "login required"})
     msg = request.json.get("message", "")
+    
+    # Use dynamic AI assistant if available
+    if whimsy.ai_assistant:
+        try:
+            response_data = whimsy.ai_assistant.generate_response(msg)
+            return jsonify(response_data)
+        except Exception as e:
+            print(f"AI assistant error: {e}")
+            return jsonify({"response": f"Processing... ({str(e)})"})
+    
+    # Fallback
     return jsonify({"response": whimsy.generate_response(msg)})
 
 @app.route("/visualize")
