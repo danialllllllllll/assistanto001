@@ -1925,7 +1925,187 @@
       "new_value": "2.845706385096298e-10",
       "reasoning": "High fitness achieved. Reducing mutation to refine solutions.",
       "timestamp": "2025-11-25T00:07:13.039466"
+    },
+    {
+      "generation": 5,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.1",
+      "new_value": "0.12",
+      "reasoning": "Low fitness detected. Increasing mutation for exploration.",
+      "timestamp": "2025-11-25T01:35:12.021577"
+    },
+    {
+      "generation": 20,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.001",
+      "new_value": "0.0015",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-11-25T01:35:27.382705"
+    },
+    {
+      "generation": 25,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.0015",
+      "new_value": "0.0022500000000000003",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-11-25T01:35:32.291597"
+    },
+    {
+      "generation": 25,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.12",
+      "new_value": "0.096",
+      "reasoning": "High fitness achieved. Reducing mutation to refine solutions.",
+      "timestamp": "2025-11-25T01:35:32.291619"
+    },
+    {
+      "generation": 30,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.0022500000000000003",
+      "new_value": "0.0033750000000000004",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-11-25T01:35:35.594799"
+    },
+    {
+      "generation": 30,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.096",
+      "new_value": "0.07680000000000001",
+      "reasoning": "High fitness achieved. Reducing mutation to refine solutions.",
+      "timestamp": "2025-11-25T01:35:35.594816"
+    },
+    {
+      "generation": 35,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.0033750000000000004",
+      "new_value": "0.005062500000000001",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-11-25T01:35:40.518977"
+    },
+    {
+      "generation": 35,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.07680000000000001",
+      "new_value": "0.06144000000000001",
+      "reasoning": "High fitness achieved. Reducing mutation to refine solutions.",
+      "timestamp": "2025-11-25T01:35:40.518993"
+    },
+    {
+      "generation": 40,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.005062500000000001",
+      "new_value": "0.0075937500000000015",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-11-25T01:35:45.423143"
+    },
+    {
+      "generation": 40,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.06144000000000001",
+      "new_value": "0.04915200000000001",
+      "reasoning": "High fitness achieved. Reducing mutation to refine solutions.",
+      "timestamp": "2025-11-25T01:35:45.423163"
+    },
+    {
+      "generation": 45,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.0075937500000000015",
+      "new_value": "0.011390625000000001",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-11-25T01:35:48.937076"
+    },
+    {
+      "generation": 45,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.04915200000000001",
+      "new_value": "0.03932160000000001",
+      "reasoning": "High fitness achieved. Reducing mutation to refine solutions.",
+      "timestamp": "2025-11-25T01:35:48.937090"
+    },
+    {
+      "generation": 50,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.011390625000000001",
+      "new_value": "0.017085937500000002",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-11-25T01:35:52.584768"
+    },
+    {
+      "generation": 50,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.03932160000000001",
+      "new_value": "0.03145728000000001",
+      "reasoning": "High fitness achieved. Reducing mutation to refine solutions.",
+      "timestamp": "2025-11-25T01:35:52.584788"
+    },
+    {
+      "generation": 55,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.017085937500000002",
+      "new_value": "0.025628906250000003",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-11-25T01:35:55.485611"
+    },
+    {
+      "generation": 55,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.03145728000000001",
+      "new_value": "0.02516582400000001",
+      "reasoning": "High fitness achieved. Reducing mutation to refine solutions.",
+      "timestamp": "2025-11-25T01:35:55.485628"
+    },
+    {
+      "generation": 60,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.025628906250000003",
+      "new_value": "0.03844335937500001",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-11-25T01:35:58.781553"
+    },
+    {
+      "generation": 60,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.02516582400000001",
+      "new_value": "0.02013265920000001",
+      "reasoning": "High fitness achieved. Reducing mutation to refine solutions.",
+      "timestamp": "2025-11-25T01:35:58.781573"
+    },
+    {
+      "generation": 65,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.03844335937500001",
+      "new_value": "0.057665039062500006",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-11-25T01:36:02.319932"
+    },
+    {
+      "generation": 65,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.02013265920000001",
+      "new_value": "0.01610612736000001",
+      "reasoning": "High fitness achieved. Reducing mutation to refine solutions.",
+      "timestamp": "2025-11-25T01:36:02.319952"
     }
   ],
-  "total_changes": 214
+  "total_changes": 234
 }

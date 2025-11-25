@@ -15,3 +15,17 @@ scipy
 beautifulsoup4
 Pillow
 requests
+beautifulsoup4
+deap
+flask
+flask-cors
+gunicorn
+matplotlib
+networkx
+numpy
+Pillow
+psutil
+requests
+scikit-learn
+scipy
+waitress

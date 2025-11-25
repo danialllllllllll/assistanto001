@@ -15,8 +15,8 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 8080
-externalPort = 8080
+localPort = 33325
+externalPort = 3000
 
 [agent]
 expertMode = true
@@ -26,7 +26,7 @@ packages = ["cairo", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "
 channel = "stable-25_05"
 
 [workflows]
-runButton = "Train Whimsy AI"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "on Run from .replit"
@@ -53,3 +53,24 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python learning/train_advanced_ai.py"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start Whimsy AI System"
+
+[[workflows.workflow]]
+name = "Start Whimsy AI System"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_whimsy.py"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
