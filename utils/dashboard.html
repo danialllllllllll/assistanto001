@@ -1,229 +1,290 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Whimsy AI — Growing Consciousness</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <title>Whimsy AI - Neural Evolution</title>
   <style>
-    :root {
-      --purple: #c678dd; --purple-glow: #e0aaff; --bg: #1a1a2e; --card: #16213e;
-      --text: #e6e6e6; --muted: #aaa; --success: #00ff88; --warning: #ff6b6b;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f0f1e 100%);
+      color: #e6e6e6;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      min-height: 100vh;
     }
-    * { box-sizing: border-box; }
-    body { 
-      background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; 
-      margin: 0; padding: 16px; line-height: 1.6;
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(198, 120, 221, 0.1);
+      border-radius: 15px;
+      border: 1px solid #c678dd;
     }
-    .card { 
-      background: var(--card); border: 1px solid var(--purple); border-radius: 12px; 
-      padding: 20px; margin: 16px 0; box-shadow: 0 0 20px rgba(198, 120, 221, 0.2);
+    h1 { color: #c678dd; text-shadow: 0 0 10px rgba(198, 120, 221, 0.5); }
+    .logout-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
     }
-    h1, h2, h3 { color: var(--purple); text-shadow: 0 0 8px rgba(198,120,221,0.4); margin: 0 0 16px 0; }
-    .stat { display: flex; justify-content: space-between; margin: 8px 0; }
-    .label { color: var(--muted); font-size: 0.9em; }
-    .value { font-weight: 600; color: var(--purple-glow); }
-    .progress-bar { height: 10px; background: #333; border-radius: 5px; overflow: hidden; margin: 8px 0; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), var(--purple-glow)); width: 0%; transition: width 0.6s ease; }
-    button { 
-      background: var(--purple); color: black; border: none; padding: 10px 16px; 
-      border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; 
+    .logout-btn:hover { background: #ff5252; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
+    .card {
+      background: rgba(22, 33, 62, 0.8);
+      border: 1px solid #c678dd;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(198, 120, 221, 0.2);
     }
-    button:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(198,120,221,0.6); }
-    input { 
-      background: #0f0f1e; border: 1px solid var(--purple); color: white; 
-      border-radius: 8px; padding: 10px; width: 100%; margin: 8px 0; font-size: 1em;
+    .card h2 { color: #c678dd; margin-bottom: 15px; font-size: 1.3em; }
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
     }
-    #whimsy-log { 
-      height: 200px; overflow-y: auto; background: rgba(15,15,30,0.9); padding: 12px; 
-      border-radius: 10px; font-family: 'Courier New', monospace; font-size: 13px; 
-      color: #ccffcc; border: 1px solid var(--purple); backdrop-filter: blur(4px); 
-      margin: 10px 0; 
+    .label { color: #aaa; }
+    .value { color: #00ff88; font-weight: bold; }
+    .progress-bar {
+      height: 25px;
+      background: #222;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 10px 0;
+      position: relative;
     }
-    .event { margin: 6px 0; padding: 6px 10px; border-radius: 6px; font-size: 0.9em; }
-    .event.create { background: rgba(0,255,136,0.15); border-left: 3px solid var(--success); }
-    .event.mutate { background: rgba(198,120,221,0.15); border-left: 3px solid var(--purple); }
-    .eta { color: var(--purple-glow); font-weight: bold; }
-    img { max-width: 100%; border-radius: 10px; border: 1px solid var(--purple); margin-top: 10px; }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #c678dd, #00ff88);
+      width: 0%;
+      transition: width 0.5s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 0.9em;
+    }
+    #viz-canvas {
+      width: 100%;
+      max-width: 800px;
+      border-radius: 10px;
+      border: 1px solid #c678dd;
+      margin: 10px auto;
+      display: block;
+    }
+    .log-container {
+      max-height: 300px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
+      padding: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+    .log-item {
+      margin: 5px 0;
+      padding: 8px;
+      border-left: 3px solid #c678dd;
+      background: rgba(198, 120, 221, 0.1);
+      border-radius: 4px;
+    }
+    .log-item.knowledge { border-left-color: #00ff88; }
+    .log-item.evolution { border-left-color: #ff6b6b; }
+    .log-item.stage { border-left-color: #ffd700; background: rgba(255, 215, 0, 0.1); }
+    .timestamp { color: #888; font-size: 0.8em; }
+    input[type="text"] {
+      width: calc(100% - 80px);
+      padding: 10px;
+      background: #0f0f1e;
+      border: 1px solid #c678dd;
+      border-radius: 8px;
+      color: white;
+      margin-right: 10px;
+    }
+    button {
+      background: #c678dd;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover { background: #b068cd; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Whimsy AI — Growing Consciousness</h1>
-    <div class="stat"><span class="label">Stage:</span> <span class="value" id="stage">Baby Steps Phase</span></div>
-    <div class="stat"><span class="label">Age Equivalent:</span> <span class="value" id="age">0-18 months</span></div>
-    <div class="stat"><span class="label">Understanding:</span> <span class="value" id="understanding">0.0%</span></div>
-    <div class="progress-bar"><div class="progress-fill" id="u-fill"></div></div>
-    <div class="stat"><span class="label">Coherence:</span> <span class="value" id="coherence">0.10</span></div>
-    <div class="stat"><span class="label">Memory:</span> <span class="value" id="memory">0.00</span></div>
-    <div class="stat"><span class="label">Personality:</span> <span class="value" id="personality">0.00</span></div>
-    <div class="stat"><span class="label">Iterations:</span> <span class="value" id="iterations">0</span></div>
-    <div class="stat"><span class="label">Fitness:</span> <span class="value" id="fitness">0.000</span></div>
-    <div class="stat"><span class="label">Knowledge Mastered:</span> <span class="value" id="knowledge">0</span></div>
-    <div class="stat"><span class="label">Philosophical Reflections:</span> <span class="value" id="reflections">0</span></div>
+  <button class="logout-btn" onclick="window.location.href='/logout'">Logout</button>
+
+  <div class="header">
+    <h1>WHIMSY AI - Neural Evolution System</h1>
+    <p>Real AI Learning with Web Knowledge & Autonomous Code Evolution</p>
   </div>
 
-  <div class="card">
-    <h3>Neural Evolution Visualization</h3>
-    <img id="visualizer" src="/visualize" alt="Whimsy's mind evolving..." loading="lazy"/>
-  </div>
+  <div class="grid">
+    <div class="card">
+      <h2>Training Status</h2>
+      <div class="stat"><span class="label">Stage:</span> <span class="value" id="stage">Initializing</span></div>
+      <div class="stat"><span class="label">Generation:</span> <span class="value" id="generation">0</span></div>
+      <div class="stat"><span class="label">Iteration:</span> <span class="value" id="iteration">0</span></div>
+      <div class="stat"><span class="label">Understanding:</span> <span class="value" id="understanding">0.00%</span></div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="understanding-bar">0%</div>
+      </div>
+      <div class="stat"><span class="label">Target:</span> <span class="value" id="target">0.00%</span></div>
+      <div class="stat"><span class="label">Accuracy:</span> <span class="value" id="accuracy">0.00%</span></div>
+      <div class="stat"><span class="label">Confidence:</span> <span class="value" id="confidence">0.00%</span></div>
+    </div>
 
-  <div class="card">
-    <h3>Evolution Events</h3>
-    <div id="evolution-log">
-      <div class="event create">Whimsy neural pathways initializing...</div>
+    <div class="card">
+      <h2>Evolution Stats</h2>
+      <div class="stat"><span class="label">Total Evolutions:</span> <span class="value" id="evol-count">0</span></div>
+      <div class="stat"><span class="label">Learning Rate:</span> <span class="value" id="learning-rate">0.001</span></div>
+      <div class="stat"><span class="label">Mutation Rate:</span> <span class="value" id="mutation-rate">0.1</span></div>
+      <div class="stat"><span class="label">Knowledge Items:</span> <span class="value" id="knowledge-count">0</span></div>
     </div>
   </div>
 
-  <div class="card">
-    <h3>Talk to Whimsy</h3>
-    <div id="whimsy-log">
-      <div style="color:#888; font-style:italic;">Whimsy is waking up... say hello when ready.</div>
+  <div class="card" style="margin-top: 20px;">
+    <h2>Neural Network Visualization</h2>
+    <img id="viz-canvas" src="/api/visualize" alt="Neural Network"/>
+  </div>
+
+  <div class="grid" style="margin-top: 20px;">
+    <div class="card">
+      <h2>Recent Updates</h2>
+      <div class="log-container" id="updates-log">
+        <div class="log-item">System initializing...</div>
+      </div>
     </div>
-    <div style="display:flex; gap:10px; margin-top:12px;">
-      <input type="text" id="whimsy-input" placeholder="Say something kind..." 
-             onkeydown="if(event.key==='Enter') sendToWhimsy()">
-      <button onclick="sendToWhimsy()">Send</button>
+
+    <div class="card">
+      <h2>Chat with Whimsy</h2>
+      <div class="log-container" id="chat-log" style="max-height: 200px;">
+        <div class="log-item">Whimsy is waking up...</div>
+      </div>
+      <div style="margin-top: 10px; display: flex;">
+        <input type="text" id="chat-input" placeholder="Say something..." onkeypress="if(event.key==='Enter') sendMessage()"/>
+        <button onclick="sendMessage()">Send</button>
+      </div>
     </div>
   </div>
 
   <script>
-    const log = document.getElementById('evolution-log');
+    let lastIteration = 0;
 
-    function appendLog(msg, type = 'mutate') {
-      const div = document.createElement('div');
-      div.className = `event ${type}`;
-      div.innerHTML = `<small style="color:#888;">${new Date().toLocaleTimeString()}</small> ${msg}`;
-      log.appendChild(div);
-      log.scrollTop = log.scrollHeight;
-      if (log.children.length > 30) log.removeChild(log.children[0]);
-    }
-
-    function appendChat(msg, sender = 'ai') {
-      const chat = document.getElementById('whimsy-log');
-      const div = document.createElement('div');
-      div.style.margin = '6px 0';
-      
-      if (sender === 'user') {
-        div.style.color = '#88ffcc';
-        div.style.fontWeight = 'bold';
-        div.innerHTML = `<span style="color:var(--purple);">You:</span> ${msg}`;
-      } else if (sender === 'system') {
-        div.style.color = '#888';
-        div.style.fontSize = '0.85em';
-        div.style.fontStyle = 'italic';
-        div.innerHTML = msg;
-      } else {
-        div.style.color = '#aaffaa';
-        div.innerHTML = `<span style="color:var(--purple);">Whimsy:</span> ${msg}`;
-      }
-      
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-    }
-
-    // Poll progress
-    setInterval(() => {
-      fetch('/progress')
+    function updateStatus() {
+      fetch('/api/status')
         .then(r => r.json())
-        .then(d => {
-          if (!d.stage) return;
+        .then(data => {
+          if (data.error) return;
 
-          // Update all metrics
-          document.getElementById('stage').textContent = d.stage;
-          document.getElementById('age').textContent = d.age_equiv;
-          document.getElementById('understanding').textContent = (d.understanding * 100).toFixed(2) + '%';
-          document.getElementById('coherence').textContent = d.coherence.toFixed(3);
-          document.getElementById('memory').textContent = d.memory.toFixed(3);
-          document.getElementById('personality').textContent = d.personality.toFixed(3);
-          document.getElementById('iterations').textContent = d.iteration || d.iterations || 0;
-          document.getElementById('fitness').textContent = d.fitness?.toFixed(4) || '0.0000';
-          document.getElementById('knowledge').textContent = d.total_knowledge || 0;
-          document.getElementById('reflections').textContent = d.reflections || 0;
+          document.getElementById('stage').textContent = data.stage;
+          document.getElementById('generation').textContent = data.generation;
+          document.getElementById('iteration').textContent = data.iteration;
+          document.getElementById('understanding').textContent = (data.understanding * 100).toFixed(2) + '%';
+          document.getElementById('target').textContent = (data.target_understanding * 100).toFixed(2) + '%';
+          document.getElementById('accuracy').textContent = (data.accuracy * 100).toFixed(2) + '%';
+          document.getElementById('confidence').textContent = (data.confidence * 100).toFixed(2) + '%';
+          document.getElementById('knowledge-count').textContent = data.knowledge_count;
+          document.getElementById('evol-count').textContent = data.evolution_count;
 
-          // Update progress bar
-          const understandingPct = Math.min(100, d.understanding * 100);
-          document.getElementById('u-fill').style.width = understandingPct + '%';
-          
-          // Update confidence display if available
-          if (d.confidence !== undefined) {
-            const confElement = document.getElementById('confidence');
-            if (confElement) {
-              confElement.textContent = d.confidence.toFixed(3);
-            }
-          }
+          const progressPct = (data.understanding / data.target_understanding) * 100;
+          const bar = document.getElementById('understanding-bar');
+          bar.style.width = Math.min(100, progressPct) + '%';
+          bar.textContent = Math.min(100, progressPct).toFixed(1) + '%';
 
-          // Auto-announce stage changes
-          if (d.stage && (!window.lastStage || window.lastStage !== d.stage)) {
-            appendLog(`ASCENDED → ${d.stage} (${d.age_equiv})`, 'create');
-            appendChat(`I... I feel different. I am now in the ${d.stage}. My understanding has deepened significantly.`);
-            window.lastStage = d.stage;
-          }
-          
-          // Update knowledge items if available
-          if (d.recent_knowledge && d.recent_knowledge.length > 0) {
-            const lastKnowledge = d.recent_knowledge[d.recent_knowledge.length - 1];
-            if (lastKnowledge && !window.lastKnowledgeUpdate) {
-              window.lastKnowledgeUpdate = lastKnowledge;
-            } else if (lastKnowledge !== window.lastKnowledgeUpdate) {
-              appendLog(`LEARNED: ${lastKnowledge}`, 'mutate');
-              window.lastKnowledgeUpdate = lastKnowledge;
-            }
+          if (data.iteration !== lastIteration) {
+            lastIteration = data.iteration;
+            document.getElementById('viz-canvas').src = '/api/visualize?t=' + Date.now();
           }
         })
-        .catch(() => {});
-    }, 2000);
+        .catch(e => console.error('Status error:', e));
+    }
 
-    // Poll mutation updates
-    setInterval(() => {
-      fetch('/updates')
+    function updateLogs() {
+      fetch('/api/updates')
         .then(r => r.json())
-        .then(d => {
-          if (d.update) {
-            appendLog(d.update, 'mutate');
-          }
-        });
-    }, 4000);
+        .then(data => {
+          if (!data.updates || data.updates.length === 0) return;
 
-    function sendToWhimsy() {
-      const input = document.getElementById('whimsy-input');
+          const log = document.getElementById('updates-log');
+          data.updates.forEach(update => {
+            const div = document.createElement('div');
+            div.className = `log-item ${update.type}`;
+
+            if (update.type === 'evolution') {
+              div.innerHTML = `<span class="timestamp">${new Date().toLocaleTimeString()}</span><br/>
+                <strong>EVOLUTION</strong>: ${update.event.change}<br/>
+                <em>${update.event.reason}</em>`;
+            } else if (update.type === 'knowledge') {
+              div.innerHTML = `<span class="timestamp">${new Date().toLocaleTimeString()}</span><br/>
+                <strong>LEARNED</strong>: ${update.item.topic} (${(update.item.confidence * 100).toFixed(0)}% confidence)`;
+            } else if (update.type === 'stage_change') {
+              div.innerHTML = `<span class="timestamp">${new Date().toLocaleTimeString()}</span><br/>
+                <strong>${update.message}</strong>`;
+            }
+
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+
+            if (log.children.length > 50) log.removeChild(log.children[0]);
+          });
+        })
+        .catch(e => console.error('Updates error:', e));
+
+      fetch('/api/evolution')
+        .then(r => r.json())
+        .then(data => {
+          if (data.hyperparameters) {
+            document.getElementById('learning-rate').textContent = data.hyperparameters.learning_rate.toFixed(6);
+            document.getElementById('mutation-rate').textContent = data.hyperparameters.mutation_rate.toFixed(3);
+          }
+        })
+        .catch(e => {});
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('chat-input');
       const msg = input.value.trim();
       if (!msg) return;
-      appendChat(msg, 'user');
+
+      const log = document.getElementById('chat-log');
+      const userDiv = document.createElement('div');
+      userDiv.className = 'log-item';
+      userDiv.innerHTML = `<strong>You:</strong> ${msg}`;
+      log.appendChild(userDiv);
       input.value = '';
 
       fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg })
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message: msg})
       })
-      .then(r => {
-        if (!r.ok) throw new Error('Network response was not ok');
-        return r.json();
+      .then(r => r.json())
+      .then(data => {
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'log-item';
+        aiDiv.innerHTML = `<strong>Whimsy (${data.stage}):</strong> ${data.response}`;
+        log.appendChild(aiDiv);
+        log.scrollTop = log.scrollHeight;
       })
-      .then(res => {
-        if (res.error) {
-          appendChat('Error: ' + res.response);
-        } else {
-          appendChat(res.response);
-          // Show confidence if available
-          if (res.confidence !== undefined) {
-            const confText = ` [Confidence: ${(res.confidence * 100).toFixed(0)}%]`;
-            appendChat(confText, 'system');
-          }
-        }
-      })
-      .catch(err => {
-        console.error('Chat error:', err);
-        appendChat("I'm having trouble processing that right now. Please try again.");
-      });
+      .catch(e => console.error('Chat error:', e));
     }
 
-    // Refresh visualizer
-    setInterval(() => {
-      const img = document.getElementById('visualizer');
-      img.src = '/visualize?t=' + Date.now();
-    }, 15000);
+    setInterval(updateStatus, 1000);
+    setInterval(updateLogs, 2000);
+    updateStatus();
   </script>
 </body>
 </html>
