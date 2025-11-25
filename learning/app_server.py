@@ -206,27 +206,61 @@ def chat():
         return jsonify({"response": "Please log in first"})
 
     data = request.json
-    message = data.get("message", "")
+    message = data.get("message", "").strip()
 
     if not trainer:
         return jsonify({"response": "System initializing..."})
 
+    # Check if user is asking to learn a topic
+    learn_keywords = ["learn", "teach", "study", "understand", "research"]
+    is_learning_request = any(kw in message.lower() for kw in learn_keywords)
+    
+    if is_learning_request:
+        # Extract topic from message (simple approach: remove learn keywords)
+        topic = message
+        for kw in learn_keywords:
+            topic = topic.lower().replace(kw, "").strip()
+        
+        if topic:
+            # Use stage-specific algorithm to learn the topic
+            learning_result = trainer.learn_topic(topic)
+            
+            stage = trainer.get_current_stage()['name']
+            understanding_pct = int(learning_result['understanding'] * 100)
+            
+            response = f"🧠 Learning about '{topic}' at {stage} level...\n"
+            response += f"📊 Understanding: {understanding_pct}%\n"
+            response += f"🎯 Target: 99%\n"
+            
+            if learning_result['stage_advanced']:
+                response += f"🎉 ADVANCED TO: {learning_result['stage']}!"
+            
+            return jsonify({
+                "response": response,
+                "stage": stage,
+                "understanding": learning_result['understanding'],
+                "topic": topic,
+                "is_learning": True,
+                "knowledge_items": learning_result['knowledge_items']
+            })
+    
+    # Non-learning conversation
     stage = trainer.get_current_stage()['name']
-
     responses = {
-        "Baby Steps": "goo... ba ba...",
-        "Toddler": "me learning!",
-        "Pre-K": "I think I understand a little...",
-        "Elementary": "I'm learning to understand deeply.",
-        "Teen": "I'm developing my own understanding of things.",
-        "Scholar": "Let me analyze that carefully before responding.",
-        "Thinker": "I contemplate deeply on such matters."
+        "Baby Steps": f"(Baby Steps) goo... ba ba...",
+        "Toddler": f"(Toddler) me learning! Tell me what to learn!",
+        "Pre-K": f"(Pre-K) I'm thinking... Tell me something to learn about!",
+        "Elementary": f"(Elementary) I'm curious! What should I learn?",
+        "Teen": f"(Teen) I'd like to expand my knowledge. What topic interests you?",
+        "Scholar": f"(Scholar) I'm ready for deeper learning. What shall we study?",
+        "Thinker": f"(Thinker) What profound subject shall we explore together?"
     }
 
     return jsonify({
-        "response": responses.get(stage, "..."),
+        "response": responses.get(stage, "Tell me what to learn!"),
         "stage": stage,
-        "understanding": trainer.understanding
+        "understanding": trainer.understanding,
+        "is_learning": False
     })
 
 def start_server():

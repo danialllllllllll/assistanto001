@@ -15,6 +15,7 @@ from learning.self_evolver import SelfEvolver
 from learning.code_rewriter import CodeRewriter
 from learning.realtime_visualizer import RealtimeVisualizer
 from learning.genetic_learning import GeneticLearning
+from learning.stage_algorithms import get_algorithm_for_stage
 
 class WhimsyTrainer:
     def __init__(self):
@@ -55,6 +56,8 @@ class WhimsyTrainer:
         self.evolution_events = []
         self.code_rewrites = []
         self.genetic_patterns = []
+        self.current_learning_topic = None
+        self.current_learning_understanding = 0.0
         
         self.realtime_viz.initialize_from_network(self.network)
 
@@ -64,7 +67,43 @@ class WhimsyTrainer:
     def get_current_stage(self):
         return self.stages[min(self.stage, len(self.stages) - 1)]
 
+    def learn_topic(self, topic: str) -> dict:
+        """Learn a topic through chat interface until 99% understanding"""
+        stage_algo = get_algorithm_for_stage(self.stage)
+        self.current_learning_topic = topic
+        
+        # Get knowledge from web sources appropriate for stage
+        min_sources = stage_algo.min_sources
+        knowledge_items = self.web_learner.learn_topic(topic, min_sources)
+        
+        # Calculate understanding based on sources and consistency
+        if knowledge_items:
+            confidences = [item.get('confidence', 0) for item in knowledge_items]
+            consistency = np.std(confidences) if len(confidences) > 1 else 0
+            
+            # Understanding = average confidence - consistency penalty
+            self.current_learning_understanding = float(np.mean(confidences) * (1 - min(consistency, 0.3)))
+            self.understanding = self.current_learning_understanding
+            
+            self.knowledge.extend(knowledge_items)
+        else:
+            self.understanding = 0.0
+            
+        # Check for stage advancement
+        if self.understanding >= 0.99:
+            self.advance_stage()
+            
+        return {
+            "topic": topic,
+            "understanding": self.understanding,
+            "target": 0.99,
+            "stage": self.get_current_stage()['name'],
+            "knowledge_items": len(knowledge_items),
+            "stage_advanced": self.understanding >= 0.99
+        }
+
     def train_iteration(self):
+        """Background training - only updates network architecture, no web learning"""
         stage_info = self.get_current_stage()
         self.network.set_stage_activation(stage_info['nodes'])
 
@@ -74,9 +113,7 @@ class WhimsyTrainer:
         y_batch = self.y_train[indices]
 
         self.network.forward(X_batch, training=True)
-        
         self.realtime_viz.update_from_forward_pass(self.network, self.network.activations)
-        
         self.network.backward(X_batch, y_batch, learning_rate=0.001)
 
         predictions = self.network.predict(self.X_train)
@@ -85,22 +122,12 @@ class WhimsyTrainer:
         correct = predictions == self.y_train
         self.accuracy = float(np.mean(correct))
         self.confidence = float(np.mean(confidences[correct]) if np.any(correct) else 0)
-        self.understanding = (self.accuracy * 0.6 + self.confidence * 0.4)
 
         self.iteration += 1
 
-        if self.iteration % 5 == 0:
-            self.generation += 1
-            self.autonomous_evolve()
-
-        if self.iteration % 20 == 0:
-            self.web_learn()
-
         if self.iteration % 10 == 0:
+            self.generation += 1
             self.update_visualization()
-
-        if self.iteration % 30 == 0 and self.stage >= 2:
-            self.genetic_evolution()
 
         if self.iteration % 50 == 0:
             self.rewrite_own_code()
