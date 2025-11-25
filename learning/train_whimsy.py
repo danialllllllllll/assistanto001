@@ -12,6 +12,9 @@ from learning.web_learning import AdvancedWebLearning
 from learning.node_visualizer import NodeVisualizer
 from learning.learning_node_manager import LearningNodeManager
 from learning.self_evolver import SelfEvolver
+from learning.code_rewriter import CodeRewriter
+from learning.realtime_visualizer import RealtimeVisualizer
+from learning.genetic_learning import GeneticLearning
 
 class WhimsyTrainer:
     def __init__(self):
@@ -43,10 +46,17 @@ class WhimsyTrainer:
         self.web_learner = AdvancedWebLearning()
         self.node_manager = LearningNodeManager(initial_nodes=30)
         self.visualizer = NodeVisualizer()
+        self.realtime_viz = RealtimeVisualizer()
         self.evolver = SelfEvolver()
+        self.code_rewriter = CodeRewriter()
+        self.genetic_learner = GeneticLearning(population_size=15)
 
         self.knowledge = []
         self.evolution_events = []
+        self.code_rewrites = []
+        self.genetic_patterns = []
+        
+        self.realtime_viz.initialize_from_network(self.network)
 
         self.X_train = np.random.randn(200, 102)
         self.y_train = np.random.randint(0, 4, 200)
@@ -58,12 +68,15 @@ class WhimsyTrainer:
         stage_info = self.get_current_stage()
         self.network.set_stage_activation(stage_info['nodes'])
 
-        batch_size = 32
+        batch_size = 64
         indices = np.random.choice(len(self.X_train), batch_size, replace=False)
         X_batch = self.X_train[indices]
         y_batch = self.y_train[indices]
 
         self.network.forward(X_batch, training=True)
+        
+        self.realtime_viz.update_from_forward_pass(self.network, self.network.activations)
+        
         self.network.backward(X_batch, y_batch, learning_rate=0.001)
 
         predictions = self.network.predict(self.X_train)
@@ -85,6 +98,12 @@ class WhimsyTrainer:
 
         if self.iteration % 10 == 0:
             self.update_visualization()
+
+        if self.iteration % 30 == 0 and self.stage >= 2:
+            self.genetic_evolution()
+
+        if self.iteration % 50 == 0:
+            self.rewrite_own_code()
 
         if self.understanding >= stage_info['target_understanding'] and self.stage < len(self.stages) - 1:
             self.stage += 1
@@ -140,6 +159,84 @@ class WhimsyTrainer:
         except Exception as e:
             print(f"Web learning error: {e}")
 
+    def genetic_evolution(self):
+        """Evolve learning strategies using genetic algorithms"""
+        try:
+            evolution_result = self.genetic_learner.evolve_generation(
+                self.network,
+                self.X_train,
+                self.y_train
+            )
+            
+            genetic_event = {
+                "iteration": self.iteration,
+                "generation": evolution_result['generation'],
+                "best_fitness": evolution_result['best_fitness'],
+                "avg_fitness": evolution_result['avg_fitness'],
+                "diversity": evolution_result['population_diversity'],
+                "timestamp": datetime.now().isoformat()
+            }
+            self.genetic_patterns.append(genetic_event)
+            self.update_queue.put({"type": "genetic", "event": genetic_event})
+            
+            print(f"[GENETIC] Gen {evolution_result['generation']}: "
+                  f"Best={evolution_result['best_fitness']:.4f}, "
+                  f"Avg={evolution_result['avg_fitness']:.4f}, "
+                  f"Diversity={evolution_result['population_diversity']:.4f}")
+            
+            patterns = self.genetic_learner.get_adaptive_patterns_summary()
+            if patterns['recent_patterns']:
+                for pattern in patterns['recent_patterns'][-2:]:
+                    self.realtime_viz.track_genetic_pattern(
+                        pattern['type'],
+                        pattern['description'],
+                        pattern['effectiveness']
+                    )
+                    print(f"[PATTERN] {pattern['type']}: {pattern['description']}")
+        except Exception as e:
+            print(f"Genetic evolution error: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def rewrite_own_code(self):
+        """Rewrite own Python code every 50 iterations for autonomous optimization"""
+        if self.stage < 2:
+            return
+        
+        try:
+            metrics = {
+                'accuracy': self.accuracy,
+                'understanding': self.understanding,
+                'confidence': self.confidence,
+                'iteration': self.iteration
+            }
+            
+            analysis = self.code_rewriter.analyze_performance(metrics)
+            
+            if analysis['needs_optimization']:
+                print(f"\n[CODE EVOLUTION] Performance trend: {analysis['performance_trend']}")
+                modifications = self.code_rewriter.generate_code_modifications(analysis, self.iteration)
+                
+                if modifications:
+                    results = self.code_rewriter.apply_modifications(modifications)
+                    
+                    for mod_dict in results['applied']:
+                        rewrite_event = {
+                            "iteration": self.iteration,
+                            "type": "code_rewrite",
+                            "file": mod_dict['file_path'],
+                            "description": mod_dict['description'],
+                            "timestamp": datetime.now().isoformat()
+                        }
+                        self.code_rewrites.append(rewrite_event)
+                        self.update_queue.put({"type": "code_rewrite", "event": rewrite_event})
+                    
+                    print(f"[CODE REWRITE] Applied {len(results['applied'])} modifications, {len(results['failed'])} failed")
+        except Exception as e:
+            print(f"Code rewrite error: {e}")
+            import traceback
+            traceback.print_exc()
+
     def update_visualization(self):
         nodes_data = []
         for node_id, node in self.node_manager.nodes.items():
@@ -168,6 +265,8 @@ class WhimsyTrainer:
             os.makedirs('data', exist_ok=True)
             with open('data/network_topology.json', 'w') as f:
                 json.dump(topology, f)
+            
+            self.realtime_viz.save_visualization_state('data/realtime_viz.json')
         except Exception as e:
             print(f"Viz save error: {e}")
 

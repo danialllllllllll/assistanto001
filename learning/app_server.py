@@ -157,6 +157,49 @@ def visualize_network():
     buf.seek(0)
     return send_file(buf, mimetype="image/png")
 
+@app.route("/api/realtime_viz")
+def get_realtime_viz():
+    if not session.get("logged_in"):
+        return jsonify({"error": "Not logged in"}), 401
+
+    if not trainer:
+        return jsonify({"error": "Trainer not initialized"}), 503
+
+    try:
+        viz_data = trainer.realtime_viz.get_realtime_visualization_data()
+        return jsonify(viz_data)
+    except:
+        return jsonify({"error": "Visualization data not available"}), 500
+
+@app.route("/api/genetic_patterns")
+def get_genetic_patterns():
+    if not session.get("logged_in"):
+        return jsonify({"patterns": []})
+
+    if not trainer:
+        return jsonify({"patterns": []})
+
+    return jsonify({
+        "patterns": trainer.genetic_patterns[-20:],
+        "total": len(trainer.genetic_patterns),
+        "best_strategy": trainer.genetic_learner.get_best_strategy(),
+        "adaptive_patterns": trainer.genetic_learner.get_adaptive_patterns_summary()
+    })
+
+@app.route("/api/code_rewrites")
+def get_code_rewrites():
+    if not session.get("logged_in"):
+        return jsonify({"rewrites": []})
+
+    if not trainer:
+        return jsonify({"rewrites": []})
+
+    return jsonify({
+        "rewrites": trainer.code_rewrites[-20:],
+        "total": len(trainer.code_rewrites),
+        "summary": trainer.code_rewriter.get_rewrite_summary() if trainer.code_rewriter else {}
+    })
+
 @app.route("/api/chat", methods=["POST"])
 def chat():
     if not session.get("logged_in"):
