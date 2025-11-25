@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - Whimsy AI</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f0f1e 100%);
+      color: #e6e6e6;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .login-card {
+      background: rgba(22, 33, 62, 0.9);
+      border: 2px solid #c678dd;
+      border-radius: 15px;
+      padding: 40px;
+      box-shadow: 0 0 30px rgba(198, 120, 221, 0.3);
+      max-width: 400px;
+      width: 100%;
+    }
+    h1 {
+      color: #c678dd;
+      text-align: center;
+      margin-bottom: 30px;
+      text-shadow: 0 0 10px rgba(198, 120, 221, 0.5);
+    }
+    .error {
+      background: rgba(255, 107, 107, 0.2);
+      border: 1px solid #ff6b6b;
+      color: #ff6b6b;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-bottom: 10px;
+      color: #aaa;
+    }
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      background: #0f0f1e;
+      border: 1px solid #c678dd;
+      border-radius: 8px;
+      color: white;
+      font-size: 1em;
+      margin-bottom: 20px;
+    }
+    input[type="password"]:focus {
+      outline: none;
+      border-color: #00ff88;
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+    }
+    button {
+      width: 100%;
+      background: #c678dd;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    button:hover {
+      background: #00ff88;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
+    }
+    .hint {
+      text-align: center;
+      margin-top: 20px;
+      color: #888;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <h1>WHIMSY AI</h1>
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+    <form method="POST">
+      <label for="password">Enter Access Code</label>
+      <input type="password" id="password" name="password" autofocus required placeholder="Enter password"/>
+      <button type="submit">ACCESS SYSTEM</button>
+    </form>
+    <div class="hint">Hint: OVER//RIDE</div>
+  </div>
+</body>
+</html>
