@@ -74,9 +74,20 @@ class WhimsyTrainer:
         
         print(f"\n[LEARNING] {self.get_current_stage()['name']} stage learning: {topic}")
         
-        # Get knowledge from web sources appropriate for stage
-        min_sources = stage_algo.min_sources
-        knowledge_items = self.web_learner.learn_topic(topic, min_sources)
+        # Get knowledge from web sources using search_and_learn
+        learned_data = self.web_learner.search_and_learn(topic, depth=stage_algo.min_sources)
+        
+        # Convert learned_data to knowledge_items format for stage algorithm
+        knowledge_items = []
+        if learned_data and learned_data.get('processed_knowledge'):
+            for source, data in learned_data['processed_knowledge'].items():
+                knowledge_items.append({
+                    'source': source,
+                    'content': data,
+                    'confidence': data.get('quality_score', 0.5) if isinstance(data, dict) else 0.5,
+                    'source_type': source,
+                    'sources': learned_data.get('sources', [])
+                })
         
         # Process knowledge through stage-specific algorithm
         if knowledge_items:
@@ -92,13 +103,15 @@ class WhimsyTrainer:
                 "method": result.get('method', ''),
                 "insights": result.get('insights', []),
                 "timestamp": datetime.now().isoformat(),
-                "raw_items": knowledge_items
+                "raw_items": knowledge_items,
+                "learned_data": learned_data
             }
             self.knowledge.append(knowledge_entry)
             
             # Log learning process
             print(f"[LEARNING] Understanding: {self.understanding*100:.1f}% (target: 99%)")
             print(f"[LEARNING] Method: {result.get('method', 'N/A')}")
+            print(f"[LEARNING] Sources: {', '.join(learned_data.get('sources', []))}")
             if result.get('insights'):
                 print(f"[LEARNING] Insights: {result['insights'][0]}")
         else:
@@ -119,10 +132,11 @@ class WhimsyTrainer:
             "understanding": self.understanding,
             "target": 0.99,
             "stage": self.get_current_stage()['name'],
-            "knowledge_items": len(knowledge_items) if knowledge_items else 0,
+            "knowledge_items": len(knowledge_items),
             "stage_advanced": stage_advanced,
-            "method": stage_algo.process_knowledge(knowledge_items).get('method', '') if knowledge_items else '',
-            "learning_complete": self.understanding >= 0.99
+            "method": result.get('method', '') if knowledge_items else '',
+            "learning_complete": self.understanding >= 0.99,
+            "sources": learned_data.get('sources', []) if learned_data else []
         }
     
     def advance_stage(self):

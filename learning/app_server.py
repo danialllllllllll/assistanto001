@@ -231,7 +231,14 @@ def chat():
             response = f"🧠 Learning '{topic}' using {stage} stage algorithm...\n\n"
             response += f"📚 Method: {learning_result.get('method', 'N/A')}\n"
             response += f"📊 Understanding: {understanding_pct}% / 99%\n"
-            response += f"🔍 Sources consulted: {learning_result.get('knowledge_items', 0)}\n\n"
+            response += f"🔍 Knowledge items: {learning_result.get('knowledge_items', 0)}\n"
+            
+            # Show which sources were actually consulted
+            sources = learning_result.get('sources', [])
+            if sources:
+                response += f"🌐 Web sources: {', '.join(sources)}\n"
+            
+            response += "\n"
             
             if learning_result.get('learning_complete'):
                 response += f"✅ MASTERED! (99% understanding achieved)\n"
