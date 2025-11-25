@@ -228,12 +228,18 @@ def chat():
             stage = trainer.get_current_stage()['name']
             understanding_pct = int(learning_result['understanding'] * 100)
             
-            response = f"🧠 Learning about '{topic}' at {stage} level...\n"
-            response += f"📊 Understanding: {understanding_pct}%\n"
-            response += f"🎯 Target: 99%\n"
+            response = f"🧠 Learning '{topic}' using {stage} stage algorithm...\n\n"
+            response += f"📚 Method: {learning_result.get('method', 'N/A')}\n"
+            response += f"📊 Understanding: {understanding_pct}% / 99%\n"
+            response += f"🔍 Sources consulted: {learning_result.get('knowledge_items', 0)}\n\n"
+            
+            if learning_result.get('learning_complete'):
+                response += f"✅ MASTERED! (99% understanding achieved)\n"
+            else:
+                response += f"⏳ Continue learning to reach 99% mastery\n"
             
             if learning_result['stage_advanced']:
-                response += f"🎉 ADVANCED TO: {learning_result['stage']}!"
+                response += f"\n🎉 STAGE ADVANCEMENT → {learning_result['stage']}!"
             
             return jsonify({
                 "response": response,
@@ -241,11 +247,14 @@ def chat():
                 "understanding": learning_result['understanding'],
                 "topic": topic,
                 "is_learning": True,
-                "knowledge_items": learning_result['knowledge_items']
+                "knowledge_items": learning_result['knowledge_items'],
+                "learning_complete": learning_result.get('learning_complete', False)
             })
     
     # Non-learning conversation
     stage = trainer.get_current_stage()['name']
+    response = f"I'm at {stage} stage. Tell me to 'learn [topic]' to begin researching a subject until I reach 99% understanding!"
+    
     responses = {
         "Baby Steps": f"(Baby Steps) goo... ba ba...",
         "Toddler": f"(Toddler) me learning! Tell me what to learn!",

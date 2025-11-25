@@ -72,38 +72,71 @@ class WhimsyTrainer:
         stage_algo = get_algorithm_for_stage(self.stage)
         self.current_learning_topic = topic
         
+        print(f"\n[LEARNING] {self.get_current_stage()['name']} stage learning: {topic}")
+        
         # Get knowledge from web sources appropriate for stage
         min_sources = stage_algo.min_sources
         knowledge_items = self.web_learner.learn_topic(topic, min_sources)
         
-        # Calculate understanding based on sources and consistency
+        # Process knowledge through stage-specific algorithm
         if knowledge_items:
-            confidences = [item.get('confidence', 0) for item in knowledge_items]
-            consistency = np.std(confidences) if len(confidences) > 1 else 0
+            result = stage_algo.process_knowledge(knowledge_items)
+            self.understanding = result['understanding']
+            self.current_learning_understanding = self.understanding
             
-            # Understanding = average confidence - consistency penalty
-            self.current_learning_understanding = float(np.mean(confidences) * (1 - min(consistency, 0.3)))
-            self.understanding = self.current_learning_understanding
+            # Store processed knowledge
+            knowledge_entry = {
+                "topic": topic,
+                "stage": self.get_current_stage()['name'],
+                "understanding": self.understanding,
+                "method": result.get('method', ''),
+                "insights": result.get('insights', []),
+                "timestamp": datetime.now().isoformat(),
+                "raw_items": knowledge_items
+            }
+            self.knowledge.append(knowledge_entry)
             
-            self.knowledge.extend(knowledge_items)
+            # Log learning process
+            print(f"[LEARNING] Understanding: {self.understanding*100:.1f}% (target: 99%)")
+            print(f"[LEARNING] Method: {result.get('method', 'N/A')}")
+            if result.get('insights'):
+                print(f"[LEARNING] Insights: {result['insights'][0]}")
         else:
             self.understanding = 0.0
+            print(f"[LEARNING] Failed to acquire knowledge about {topic}")
             
         # Check for stage advancement
+        stage_advanced = False
         if self.understanding >= 0.99:
+            old_stage = self.get_current_stage()['name']
             self.advance_stage()
+            new_stage = self.get_current_stage()['name']
+            stage_advanced = True
+            print(f"\n🎉 STAGE ADVANCEMENT: {old_stage} → {new_stage}\n")
             
         return {
             "topic": topic,
             "understanding": self.understanding,
             "target": 0.99,
             "stage": self.get_current_stage()['name'],
-            "knowledge_items": len(knowledge_items),
-            "stage_advanced": self.understanding >= 0.99
+            "knowledge_items": len(knowledge_items) if knowledge_items else 0,
+            "stage_advanced": stage_advanced,
+            "method": stage_algo.process_knowledge(knowledge_items).get('method', '') if knowledge_items else '',
+            "learning_complete": self.understanding >= 0.99
         }
+    
+    def advance_stage(self):
+        """Advance to next developmental stage"""
+        if self.stage < len(self.stages) - 1:
+            self.stage += 1
+            # Reset understanding for new stage
+            self.understanding = 0.0
+            self.current_learning_understanding = 0.0
+            return True
+        return False
 
     def train_iteration(self):
-        """Background training - only updates network architecture, no web learning"""
+        """Background training - only updates network architecture, NOT understanding/learning"""
         stage_info = self.get_current_stage()
         self.network.set_stage_activation(stage_info['nodes'])
 
@@ -131,12 +164,8 @@ class WhimsyTrainer:
 
         if self.iteration % 50 == 0:
             self.rewrite_own_code()
-
-        if self.understanding >= stage_info['target_understanding'] and self.stage < len(self.stages) - 1:
-            self.stage += 1
-            msg = f"ADVANCED TO {self.stages[self.stage]['name']}"
-            self.update_queue.put({"type": "stage_change", "message": msg})
-            print(f"\n{msg}\n")
+            
+        # NOTE: Stage advancement now ONLY happens through learn_topic() reaching 99% understanding
 
     def autonomous_evolve(self):
         prev_fitness = self.evolver.fitness_history[-1] if self.evolver.fitness_history else 0
@@ -163,28 +192,8 @@ class WhimsyTrainer:
                 print(f"[EVOLUTION] {sugg.target}: {sugg.old_value} -> {sugg.new_value}")
 
     def web_learn(self):
-        if self.stage < 3:
-            return
-
-        topics = ['neural networks', 'machine learning', 'artificial intelligence',
-                  'deep learning', 'cognitive science', 'philosophy of mind']
-        topic = random.choice(topics)
-
-        try:
-            learned = self.web_learner.search_and_learn(topic)
-            if learned and learned.get('confidence', 0) > 0.5:
-                knowledge_item = {
-                    "topic": topic,
-                    "stage": self.get_current_stage()['name'],
-                    "confidence": learned['confidence'],
-                    "sources": len(learned['sources']),
-                    "timestamp": datetime.now().isoformat()
-                }
-                self.knowledge.append(knowledge_item)
-                self.update_queue.put({"type": "knowledge", "item": knowledge_item})
-                print(f"[WEB LEARN] {topic}: {learned['confidence']:.2f} confidence from {len(learned['sources'])} sources")
-        except Exception as e:
-            print(f"Web learning error: {e}")
+        """Disabled - learning now happens only through chat interface"""
+        pass
 
     def genetic_evolution(self):
         """Evolve learning strategies using genetic algorithms"""
