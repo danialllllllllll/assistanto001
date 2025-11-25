@@ -15,14 +15,14 @@ import hashlib
 
 class CodeModification:
     """Represents a single code modification"""
-    def __init__(self, file_path: str, change_type: str, description: str, old_code: str, new_code: str):
+    def __init__(self, file_path: str, change_type: str, description: str, old_code: str, new_code: str, timestamp: str = None, hash: str = None):
         self.file_path = file_path
         self.change_type = change_type  # 'optimization', 'architecture', 'algorithm'
         self.description = description
         self.old_code = old_code
         self.new_code = new_code
-        self.timestamp = datetime.now().isoformat()
-        self.hash = hashlib.md5((old_code + new_code).encode()).hexdigest()[:8]
+        self.timestamp = timestamp if timestamp else datetime.now().isoformat()
+        self.hash = hash if hash else hashlib.md5((old_code + new_code).encode()).hexdigest()[:8]
     
     def to_dict(self):
         return {
