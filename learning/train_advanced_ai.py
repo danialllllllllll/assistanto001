@@ -53,12 +53,12 @@ WEB_PASSWORD = "OVER//RIDE"
 # === 7 Stages ===
 STAGES = [
     {"name": "Baby Steps Phase",    "age": "0-18 months",  "min_iter": 60},
-    {"name": "Toddler Phase",       "age": "18m-3y",       "min_iter": 80},
-    {"name": "Pre-K Phase",         "age": "3-5 years",    "min_iter": 100},
-    {"name": "Elementary Phase",    "age": "5-14 years",   "min_iter": 150},
-    {"name": "Teen Phase",          "age": "14-18 years",  "min_iter": 200},
-    {"name": "Scholar Phase",       "age": "18-22 years",  "min_iter": 250},
-    {"name": "Thinker Phase",       "age": "22+ years",    "min_iter": 333},
+    {"name": "Toddler Phase",       "age": "18m-3y",       "min_iter": 800},
+    {"name": "Pre-K Phase",         "age": "3-5 years",    "min_iter": 1000},
+    {"name": "Elementary Phase",    "age": "5-14 years",   "min_iter": 1500},
+    {"name": "Teen Phase",          "age": "14-18 years",  "min_iter": 2000},
+    {"name": "Scholar Phase",       "age": "18-22 years",  "min_iter": 2500},
+    {"name": "Thinker Phase",       "age": "22+ years",    "min_iter": 3330},
 ]
 
 class WhimsyAI:
