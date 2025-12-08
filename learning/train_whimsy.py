@@ -89,13 +89,13 @@ class WhimsyTrainer:
                     'sources': learned_data.get('sources', [])
                 })
         
-        # Process knowledge through stage-specific algorithm
+        result = {'understanding': 0.0, 'method': '', 'insights': []}
+        
         if knowledge_items:
             result = stage_algo.process_knowledge(knowledge_items)
             self.understanding = result['understanding']
             self.current_learning_understanding = self.understanding
             
-            # Store processed knowledge
             knowledge_entry = {
                 "topic": topic,
                 "stage": self.get_current_stage()['name'],
@@ -108,7 +108,6 @@ class WhimsyTrainer:
             }
             self.knowledge.append(knowledge_entry)
             
-            # Log learning process
             print(f"[LEARNING] Understanding: {self.understanding*100:.1f}% (target: 99%)")
             print(f"[LEARNING] Method: {result.get('method', 'N/A')}")
             print(f"[LEARNING] Sources: {', '.join(learned_data.get('sources', []))}")
@@ -118,7 +117,6 @@ class WhimsyTrainer:
             self.understanding = 0.0
             print(f"[LEARNING] Failed to acquire knowledge about {topic}")
             
-        # Check for stage advancement
         stage_advanced = False
         if self.understanding >= 0.99:
             old_stage = self.get_current_stage()['name']
@@ -126,6 +124,8 @@ class WhimsyTrainer:
             new_stage = self.get_current_stage()['name']
             stage_advanced = True
             print(f"\n🎉 STAGE ADVANCEMENT: {old_stage} → {new_stage}\n")
+        
+        method = result.get('method', '')
             
         return {
             "topic": topic,
@@ -134,7 +134,7 @@ class WhimsyTrainer:
             "stage": self.get_current_stage()['name'],
             "knowledge_items": len(knowledge_items),
             "stage_advanced": stage_advanced,
-            "method": result.get('method', '') if knowledge_items else '',
+            "method": method,
             "learning_complete": self.understanding >= 0.99,
             "sources": learned_data.get('sources', []) if learned_data else []
         }
@@ -342,6 +342,16 @@ class WhimsyTrainer:
         while self.running and self.stage < len(self.stages):
             try:
                 self.train_iteration()
+                
+                if self.iteration % 20 == 0:
+                    self.autonomous_evolve()
+                
+                if self.iteration % 30 == 0:
+                    self.genetic_evolution()
+                
+                if self.iteration % 100 == 0:
+                    self.continuous_web_learn()
+                
                 time.sleep(0.02)
             except Exception as e:
                 print(f"Training error: {e}")
@@ -349,5 +359,120 @@ class WhimsyTrainer:
                 traceback.print_exc()
 
         print("\nWHIMSY TRAINING COMPLETE - THINKER STAGE REACHED\n")
+    
+    def continuous_web_learn(self):
+        """Background continuous learning from web sources"""
+        topics = [
+            "machine learning", "neural networks", "artificial intelligence",
+            "natural language processing", "computer vision", "deep learning",
+            "reinforcement learning", "genetic algorithms", "optimization",
+            "knowledge representation", "reasoning", "pattern recognition"
+        ]
+        
+        try:
+            topic = random.choice(topics)
+            print(f"\n[AUTO-LEARN] Background learning: {topic}")
+            
+            learned_data = self.web_learner.search_and_learn(topic, depth=2)
+            
+            if learned_data and learned_data.get('sources'):
+                knowledge_vector = self._convert_knowledge_to_training(learned_data)
+                
+                if knowledge_vector is not None and len(knowledge_vector) > 0:
+                    num_samples = min(20, len(knowledge_vector))
+                    new_X = knowledge_vector[:num_samples]
+                    new_y = np.random.randint(0, 4, num_samples)
+                    
+                    self.X_train = np.vstack([self.X_train[-180:], new_X])
+                    self.y_train = np.concatenate([self.y_train[-180:], new_y])
+                    
+                    knowledge_entry = {
+                        "topic": topic,
+                        "type": "auto_background",
+                        "sources": learned_data.get('sources', []),
+                        "confidence": learned_data.get('confidence', 0),
+                        "timestamp": datetime.now().isoformat(),
+                        "samples_added": num_samples
+                    }
+                    self.knowledge.append(knowledge_entry)
+                    
+                    self.update_queue.put({
+                        "type": "knowledge", 
+                        "item": knowledge_entry
+                    })
+                    
+                    print(f"[AUTO-LEARN] Added {num_samples} training samples from {topic}")
+                    print(f"[AUTO-LEARN] Sources: {', '.join(learned_data.get('sources', []))}")
+        except Exception as e:
+            print(f"Auto-learn error: {e}")
+    
+    def _convert_knowledge_to_training(self, learned_data):
+        """Convert web knowledge to neural network training vectors"""
+        vectors = []
+        
+        try:
+            processed = learned_data.get('processed_knowledge', {})
+            
+            for source, data in processed.items():
+                if not data:
+                    continue
+                    
+                text_content = ""
+                
+                if source == 'wikipedia':
+                    text_content = data.get('extract', '') + ' ' + data.get('description', '')
+                elif source == 'arxiv':
+                    for paper in data.get('papers', [])[:3]:
+                        text_content += paper.get('summary', '') + ' '
+                elif source == 'github':
+                    for repo in data.get('repositories', [])[:3]:
+                        text_content += repo.get('description', '') + ' '
+                        text_content += ' '.join(repo.get('topics', [])) + ' '
+                elif source == 'stackoverflow':
+                    for q in data.get('questions', [])[:3]:
+                        text_content += q.get('title', '') + ' '
+                        text_content += ' '.join(q.get('tags', [])) + ' '
+                elif source == 'reddit':
+                    for post in data.get('posts', [])[:3]:
+                        text_content += post.get('title', '') + ' '
+                        text_content += post.get('selftext', '') + ' '
+                elif source == 'web':
+                    for result in data.get('results', [])[:3]:
+                        text_content += result.get('title', '') + ' '
+                        text_content += result.get('snippet', '') + ' '
+                
+                if text_content:
+                    vector = self._text_to_vector(text_content)
+                    if vector is not None:
+                        vectors.append(vector)
+                        
+        except Exception as e:
+            print(f"Knowledge conversion error: {e}")
+            
+        if vectors:
+            return np.array(vectors)
+        return None
+    
+    def _text_to_vector(self, text):
+        """Convert text to fixed-size feature vector for neural network input"""
+        text = text.lower()
+        words = text.split()
+        
+        if len(words) < 3:
+            return None
+        
+        word_hashes = np.zeros(102)
+        
+        for i, word in enumerate(words[:50]):
+            hash_val = hash(word) % 100
+            word_hashes[hash_val] += 1
+        
+        word_hashes[100] = len(words) / 100.0
+        word_hashes[101] = len(text) / 1000.0
+        
+        max_val = max(word_hashes.max(), 1)
+        word_hashes = word_hashes / max_val
+        
+        return word_hashes
 
 trainer = WhimsyTrainer()

@@ -98,9 +98,11 @@
       background: rgba(198, 120, 221, 0.1);
       border-radius: 4px;
     }
-    .log-item.knowledge { border-left-color: #00ff88; }
-    .log-item.evolution { border-left-color: #ff6b6b; }
+    .log-item.knowledge { border-left-color: #00ff88; background: rgba(0, 255, 136, 0.1); }
+    .log-item.evolution { border-left-color: #ff6b6b; background: rgba(255, 107, 107, 0.1); }
     .log-item.stage { border-left-color: #ffd700; background: rgba(255, 215, 0, 0.1); }
+    .log-item.genetic { border-left-color: #9b59b6; background: rgba(155, 89, 182, 0.1); }
+    .log-item.code_rewrite { border-left-color: #3498db; background: rgba(52, 152, 219, 0.1); }
     .timestamp { color: #888; font-size: 0.8em; }
     input[type="text"] {
       width: calc(100% - 80px);
@@ -228,11 +230,20 @@
                 <strong>EVOLUTION</strong>: ${update.event.change}<br/>
                 <em>${update.event.reason}</em>`;
             } else if (update.type === 'knowledge') {
+              const sources = update.item.sources ? update.item.sources.join(', ') : 'chat';
+              const confidence = update.item.confidence || 0;
               div.innerHTML = `<span class="timestamp">${new Date().toLocaleTimeString()}</span><br/>
-                <strong>LEARNED</strong>: ${update.item.topic} (${(update.item.confidence * 100).toFixed(0)}% confidence)`;
+                <strong>LEARNED</strong>: ${update.item.topic}<br/>
+                <em>Sources: ${sources} | Confidence: ${(confidence * 100).toFixed(0)}%</em>`;
             } else if (update.type === 'stage_change') {
               div.innerHTML = `<span class="timestamp">${new Date().toLocaleTimeString()}</span><br/>
                 <strong>${update.message}</strong>`;
+            } else if (update.type === 'genetic') {
+              div.innerHTML = `<span class="timestamp">${new Date().toLocaleTimeString()}</span><br/>
+                <strong>GENETIC</strong>: Gen ${update.event.generation} | Fitness: ${(update.event.best_fitness * 100).toFixed(1)}%`;
+            } else if (update.type === 'code_rewrite') {
+              div.innerHTML = `<span class="timestamp">${new Date().toLocaleTimeString()}</span><br/>
+                <strong>CODE REWRITE</strong>: ${update.event.description}`;
             }
 
             log.appendChild(div);

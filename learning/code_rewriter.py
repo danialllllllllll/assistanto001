@@ -46,18 +46,37 @@ class CodeRewriter:
         self.current_iteration = 0
         self.performance_history = []
         
-        # Files that can be modified
         self.modifiable_files = [
             'learning/neural_network.py',
             'learning/train_whimsy.py',
-            'learning/learning_optimizer.py'
+            'learning/learning_optimizer.py',
+            'learning/genetic_learning.py',
+            'learning/self_evolver.py'
         ]
         
-        # Files that should NEVER be modified (safety)
         self.protected_files = [
             'learning/app_server.py',
-            'run_whimsy.py'
+            'run_whimsy.py',
+            'learning/core_values_guard.py'
         ]
+        
+        self.mutation_templates = {
+            'learning_rate': [
+                ('learning_rate=0.001', 'learning_rate=0.002'),
+                ('learning_rate=0.002', 'learning_rate=0.0015'),
+                ('learning_rate=0.0015', 'learning_rate=0.001')
+            ],
+            'batch_size': [
+                ('batch_size = 64', 'batch_size = 128'),
+                ('batch_size = 128', 'batch_size = 96'),
+                ('batch_size = 96', 'batch_size = 64')
+            ],
+            'dropout': [
+                ('dropout_rate = 0.1', 'dropout_rate = 0.15'),
+                ('dropout_rate = 0.15', 'dropout_rate = 0.2'),
+                ('dropout_rate = 0.2', 'dropout_rate = 0.1')
+            ]
+        }
         
         os.makedirs(backup_dir, exist_ok=True)
         self.load_history()
@@ -136,7 +155,43 @@ class CodeRewriter:
                 if mod:
                     modifications.append(mod)
         
+        if not modifications and analysis.get('needs_optimization'):
+            mod = self._apply_template_mutation(iteration, analysis)
+            if mod:
+                modifications.append(mod)
+        
         return modifications
+    
+    def _apply_template_mutation(self, iteration: int, analysis: Dict) -> Optional[CodeModification]:
+        """Apply a template-based mutation when specific modifications fail"""
+        import random
+        
+        mutation_type = random.choice(list(self.mutation_templates.keys()))
+        templates = self.mutation_templates[mutation_type]
+        
+        for file_path in self.modifiable_files:
+            if not os.path.exists(file_path):
+                continue
+                
+            try:
+                with open(file_path, 'r') as f:
+                    content = f.read()
+                
+                for old_code, new_code in templates:
+                    if old_code in content:
+                        description = f"Iteration {iteration}: Auto-mutation {mutation_type} - {analysis.get('performance_trend', 'optimization')}"
+                        
+                        return CodeModification(
+                            file_path=file_path,
+                            change_type='auto_mutation',
+                            description=description,
+                            old_code=old_code,
+                            new_code=new_code
+                        )
+            except Exception as e:
+                print(f"Template mutation error for {file_path}: {e}")
+        
+        return None
     
     def _modify_architecture(self, iteration: int, suggestion: Dict) -> Optional[CodeModification]:
         """Modify neural network architecture"""

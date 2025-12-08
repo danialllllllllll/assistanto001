@@ -205,27 +205,159 @@ def chat():
     if not session.get("logged_in"):
         return jsonify({"response": "Please log in first"})
 
-    data = request.json
-    message = data.get("message", "").strip()
+    data = request.json or {}
+    message = data.get("message", "").strip().lower()
 
     if not trainer:
         return jsonify({"response": "System initializing..."})
 
-    # Check if user is asking to learn a topic
+    stage = trainer.get_current_stage()['name']
+    
+    if message.startswith("evolve") or message.startswith("mutate"):
+        trainer.autonomous_evolve()
+        trainer.genetic_evolution()
+        
+        response = "🧬 EVOLUTION TRIGGERED!\n\n"
+        response += f"📈 Generation: {trainer.generation}\n"
+        response += f"🔬 Genetic patterns: {len(trainer.genetic_patterns)}\n"
+        response += f"⚡ Evolution events: {len(trainer.evolution_events)}\n"
+        
+        if trainer.evolution_events:
+            last_event = trainer.evolution_events[-1]
+            response += f"\n🔄 Last mutation: {last_event.get('change', 'N/A')}\n"
+            response += f"💡 Reason: {last_event.get('reason', 'N/A')}"
+        
+        return jsonify({
+            "response": response,
+            "stage": stage,
+            "understanding": trainer.understanding,
+            "is_evolution": True
+        })
+    
+    elif message.startswith("status"):
+        state = trainer.get_state()
+        response = f"📊 WHIMSY STATUS REPORT\n\n"
+        response += f"🎭 Stage: {state['stage']} ({state['stage_index'] + 1}/7)\n"
+        response += f"📈 Generation: {state['generation']}\n"
+        response += f"🔄 Iteration: {state['iteration']}\n"
+        response += f"🧠 Understanding: {state['understanding']*100:.1f}%\n"
+        response += f"🎯 Target: {state['target_understanding']*100:.1f}%\n"
+        response += f"✅ Accuracy: {state['accuracy']*100:.1f}%\n"
+        response += f"💪 Confidence: {state['confidence']*100:.1f}%\n"
+        response += f"📚 Knowledge items: {state['knowledge_count']}\n"
+        response += f"🧬 Evolution events: {state['evolution_count']}\n"
+        response += f"🔧 Code rewrites: {len(trainer.code_rewrites)}\n"
+        response += f"🧪 Genetic patterns: {len(trainer.genetic_patterns)}"
+        
+        return jsonify({
+            "response": response,
+            "stage": stage,
+            "understanding": trainer.understanding,
+            "is_status": True
+        })
+    
+    elif message.startswith("rewrite") or message.startswith("self-modify"):
+        trainer.rewrite_own_code()
+        response = "🔧 CODE SELF-MODIFICATION TRIGGERED!\n\n"
+        
+        if trainer.code_rewrites:
+            response += f"📝 Total rewrites: {len(trainer.code_rewrites)}\n\n"
+            for rewrite in trainer.code_rewrites[-3:]:
+                response += f"✏️ {rewrite.get('description', 'N/A')}\n"
+                response += f"   File: {rewrite.get('file', 'N/A')}\n\n"
+        else:
+            response += "No code modifications applied yet. System analyzing performance..."
+        
+        return jsonify({
+            "response": response,
+            "stage": stage,
+            "understanding": trainer.understanding,
+            "is_rewrite": True
+        })
+    
+    elif message.startswith("genetic") or message.startswith("dna"):
+        trainer.genetic_evolution()
+        
+        best_strategy = trainer.genetic_learner.get_best_strategy()
+        patterns = trainer.genetic_learner.get_adaptive_patterns_summary()
+        
+        response = "🧬 GENETIC ALGORITHM STATUS\n\n"
+        response += f"🔬 Generation: {trainer.genetic_learner.generation}\n"
+        response += f"📊 Population: {trainer.genetic_learner.population_size} genomes\n"
+        
+        if best_strategy:
+            response += f"\n🏆 Best Strategy:\n"
+            response += f"   Learning rate: {best_strategy.get('learning_rate', 0):.6f}\n"
+            response += f"   Momentum: {best_strategy.get('momentum', 0):.3f}\n"
+            response += f"   Exploration: {best_strategy.get('exploration_rate', 0):.3f}\n"
+            response += f"   Fitness: {best_strategy.get('fitness', 0):.4f}\n"
+        
+        if patterns.get('recent_patterns'):
+            response += f"\n🔍 Recent Patterns Discovered:\n"
+            for p in patterns['recent_patterns'][-3:]:
+                response += f"   • {p['type']}: {p['description'][:50]}...\n"
+        
+        return jsonify({
+            "response": response,
+            "stage": stage,
+            "understanding": trainer.understanding,
+            "is_genetic": True
+        })
+    
+    elif message.startswith("knowledge") or message.startswith("what do you know"):
+        response = "📚 KNOWLEDGE BASE\n\n"
+        response += f"Total learned: {len(trainer.knowledge)} topics\n\n"
+        
+        if trainer.knowledge:
+            response += "Recent learning:\n"
+            for k in trainer.knowledge[-5:]:
+                topic = k.get('topic', 'Unknown')
+                sources = k.get('sources', [])
+                confidence = k.get('confidence', k.get('understanding', 0))
+                response += f"\n📖 {topic}\n"
+                response += f"   Sources: {', '.join(sources) if sources else 'chat-based'}\n"
+                response += f"   Confidence: {confidence*100:.1f}%\n"
+        else:
+            response += "No knowledge acquired yet. Ask me to 'learn [topic]' to start!"
+        
+        return jsonify({
+            "response": response,
+            "stage": stage,
+            "understanding": trainer.understanding,
+            "is_knowledge": True
+        })
+    
+    elif message.startswith("help") or message == "?":
+        response = "🤖 WHIMSY COMMANDS\n\n"
+        response += "📚 learn [topic] - Learn about a topic from web sources\n"
+        response += "📊 status - Show current training status\n"
+        response += "🧬 evolve - Trigger evolution cycle\n"
+        response += "🧪 genetic - Show genetic algorithm status\n"
+        response += "🔧 rewrite - Trigger code self-modification\n"
+        response += "📖 knowledge - Show what I've learned\n"
+        response += "❓ help - Show this help message\n\n"
+        response += f"Current stage: {stage}"
+        
+        return jsonify({
+            "response": response,
+            "stage": stage,
+            "understanding": trainer.understanding,
+            "is_help": True
+        })
+    
     learn_keywords = ["learn", "teach", "study", "understand", "research"]
-    is_learning_request = any(kw in message.lower() for kw in learn_keywords)
+    is_learning_request = any(kw in message for kw in learn_keywords)
     
     if is_learning_request:
-        # Extract topic from message (simple approach: remove learn keywords)
         topic = message
         for kw in learn_keywords:
-            topic = topic.lower().replace(kw, "").strip()
+            topic = topic.replace(kw, "").strip()
+        
+        topic = topic.strip("about ").strip()
         
         if topic:
-            # Use stage-specific algorithm to learn the topic
             learning_result = trainer.learn_topic(topic)
             
-            stage = trainer.get_current_stage()['name']
             understanding_pct = int(learning_result['understanding'] * 100)
             
             response = f"🧠 Learning '{topic}' using {stage} stage algorithm...\n\n"
@@ -233,7 +365,6 @@ def chat():
             response += f"📊 Understanding: {understanding_pct}% / 99%\n"
             response += f"🔍 Knowledge items: {learning_result.get('knowledge_items', 0)}\n"
             
-            # Show which sources were actually consulted
             sources = learning_result.get('sources', [])
             if sources:
                 response += f"🌐 Web sources: {', '.join(sources)}\n"
@@ -258,22 +389,18 @@ def chat():
                 "learning_complete": learning_result.get('learning_complete', False)
             })
     
-    # Non-learning conversation
-    stage = trainer.get_current_stage()['name']
-    response = f"I'm at {stage} stage. Tell me to 'learn [topic]' to begin researching a subject until I reach 99% understanding!"
-    
     responses = {
-        "Baby Steps": f"(Baby Steps) goo... ba ba...",
-        "Toddler": f"(Toddler) me learning! Tell me what to learn!",
-        "Pre-K": f"(Pre-K) I'm thinking... Tell me something to learn about!",
-        "Elementary": f"(Elementary) I'm curious! What should I learn?",
-        "Teen": f"(Teen) I'd like to expand my knowledge. What topic interests you?",
-        "Scholar": f"(Scholar) I'm ready for deeper learning. What shall we study?",
-        "Thinker": f"(Thinker) What profound subject shall we explore together?"
+        "Baby Steps": f"(Baby Steps) goo... ba ba... type 'help' for commands!",
+        "Toddler": f"(Toddler) me learning! Type 'help' to see what I can do!",
+        "Pre-K": f"(Pre-K) I'm thinking... Type 'help' for available commands!",
+        "Elementary": f"(Elementary) I'm curious! Type 'help' to see my abilities!",
+        "Teen": f"(Teen) Ready to learn and evolve. Type 'help' for commands!",
+        "Scholar": f"(Scholar) Ready for deep learning. Type 'help' for my capabilities!",
+        "Thinker": f"(Thinker) Let's explore knowledge together. Type 'help' to begin!"
     }
 
     return jsonify({
-        "response": responses.get(stage, "Tell me what to learn!"),
+        "response": responses.get(stage, "Type 'help' for commands!"),
         "stage": stage,
         "understanding": trainer.understanding,
         "is_learning": False
