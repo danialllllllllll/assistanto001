@@ -29,3 +29,10 @@ requests
 scikit-learn
 scipy
 waitress
+beautifulsoup4
+networkx
+Pillow
+psutil
+requests
+scikit-learn
+scipy
