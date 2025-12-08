@@ -5705,7 +5705,25 @@
       "new_value": "0.144",
       "reasoning": "Low fitness detected. Increasing mutation for exploration.",
       "timestamp": "2025-12-08T18:44:32.031245"
+    },
+    {
+      "generation": 30,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.0022500000000000003",
+      "new_value": "0.0033750000000000004",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-12-08T18:46:43.636488"
+    },
+    {
+      "generation": 30,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.144",
+      "new_value": "0.17279999999999998",
+      "reasoning": "Low fitness detected. Increasing mutation for exploration.",
+      "timestamp": "2025-12-08T18:46:43.636513"
     }
   ],
-  "total_changes": 634
+  "total_changes": 636
 }
