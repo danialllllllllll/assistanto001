@@ -139,11 +139,16 @@
       <div class="stat"><span class="label">Stage:</span> <span class="value" id="stage">Initializing</span></div>
       <div class="stat"><span class="label">Generation:</span> <span class="value" id="generation">0</span></div>
       <div class="stat"><span class="label">Iteration:</span> <span class="value" id="iteration">0</span></div>
-      <div class="stat"><span class="label">Understanding:</span> <span class="value" id="understanding">0.00%</span></div>
+      <div class="stat"><span class="label">Focus Topic:</span> <span class="value" id="focus-topic">Selecting...</span></div>
+      <div class="stat"><span class="label">Topic Understanding:</span> <span class="value" id="topic-understanding">0.00%</span></div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="topic-bar" style="background: linear-gradient(90deg, #3498db, #2980b9);">0%</div>
+      </div>
+      <div class="stat"><span class="label">Overall Understanding:</span> <span class="value" id="understanding">0.00%</span></div>
       <div class="progress-bar">
         <div class="progress-fill" id="understanding-bar">0%</div>
       </div>
-      <div class="stat"><span class="label">Target:</span> <span class="value" id="target">0.00%</span></div>
+      <div class="stat"><span class="label">Mastered Topics:</span> <span class="value" id="mastered-count">0</span></div>
       <div class="stat"><span class="label">Accuracy:</span> <span class="value" id="accuracy">0.00%</span></div>
       <div class="stat"><span class="label">Confidence:</span> <span class="value" id="confidence">0.00%</span></div>
     </div>
@@ -159,7 +164,15 @@
 
   <div class="card" style="margin-top: 20px;">
     <h2>Neural Network Visualization</h2>
+    <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+      <div class="stat"><span class="label">Active Nodes:</span> <span class="value" id="active-nodes">0</span></div>
+      <div class="stat"><span class="label">Total Nodes:</span> <span class="value" id="total-nodes">316</span></div>
+      <div class="stat"><span class="label">Strong Connections:</span> <span class="value" id="strong-connections">0</span></div>
+    </div>
     <img id="viz-canvas" src="/api/visualize" alt="Neural Network"/>
+    <div id="node-activity" style="margin-top: 10px; font-size: 0.85em; color: #888;">
+      <span id="node-status">Monitoring node activity...</span>
+    </div>
   </div>
 
   <div class="grid" style="margin-top: 20px;">
@@ -195,16 +208,35 @@
           document.getElementById('generation').textContent = data.generation;
           document.getElementById('iteration').textContent = data.iteration;
           document.getElementById('understanding').textContent = (data.understanding * 100).toFixed(2) + '%';
-          document.getElementById('target').textContent = (data.target_understanding * 100).toFixed(2) + '%';
+          
+          if (data.focus_topic) {
+            document.getElementById('focus-topic').textContent = data.focus_topic;
+            const topicPct = (data.focus_topic_understanding || 0) * 100;
+            document.getElementById('topic-understanding').textContent = topicPct.toFixed(1) + '% / 99.9%';
+            const topicBar = document.getElementById('topic-bar');
+            topicBar.style.width = Math.min(100, (topicPct / 99.9) * 100) + '%';
+            topicBar.textContent = topicPct.toFixed(1) + '%';
+            if (topicPct >= 99.9) {
+              topicBar.style.background = 'linear-gradient(90deg, #00ff00, #00cc00)';
+            }
+          }
+          
+          document.getElementById('mastered-count').textContent = data.mastered_count || 0;
           document.getElementById('accuracy').textContent = (data.accuracy * 100).toFixed(2) + '%';
           document.getElementById('confidence').textContent = (data.confidence * 100).toFixed(2) + '%';
           document.getElementById('knowledge-count').textContent = data.knowledge_count;
           document.getElementById('evol-count').textContent = data.evolution_count;
 
-          const progressPct = (data.understanding / data.target_understanding) * 100;
+          const progressPct = data.understanding * 100;
           const bar = document.getElementById('understanding-bar');
           bar.style.width = Math.min(100, progressPct) + '%';
-          bar.textContent = Math.min(100, progressPct).toFixed(1) + '%';
+          bar.textContent = progressPct.toFixed(1) + '%';
+          
+          if (progressPct >= data.target_understanding * 100) {
+            bar.style.background = 'linear-gradient(90deg, #00ff00, #00cc00)';
+          } else {
+            bar.style.background = 'linear-gradient(90deg, #c678dd, #9b59b6)';
+          }
 
           if (data.iteration !== lastIteration) {
             lastIteration = data.iteration;
@@ -212,6 +244,22 @@
           }
         })
         .catch(e => console.error('Status error:', e));
+      
+      fetch('/api/realtime_viz')
+        .then(r => r.json())
+        .then(data => {
+          if (data.processing_flow) {
+            document.getElementById('active-nodes').textContent = data.processing_flow.active_neurons || 0;
+            document.getElementById('total-nodes').textContent = data.processing_flow.total_neurons || 316;
+            document.getElementById('strong-connections').textContent = data.processing_flow.strong_connections || 0;
+            
+            const active = data.processing_flow.active_neurons || 0;
+            const total = data.processing_flow.total_neurons || 316;
+            const pct = ((active / total) * 100).toFixed(1);
+            document.getElementById('node-status').textContent = `${active}/${total} nodes active (${pct}%) | Iteration: ${data.processing_flow.iteration || 0}`;
+          }
+        })
+        .catch(e => {});
     }
 
     function updateLogs() {
@@ -231,13 +279,27 @@
                 <em>${update.event.reason}</em>`;
             } else if (update.type === 'knowledge') {
               const sources = update.item.sources ? update.item.sources.join(', ') : 'chat';
-              const confidence = update.item.confidence || 0;
+              const topicUnderstanding = update.item.topic_understanding || update.item.confidence || 0;
+              const overallUnderstanding = update.item.overall_understanding || update.item.understanding || 0;
+              const learningType = update.item.type || 'learning';
+              const typeLabel = learningType === 'passive_learning' ? '🔄 PASSIVE' : learningType === 'chat_learning' ? '💬 CHAT' : '📚 LEARNED';
               div.innerHTML = `<span class="timestamp">${new Date().toLocaleTimeString()}</span><br/>
-                <strong>LEARNED</strong>: ${update.item.topic}<br/>
-                <em>Sources: ${sources} | Confidence: ${(confidence * 100).toFixed(0)}%</em>`;
+                <strong>${typeLabel}</strong>: ${update.item.topic}<br/>
+                <em>Understanding: ${(topicUnderstanding * 100).toFixed(0)}% | Overall: ${(overallUnderstanding * 100).toFixed(0)}%</em><br/>
+                <small>Sources: ${sources}</small>`;
             } else if (update.type === 'stage_change') {
               div.innerHTML = `<span class="timestamp">${new Date().toLocaleTimeString()}</span><br/>
+                <strong>🎉 ${update.message}</strong>`;
+            } else if (update.type === 'stage_ready') {
+              div.innerHTML = `<span class="timestamp">${new Date().toLocaleTimeString()}</span><br/>
+                <strong>📢 ${update.message}</strong>`;
+              div.style.background = 'rgba(255, 215, 0, 0.2)';
+              div.style.borderLeftColor = '#ffd700';
+            } else if (update.type === 'mastery') {
+              div.innerHTML = `<span class="timestamp">${new Date().toLocaleTimeString()}</span><br/>
                 <strong>${update.message}</strong>`;
+              div.style.background = 'rgba(0, 255, 0, 0.2)';
+              div.style.borderLeftColor = '#00ff00';
             } else if (update.type === 'genetic') {
               div.innerHTML = `<span class="timestamp">${new Date().toLocaleTimeString()}</span><br/>
                 <strong>GENETIC</strong>: Gen ${update.event.generation} | Fitness: ${(update.event.best_fitness * 100).toFixed(1)}%`;

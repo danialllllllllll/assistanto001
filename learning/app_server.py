@@ -275,6 +275,38 @@ def chat():
             "is_rewrite": True
         })
     
+    elif message.startswith("advance") or message.startswith("next stage"):
+        current_stage = trainer.get_current_stage()
+        if trainer.understanding >= current_stage['target_understanding']:
+            old_stage = current_stage['name']
+            if trainer.advance_stage():
+                new_stage = trainer.get_current_stage()['name']
+                response = f"🎉 STAGE ADVANCEMENT APPROVED!\n\n"
+                response += f"📈 {old_stage} → {new_stage}\n"
+                response += f"🎯 New target: {trainer.get_current_stage()['target_understanding']*100:.0f}%\n"
+                response += f"📊 Current understanding reset to work toward new goal"
+                return jsonify({
+                    "response": response,
+                    "stage": new_stage,
+                    "understanding": trainer.understanding,
+                    "is_advancement": True
+                })
+            else:
+                response = "🏆 You've already reached the final stage: Thinker!"
+        else:
+            remaining = current_stage['target_understanding'] - trainer.understanding
+            response = f"⏳ Not ready to advance yet.\n\n"
+            response += f"📊 Current understanding: {trainer.understanding*100:.1f}%\n"
+            response += f"🎯 Target: {current_stage['target_understanding']*100:.0f}%\n"
+            response += f"📈 Need {remaining*100:.1f}% more to advance"
+        
+        return jsonify({
+            "response": response,
+            "stage": stage,
+            "understanding": trainer.understanding,
+            "is_advancement": False
+        })
+    
     elif message.startswith("genetic") or message.startswith("dna"):
         trainer.genetic_evolution()
         
@@ -331,12 +363,14 @@ def chat():
         response = "🤖 WHIMSY COMMANDS\n\n"
         response += "📚 learn [topic] - Learn about a topic from web sources\n"
         response += "📊 status - Show current training status\n"
+        response += "🎯 advance - Approve stage advancement (when ready)\n"
         response += "🧬 evolve - Trigger evolution cycle\n"
         response += "🧪 genetic - Show genetic algorithm status\n"
         response += "🔧 rewrite - Trigger code self-modification\n"
         response += "📖 knowledge - Show what I've learned\n"
         response += "❓ help - Show this help message\n\n"
-        response += f"Current stage: {stage}"
+        response += f"Current stage: {stage}\n"
+        response += f"Target: {trainer.get_current_stage()['target_understanding']*100:.0f}%"
         
         return jsonify({
             "response": response,
@@ -359,22 +393,33 @@ def chat():
             learning_result = trainer.learn_topic(topic)
             
             understanding_pct = int(learning_result['understanding'] * 100)
+            topic_understanding_pct = int(learning_result.get('topic_understanding', 0) * 100)
             
-            response = f"🧠 Learning '{topic}' using {stage} stage algorithm...\n\n"
-            response += f"📚 Method: {learning_result.get('method', 'N/A')}\n"
-            response += f"📊 Understanding: {understanding_pct}% / 99%\n"
-            response += f"🔍 Knowledge items: {learning_result.get('knowledge_items', 0)}\n"
+            response = f"🧠 LEARNING: '{topic.upper()}'\n"
+            response += f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            response += f"📊 Topic Understanding: {topic_understanding_pct}%\n"
+            response += f"📈 Overall Understanding: {understanding_pct}%\n"
+            response += f"🎯 Target: 99%\n\n"
             
             sources = learning_result.get('sources', [])
             if sources:
-                response += f"🌐 Web sources: {', '.join(sources)}\n"
+                response += f"🌐 Sources searched:\n"
+                for src in sources:
+                    response += f"   • {src.title()}\n"
+                response += "\n"
             
-            response += "\n"
+            response += f"📚 Method: {learning_result.get('method', 'N/A')}\n"
+            response += f"📝 Knowledge items: {learning_result.get('knowledge_items', 0)}\n\n"
+            
+            synthesized = learning_result.get('synthesized', '')
+            if synthesized:
+                response += f"💡 Synthesis:\n{synthesized[:300]}...\n\n"
             
             if learning_result.get('learning_complete'):
                 response += f"✅ MASTERED! (99% understanding achieved)\n"
             else:
-                response += f"⏳ Continue learning to reach 99% mastery\n"
+                remaining = 99 - understanding_pct
+                response += f"⏳ Need {remaining}% more to reach mastery\n"
             
             if learning_result['stage_advanced']:
                 response += f"\n🎉 STAGE ADVANCEMENT → {learning_result['stage']}!"
@@ -382,11 +427,13 @@ def chat():
             return jsonify({
                 "response": response,
                 "stage": stage,
-                "understanding": learning_result['understanding'],
+                "understanding": float(learning_result['understanding']),
+                "topic_understanding": float(learning_result.get('topic_understanding', 0)),
                 "topic": topic,
                 "is_learning": True,
-                "knowledge_items": learning_result['knowledge_items'],
-                "learning_complete": learning_result.get('learning_complete', False)
+                "knowledge_items": int(learning_result['knowledge_items']),
+                "sources": sources,
+                "learning_complete": bool(learning_result.get('learning_complete', False))
             })
     
     responses = {

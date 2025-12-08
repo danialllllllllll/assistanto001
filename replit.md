@@ -89,8 +89,10 @@ Access the dashboard at: http://localhost:5000
 - Connection error handling
 
 ## Key Differences from Traditional AI
+- **Focused Learning**: Learns ONE topic at a time until 99.9% mastery - no random jumping
+- **Manual Stage Control**: User must approve stage advancement with "advance" command
 - **Hybrid Learning**: Genetic algorithms + gradient descent for human-like adaptation
-- **Multi-Source Learning**: Knowledge from Wikipedia, ArXiv, GitHub, StackOverflow, Reddit, news, and web
+- **Multi-Source Learning**: Knowledge from Wikipedia, ArXiv, GitHub, StackOverflow, OpenLibrary, Wikidata
 - **Self-Modifying Code**: Rewrites its own Python code every 50 iterations for optimization
 - **Real-Time Neural Telemetry**: Live tracking of neuron activation and connection weights
 - **No Shortcuts**: Must truly understand, not memorize
@@ -98,11 +100,26 @@ Access the dashboard at: http://localhost:5000
 - **Ethical Foundation**: Core values permanently embedded and protected
 - **Sense of Self**: Develops human-like identity and reflection capabilities
 
+## Chat Commands
+- `learn [topic]` - Learn about a specific topic (5% understanding gain per session)
+- `advance` - Approve stage advancement (when understanding threshold reached)
+- `status` - Show current training status
+- `genetic` - Show genetic algorithm status
+- `evolve` - Trigger evolution cycle
+- `rewrite` - Trigger code self-modification
+- `knowledge` - Show what Whimsy has learned
+- `help` - Show all available commands
+
 ## Recent Changes
+- **2025-12-08**: ✅ FOCUSED TOPIC LEARNING - Whimsy now learns ONE topic at a time until 99.9% mastery!
+- **2025-12-08**: Manual stage advancement only - user must type "advance" command in chat to approve
+- **2025-12-08**: Topic progress tracking: Dashboard shows current focus topic and understanding %
+- **2025-12-08**: Mastered topics list: Tracks topics that have reached 99.9% understanding
+- **2025-12-08**: Realistic learning speed: Slow, steady accumulation toward mastery
 - **2025-12-08**: ✅ EVOLUTION SYSTEM FULLY OPERATIONAL - All requirements verified working!
 - **2025-12-08**: Genetic evolution running: Fitness improving 53% → 81% across 7 generations
 - **2025-12-08**: Web learning confirmed: Wikipedia, ArXiv, GitHub, StackOverflow, DuckDuckGo APIs working
-- **2025-12-08**: Auto-learning: Background learning triggers every 100 iterations with real topics
+- **2025-12-08**: Auto-learning: Background learning triggers every 50 iterations on focused topic
 - **2025-12-08**: Pattern discovery: Detects rapid_learning, exploratory_learning, stable_learning patterns
 - **2025-12-08**: Autonomous evolution: Hyperparameters auto-adjust based on detected patterns
 - **2025-12-08**: Chat commands: learn [topic], evolve, mutate, status, genetic, knowledge, help

@@ -18,17 +18,32 @@ class AdvancedWebLearning:
         self.api_cache = {}
         self.learning_history = []
         self.processing_pipelines = {}
-        self.source_reliability = {}  # Track source quality
+        self.source_reliability = {}
+        self.understanding_tracker = {}
+        self.comprehension_depth = {}
         
-        # API endpoints for diverse learning
         self.apis = {
             'wikipedia': 'https://en.wikipedia.org/api/rest_v1/page/summary/',
             'arxiv': 'http://export.arxiv.org/api/query',
             'github': 'https://api.github.com/search/repositories',
             'stackoverflow': 'https://api.stackexchange.com/2.3/search/advanced',
-            'news': 'https://newsapi.org/v2/everything',
+            'news': 'https://newsdata.io/api/1/news',
             'reddit': 'https://www.reddit.com/search.json',
+            'wikidata': 'https://www.wikidata.org/w/api.php',
+            'openlibrary': 'https://openlibrary.org/search.json',
         }
+        
+        self.random_topics = [
+            "machine learning", "neural networks", "artificial intelligence",
+            "natural language processing", "computer vision", "deep learning",
+            "reinforcement learning", "genetic algorithms", "optimization",
+            "knowledge representation", "reasoning", "pattern recognition",
+            "robotics", "data science", "statistics", "mathematics",
+            "physics", "biology", "chemistry", "psychology", "philosophy",
+            "logic", "linguistics", "cognitive science", "neuroscience",
+            "algorithms", "data structures", "software engineering",
+            "cryptography", "quantum computing", "distributed systems"
+        ]
         
     def search_and_learn(self, topic: str, depth: int = 5) -> Dict[str, Any]:
         """Search web and learn from ALL available sources"""
@@ -79,6 +94,18 @@ class AdvancedWebLearning:
         if web_data:
             sources_data['web'] = web_data
             learned_data['sources'].append('web')
+        
+        # Open Library - Books and literature
+        openlibrary_data = self.learn_from_open_library(topic)
+        if openlibrary_data:
+            sources_data['openlibrary'] = openlibrary_data
+            learned_data['sources'].append('openlibrary')
+        
+        # Wikidata - Structured knowledge
+        wikidata_data = self.learn_from_wikidata(topic)
+        if wikidata_data:
+            sources_data['wikidata'] = wikidata_data
+            learned_data['sources'].append('wikidata')
         
         learned_data['processed_knowledge'] = sources_data
         
@@ -493,3 +520,111 @@ class AdvancedWebLearning:
                 'web': sum(1 for h in self.learning_history if 'web' in str(h))
             }
         }
+    
+    def get_random_topic(self) -> str:
+        """Get a random topic for passive learning"""
+        import random
+        return random.choice(self.random_topics)
+    
+    def calculate_understanding(self, learned_data: Dict[str, Any]) -> float:
+        """Calculate real understanding based on knowledge depth and cross-validation"""
+        if not learned_data:
+            return 0.0
+        
+        understanding = 0.0
+        
+        source_count = len(learned_data.get('sources', []))
+        understanding += min(0.25, source_count * 0.05)
+        
+        processed = learned_data.get('processed_knowledge', {})
+        content_depth = 0
+        for source, data in processed.items():
+            if isinstance(data, dict):
+                if source == 'wikipedia' and data.get('extract'):
+                    content_depth += len(data['extract']) / 1000
+                elif source == 'arxiv' and data.get('papers'):
+                    content_depth += len(data['papers']) * 0.15
+                elif source == 'github' and data.get('repositories'):
+                    content_depth += len(data['repositories']) * 0.1
+                elif source == 'stackoverflow' and data.get('questions'):
+                    answered = sum(1 for q in data['questions'] if q.get('is_answered'))
+                    content_depth += answered * 0.12
+                elif source == 'web' and data.get('results'):
+                    content_depth += len(data['results']) * 0.08
+        understanding += min(0.35, content_depth)
+        
+        cross_validation = learned_data.get('cross_validation', [])
+        if cross_validation:
+            for val in cross_validation:
+                understanding += val.get('agreement_level', 0) * 0.25
+        
+        synthesized = learned_data.get('synthesized', '')
+        if len(synthesized) > 200:
+            understanding += 0.15
+        elif len(synthesized) > 100:
+            understanding += 0.10
+        
+        return min(0.99, understanding)
+    
+    def learn_from_open_library(self, topic: str) -> Dict[str, Any]:
+        """Learn from Open Library - Books and literature"""
+        try:
+            import urllib.parse
+            encoded_topic = urllib.parse.quote(topic)
+            url = f"{self.apis['openlibrary']}?q={encoded_topic}&limit=5"
+            
+            headers = {'User-Agent': 'WhimsyAI/2.0 (Advanced Learning System)'}
+            response = requests.get(url, timeout=10, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                books = []
+                for doc in data.get('docs', [])[:5]:
+                    books.append({
+                        'title': doc.get('title', ''),
+                        'author': doc.get('author_name', ['Unknown'])[0] if doc.get('author_name') else 'Unknown',
+                        'first_publish_year': doc.get('first_publish_year', 0),
+                        'subject': doc.get('subject', [])[:5]
+                    })
+                
+                if books:
+                    print(f"OpenLibrary: Found {len(books)} books on '{topic}'")
+                    return {
+                        'books': books,
+                        'count': len(books),
+                        'quality_score': 0.85
+                    }
+        except Exception as e:
+            print(f"OpenLibrary error: {e}")
+        return None
+    
+    def learn_from_wikidata(self, topic: str) -> Dict[str, Any]:
+        """Learn from Wikidata - Structured knowledge"""
+        try:
+            import urllib.parse
+            encoded_topic = urllib.parse.quote(topic)
+            url = f"{self.apis['wikidata']}?action=wbsearchentities&search={encoded_topic}&language=en&format=json"
+            
+            headers = {'User-Agent': 'WhimsyAI/2.0 (Advanced Learning System)'}
+            response = requests.get(url, timeout=10, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                entities = []
+                for result in data.get('search', [])[:5]:
+                    entities.append({
+                        'id': result.get('id', ''),
+                        'label': result.get('label', ''),
+                        'description': result.get('description', '')
+                    })
+                
+                if entities:
+                    print(f"Wikidata: Found {len(entities)} entities on '{topic}'")
+                    return {
+                        'entities': entities,
+                        'count': len(entities),
+                        'quality_score': 0.9
+                    }
+        except Exception as e:
+            print(f"Wikidata error: {e}")
+        return None

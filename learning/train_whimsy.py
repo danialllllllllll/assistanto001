@@ -58,6 +58,10 @@ class WhimsyTrainer:
         self.genetic_patterns = []
         self.current_learning_topic = None
         self.current_learning_understanding = 0.0
+        self.topic_understanding = {}
+        self.mastered_topics = []
+        self.focus_topic = None
+        self.focus_topic_understanding = 0.0
         
         self.realtime_viz.initialize_from_network(self.network)
 
@@ -68,16 +72,14 @@ class WhimsyTrainer:
         return self.stages[min(self.stage, len(self.stages) - 1)]
 
     def learn_topic(self, topic: str) -> dict:
-        """Learn a topic through chat interface until 99% understanding"""
+        """Learn a topic through chat interface - calculates real understanding"""
         stage_algo = get_algorithm_for_stage(self.stage)
         self.current_learning_topic = topic
         
-        print(f"\n[LEARNING] {self.get_current_stage()['name']} stage learning: {topic}")
+        print(f"\n[CHAT-LEARN] {self.get_current_stage()['name']} stage learning: {topic}")
         
-        # Get knowledge from web sources using search_and_learn
-        learned_data = self.web_learner.search_and_learn(topic, depth=stage_algo.min_sources)
+        learned_data = self.web_learner.search_and_learn(topic, depth=max(5, stage_algo.min_sources))
         
-        # Convert learned_data to knowledge_items format for stage algorithm
         knowledge_items = []
         if learned_data and learned_data.get('processed_knowledge'):
             for source, data in learned_data['processed_knowledge'].items():
@@ -93,29 +95,53 @@ class WhimsyTrainer:
         
         if knowledge_items:
             result = stage_algo.process_knowledge(knowledge_items)
-            self.understanding = result['understanding']
+            
+            web_understanding = self.web_learner.calculate_understanding(learned_data)
+            stage_understanding = result['understanding']
+            topic_understanding = (web_understanding * 0.6) + (stage_understanding * 0.4)
+            
+            old_understanding = self.understanding
+            understanding_gain = topic_understanding * 0.05
+            self.understanding = min(0.99, self.understanding + understanding_gain)
             self.current_learning_understanding = self.understanding
+            combined_understanding = topic_understanding
+            
+            knowledge_vector = self._convert_knowledge_to_training(learned_data)
+            if knowledge_vector is not None and len(knowledge_vector) > 0:
+                num_samples = min(30, len(knowledge_vector))
+                new_X = knowledge_vector[:num_samples]
+                new_y = np.random.randint(0, 4, num_samples)
+                self.X_train = np.vstack([self.X_train[-170:], new_X])
+                self.y_train = np.concatenate([self.y_train[-170:], new_y])
             
             knowledge_entry = {
                 "topic": topic,
+                "type": "chat_learning",
                 "stage": self.get_current_stage()['name'],
                 "understanding": self.understanding,
+                "topic_understanding": combined_understanding,
+                "understanding_gain": self.understanding - old_understanding,
                 "method": result.get('method', ''),
                 "insights": result.get('insights', []),
-                "timestamp": datetime.now().isoformat(),
-                "raw_items": knowledge_items,
-                "learned_data": learned_data
+                "sources": learned_data.get('sources', []),
+                "synthesized": learned_data.get('synthesized', ''),
+                "timestamp": datetime.now().isoformat()
             }
             self.knowledge.append(knowledge_entry)
             
-            print(f"[LEARNING] Understanding: {self.understanding*100:.1f}% (target: 99%)")
-            print(f"[LEARNING] Method: {result.get('method', 'N/A')}")
-            print(f"[LEARNING] Sources: {', '.join(learned_data.get('sources', []))}")
+            self.update_queue.put({
+                "type": "knowledge", 
+                "item": knowledge_entry
+            })
+            
+            print(f"[CHAT-LEARN] Topic understanding: {combined_understanding*100:.1f}%")
+            print(f"[CHAT-LEARN] Overall: {old_understanding*100:.1f}% → {self.understanding*100:.1f}%")
+            print(f"[CHAT-LEARN] Method: {result.get('method', 'N/A')}")
+            print(f"[CHAT-LEARN] Sources: {', '.join(learned_data.get('sources', []))}")
             if result.get('insights'):
-                print(f"[LEARNING] Insights: {result['insights'][0]}")
+                print(f"[CHAT-LEARN] Insights: {result['insights'][0]}")
         else:
-            self.understanding = 0.0
-            print(f"[LEARNING] Failed to acquire knowledge about {topic}")
+            print(f"[CHAT-LEARN] Failed to acquire knowledge about {topic}")
             
         stage_advanced = False
         if self.understanding >= 0.99:
@@ -126,15 +152,19 @@ class WhimsyTrainer:
             print(f"\n🎉 STAGE ADVANCEMENT: {old_stage} → {new_stage}\n")
         
         method = result.get('method', '')
+        topic_understanding = combined_understanding if knowledge_items else 0.0
+        synthesized = learned_data.get('synthesized', '') if learned_data else ''
             
         return {
             "topic": topic,
             "understanding": self.understanding,
+            "topic_understanding": topic_understanding,
             "target": 0.99,
             "stage": self.get_current_stage()['name'],
             "knowledge_items": len(knowledge_items),
             "stage_advanced": stage_advanced,
             "method": method,
+            "synthesized": synthesized,
             "learning_complete": self.understanding >= 0.99,
             "sources": learned_data.get('sources', []) if learned_data else []
         }
@@ -333,7 +363,11 @@ class WhimsyTrainer:
             "nodes_active": stage_info['nodes'],
             "knowledge_count": len(self.knowledge),
             "evolution_count": len(self.evolution_events),
-            "target_understanding": stage_info['target_understanding']
+            "target_understanding": stage_info['target_understanding'],
+            "focus_topic": self.focus_topic,
+            "focus_topic_understanding": round(self.focus_topic_understanding, 4) if self.focus_topic else 0.0,
+            "mastered_count": len(self.mastered_topics),
+            "mastered_topics": self.mastered_topics
         }
 
     def train_loop(self):
@@ -349,7 +383,7 @@ class WhimsyTrainer:
                 if self.iteration % 30 == 0:
                     self.genetic_evolution()
                 
-                if self.iteration % 100 == 0:
+                if self.iteration % 50 == 0:
                     self.continuous_web_learn()
                 
                 time.sleep(0.02)
@@ -361,38 +395,64 @@ class WhimsyTrainer:
         print("\nWHIMSY TRAINING COMPLETE - THINKER STAGE REACHED\n")
     
     def continuous_web_learn(self):
-        """Background continuous learning from web sources"""
-        topics = [
-            "machine learning", "neural networks", "artificial intelligence",
-            "natural language processing", "computer vision", "deep learning",
-            "reinforcement learning", "genetic algorithms", "optimization",
-            "knowledge representation", "reasoning", "pattern recognition"
-        ]
-        
+        """Background continuous learning - focuses on ONE topic until 99.9% mastery"""
         try:
-            topic = random.choice(topics)
-            print(f"\n[AUTO-LEARN] Background learning: {topic}")
+            if self.focus_topic is None or self.focus_topic_understanding >= 0.999:
+                if self.focus_topic and self.focus_topic_understanding >= 0.999:
+                    self.mastered_topics.append(self.focus_topic)
+                    print(f"\n🎓 MASTERED: {self.focus_topic} (99.9% understanding achieved!)")
+                    self.update_queue.put({
+                        "type": "mastery",
+                        "message": f"🎓 MASTERED: {self.focus_topic}! Moving to new topic..."
+                    })
+                
+                available_topics = [t for t in self.web_learner.random_topics 
+                                   if t not in self.mastered_topics]
+                if not available_topics:
+                    available_topics = self.web_learner.random_topics
+                
+                self.focus_topic = random.choice(available_topics)
+                self.focus_topic_understanding = self.topic_understanding.get(self.focus_topic, 0.0)
+                print(f"\n📚 NEW FOCUS: {self.focus_topic} (starting at {self.focus_topic_understanding*100:.1f}%)")
             
-            learned_data = self.web_learner.search_and_learn(topic, depth=2)
+            topic = self.focus_topic
+            print(f"\n[FOCUSED-LEARN] Studying: {topic} ({self.focus_topic_understanding*100:.1f}% → targeting 99.9%)")
+            
+            learned_data = self.web_learner.search_and_learn(topic, depth=3)
             
             if learned_data and learned_data.get('sources'):
+                session_understanding = self.web_learner.calculate_understanding(learned_data)
+                
+                understanding_gain = session_understanding * 0.03 * (1 - self.focus_topic_understanding)
+                old_topic_understanding = self.focus_topic_understanding
+                self.focus_topic_understanding = min(0.999, self.focus_topic_understanding + understanding_gain)
+                self.topic_understanding[topic] = self.focus_topic_understanding
+                
                 knowledge_vector = self._convert_knowledge_to_training(learned_data)
                 
                 if knowledge_vector is not None and len(knowledge_vector) > 0:
-                    num_samples = min(20, len(knowledge_vector))
+                    num_samples = min(25, len(knowledge_vector))
                     new_X = knowledge_vector[:num_samples]
                     new_y = np.random.randint(0, 4, num_samples)
                     
-                    self.X_train = np.vstack([self.X_train[-180:], new_X])
-                    self.y_train = np.concatenate([self.y_train[-180:], new_y])
+                    self.X_train = np.vstack([self.X_train[-175:], new_X])
+                    self.y_train = np.concatenate([self.y_train[-175:], new_y])
+                    
+                    old_overall = self.understanding
+                    overall_gain = understanding_gain * 0.1
+                    self.understanding = min(0.99, self.understanding + overall_gain)
                     
                     knowledge_entry = {
                         "topic": topic,
-                        "type": "auto_background",
+                        "type": "focused_learning",
                         "sources": learned_data.get('sources', []),
+                        "topic_understanding": self.focus_topic_understanding,
+                        "session_gain": self.focus_topic_understanding - old_topic_understanding,
+                        "overall_understanding": self.understanding,
                         "confidence": learned_data.get('confidence', 0),
                         "timestamp": datetime.now().isoformat(),
-                        "samples_added": num_samples
+                        "samples_added": num_samples,
+                        "synthesized": learned_data.get('synthesized', '')[:200]
                     }
                     self.knowledge.append(knowledge_entry)
                     
@@ -401,10 +461,23 @@ class WhimsyTrainer:
                         "item": knowledge_entry
                     })
                     
-                    print(f"[AUTO-LEARN] Added {num_samples} training samples from {topic}")
-                    print(f"[AUTO-LEARN] Sources: {', '.join(learned_data.get('sources', []))}")
+                    remaining = 99.9 - (self.focus_topic_understanding * 100)
+                    print(f"[FOCUSED-LEARN] Topic: {topic}")
+                    print(f"[FOCUSED-LEARN] Understanding: {old_topic_understanding*100:.1f}% → {self.focus_topic_understanding*100:.1f}%")
+                    print(f"[FOCUSED-LEARN] Remaining: {remaining:.1f}% to mastery")
+                    print(f"[FOCUSED-LEARN] Overall: {old_overall*100:.2f}% → {self.understanding*100:.2f}%")
+                    print(f"[FOCUSED-LEARN] Sources: {', '.join(learned_data.get('sources', []))}")
+                    
+                    if self.understanding >= self.get_current_stage()['target_understanding']:
+                        self.update_queue.put({
+                            "type": "stage_ready",
+                            "message": f"📢 Ready to advance to next stage! Type 'advance' in chat to proceed."
+                        })
+                        print(f"\n📢 READY FOR STAGE ADVANCEMENT - Waiting for user approval")
         except Exception as e:
-            print(f"Auto-learn error: {e}")
+            print(f"Focused-learn error: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _convert_knowledge_to_training(self, learned_data):
         """Convert web knowledge to neural network training vectors"""

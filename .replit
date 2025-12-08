@@ -14,10 +14,6 @@ run = ["python", "learning/train_advanced_ai.py"]
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 44389
-externalPort = 3000
-
 [agent]
 expertMode = true
 

@@ -5723,7 +5723,241 @@
       "new_value": "0.17279999999999998",
       "reasoning": "Low fitness detected. Increasing mutation for exploration.",
       "timestamp": "2025-12-08T18:46:43.636513"
+    },
+    {
+      "generation": 40,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.0033750000000000004",
+      "new_value": "0.005062500000000001",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-12-08T18:50:33.475923"
+    },
+    {
+      "generation": 40,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.17279999999999998",
+      "new_value": "0.20735999999999996",
+      "reasoning": "Low fitness detected. Increasing mutation for exploration.",
+      "timestamp": "2025-12-08T18:50:33.475945"
+    },
+    {
+      "generation": 10,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.001",
+      "new_value": "0.0015",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-12-08T18:52:15.019033"
+    },
+    {
+      "generation": 10,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.1",
+      "new_value": "0.12",
+      "reasoning": "Low fitness detected. Increasing mutation for exploration.",
+      "timestamp": "2025-12-08T18:52:15.019056"
+    },
+    {
+      "generation": 20,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.0015",
+      "new_value": "0.0022500000000000003",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-12-08T18:53:19.299309"
+    },
+    {
+      "generation": 20,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.12",
+      "new_value": "0.144",
+      "reasoning": "Low fitness detected. Increasing mutation for exploration.",
+      "timestamp": "2025-12-08T18:53:19.299334"
+    },
+    {
+      "generation": 10,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.001",
+      "new_value": "0.0015",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-12-08T18:53:59.117697"
+    },
+    {
+      "generation": 10,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.1",
+      "new_value": "0.12",
+      "reasoning": "Low fitness detected. Increasing mutation for exploration.",
+      "timestamp": "2025-12-08T18:53:59.117726"
+    },
+    {
+      "generation": 20,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.0015",
+      "new_value": "0.0022500000000000003",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-12-08T18:55:02.656962"
+    },
+    {
+      "generation": 20,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.12",
+      "new_value": "0.144",
+      "reasoning": "Low fitness detected. Increasing mutation for exploration.",
+      "timestamp": "2025-12-08T18:55:02.656983"
+    },
+    {
+      "generation": 10,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.001",
+      "new_value": "0.0015",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-12-08T18:56:55.984844"
+    },
+    {
+      "generation": 10,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.1",
+      "new_value": "0.12",
+      "reasoning": "Low fitness detected. Increasing mutation for exploration.",
+      "timestamp": "2025-12-08T18:56:55.984864"
+    },
+    {
+      "generation": 10,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.001",
+      "new_value": "0.0015",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-12-08T18:58:04.127828"
+    },
+    {
+      "generation": 10,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.1",
+      "new_value": "0.12",
+      "reasoning": "Low fitness detected. Increasing mutation for exploration.",
+      "timestamp": "2025-12-08T18:58:04.127855"
+    },
+    {
+      "generation": 20,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.0015",
+      "new_value": "0.0022500000000000003",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-12-08T18:59:20.109741"
+    },
+    {
+      "generation": 20,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.12",
+      "new_value": "0.144",
+      "reasoning": "Low fitness detected. Increasing mutation for exploration.",
+      "timestamp": "2025-12-08T18:59:20.109764"
+    },
+    {
+      "generation": 10,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.001",
+      "new_value": "0.0015",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-12-08T19:00:27.685066"
+    },
+    {
+      "generation": 10,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.1",
+      "new_value": "0.12",
+      "reasoning": "Low fitness detected. Increasing mutation for exploration.",
+      "timestamp": "2025-12-08T19:00:27.685096"
+    },
+    {
+      "generation": 10,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.001",
+      "new_value": "0.0015",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-12-08T19:01:17.140888"
+    },
+    {
+      "generation": 10,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.1",
+      "new_value": "0.12",
+      "reasoning": "Low fitness detected. Increasing mutation for exploration.",
+      "timestamp": "2025-12-08T19:01:17.140923"
+    },
+    {
+      "generation": 20,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.0015",
+      "new_value": "0.0022500000000000003",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-12-08T19:02:23.234798"
+    },
+    {
+      "generation": 20,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.12",
+      "new_value": "0.144",
+      "reasoning": "Low fitness detected. Increasing mutation for exploration.",
+      "timestamp": "2025-12-08T19:02:23.234826"
+    },
+    {
+      "generation": 30,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.0022500000000000003",
+      "new_value": "0.0033750000000000004",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-12-08T19:04:37.895573"
+    },
+    {
+      "generation": 30,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.144",
+      "new_value": "0.17279999999999998",
+      "reasoning": "Low fitness detected. Increasing mutation for exploration.",
+      "timestamp": "2025-12-08T19:04:37.895612"
+    },
+    {
+      "generation": 40,
+      "change_type": "hyperparameter",
+      "target": "learning_rate",
+      "old_value": "0.0033750000000000004",
+      "new_value": "0.005062500000000001",
+      "reasoning": "Fitness stagnation detected. Increasing learning rate to escape local optimum.",
+      "timestamp": "2025-12-08T19:07:57.268825"
+    },
+    {
+      "generation": 40,
+      "change_type": "hyperparameter",
+      "target": "mutation_rate",
+      "old_value": "0.17279999999999998",
+      "new_value": "0.20735999999999996",
+      "reasoning": "Low fitness detected. Increasing mutation for exploration.",
+      "timestamp": "2025-12-08T19:07:57.268846"
     }
   ],
-  "total_changes": 636
+  "total_changes": 662
 }
